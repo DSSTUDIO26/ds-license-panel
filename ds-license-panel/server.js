@@ -57,15 +57,37 @@ app.post('/api/verify', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lisensi tidak ditemukan, tidak aktif, atau produk tidak sesuai.' });
     }
 
-    const license = result.rows[0];
+    const now = new Date();
+    const validLicenses = result.rows.filter(license => {
+      if (license.expires_at && new Date(license.expires_at) < now) {
+        return false;
+      }
+      return true;
+    });
 
-    if (license.expires_at && new Date(license.expires_at) < new Date()) {
-      return res.status(403).json({ success: false, message: 'Lisensi telah kedaluwarsa.' });
+    if (validLicenses.length === 0) {
+      return res.status(403).json({ success: false, message: 'Semua lisensi untuk akun ini telah kedaluwarsa.' });
     }
 
+    if (owner_name && !license_key) {
+      return res.json({
+        success: true,
+        message: 'Lisensi valid.',
+        multi: true,
+        data: validLicenses.map(license => ({
+          key: license.license_key,
+          owner: license.owner_name,
+          product: license.product_name,
+          expires_at: license.expires_at
+        }))
+      });
+    }
+
+    const license = validLicenses[0];
     res.json({
       success: true,
       message: 'Lisensi valid.',
+      multi: false,
       data: {
         key: license.license_key,
         owner: license.owner_name,
@@ -73,6 +95,7 @@ app.post('/api/verify', async (req, res) => {
         expires_at: license.expires_at
       }
     });
+
   } catch (err) {
     console.error('Database Error /api/verify:', err.message);
     res.status(500).json({ success: false, message: 'Gagal mengambil dari database: ' + err.message });
