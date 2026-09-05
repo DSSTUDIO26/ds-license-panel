@@ -147,6 +147,7 @@
                         <input type="text" id="newOwner" placeholder="Username Roblox (Persis)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
                         <input type="text" id="newProduct" placeholder="Nama Produk" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
                         <input type="text" id="newImage" placeholder="URL Gambar Produk (Opsional)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
+                        <input type="text" id="newDownload" placeholder="URL Download .rbxm (Opsional)" class="glass-input rounded-xl px-4 py-3 text-white text-xs md:col-span-2">
                         <input type="date" id="newExpires" class="glass-input rounded-xl px-4 py-3 text-white text-xs md:col-span-2">
                     </div>
                     <button onclick="createLicense()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl text-xs transition">
@@ -411,6 +412,7 @@
             const owner_name = document.getElementById('newOwner').value.trim();
             const product_name = document.getElementById('newProduct').value.trim();
             const image_url = document.getElementById('newImage').value.trim();
+            const download_url = document.getElementById('newDownload').value.trim();
             const expires_at = document.getElementById('newExpires').value;
 
             if (!license_key || !owner_name) {
@@ -422,7 +424,7 @@
                 const res = await fetch('/api/licenses/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-api-secret': secret },
-                    body: JSON.stringify({ license_key, owner_name, product_name, image_url, expires_at })
+                    body: JSON.stringify({ license_key, owner_name, product_name, image_url, download_url, expires_at })
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
@@ -431,6 +433,7 @@
                     document.getElementById('newOwner').value = '';
                     document.getElementById('newProduct').value = '';
                     document.getElementById('newImage').value = '';
+                    document.getElementById('newDownload').value = '';
                     document.getElementById('newExpires').value = '';
                     loadAdminData();
                 } else {
