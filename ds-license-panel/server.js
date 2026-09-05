@@ -9,13 +9,12 @@ const API_SECRET = process.env.API_SECRET || 'dragonsteel_secret_key_123';
 // Middleware
 app.use(express.json());
 
-// Menggunakan path absolut agar aman di Vercel / serverless environment
-const publicPath = path.join(process.cwd(), 'public');
-app.use(express.static(publicPath));
+// Karena index.html ada di root, gunakan folder saat ini (.) untuk file statis
+app.use(express.static(__dirname));
 
 // Route explicit untuk root URL (/)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(publicPath, 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Konfigurasi Database PostgreSQL (Neon / External)
@@ -164,7 +163,7 @@ app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
     }
 });
 
-// Start Server (Opsional jika dijalankan secara lokal)
+// Start Server
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {
         console.log(`Dragonsteel Studio Server berjalan di port ${PORT}`);
