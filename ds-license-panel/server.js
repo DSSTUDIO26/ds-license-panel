@@ -68,7 +68,6 @@ async function getRobloxUserInfo(username) {
     }
 }
 
-// 1. Endpoint Login Klien (Memerlukan Username & Salah Satu Key Valid untuk verifikasi awal kepemilikan)
 app.post('/api/client-login', async (req, res) => {
     const { owner_name, license_key } = req.body;
     if (!owner_name || !license_key) {
@@ -84,7 +83,6 @@ app.post('/api/client-login', async (req, res) => {
     }
 
     try {
-        // Cek apakah key cocok dengan owner tersebut
         const checkQuery = `SELECT * FROM licenses WHERE owner_name = $1 AND license_key = $2 AND is_active = TRUE`;
         const checkRes = await pool.query(checkQuery, [trimmedUsername, trimmedKey]);
         
@@ -92,7 +90,6 @@ app.post('/api/client-login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'License Key salah atau tidak terdaftar untuk akun ini!' });
         }
 
-        // Jika valid, tarik SEMUA produk aktif milik username tersebut secara otomatis
         const allProductsQuery = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
         const { rows } = await pool.query(allProductsQuery, [trimmedUsername]);
 
@@ -107,7 +104,6 @@ app.post('/api/client-login', async (req, res) => {
     }
 });
 
-// 2. Endpoint Refresh Data Otomatis (Untuk mengambil produk terbaru tanpa login ulang)
 app.post('/api/client-refresh', async (req, res) => {
     const { owner_name } = req.body;
     if (!owner_name) return res.status(400).json({ success: false });
@@ -127,7 +123,6 @@ app.post('/api/client-refresh', async (req, res) => {
     }
 });
 
-// 3. Roblox Script Verification Endpoint (Untuk Game / HttpService)
 app.post('/api/game-verify', async (req, res) => {
     const { owner_name, product_name } = req.body;
     if (!owner_name) {
@@ -234,4 +229,5 @@ if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => console.log(`Running on port ${PORT}`));
 }
 
-module.export = app;
+// PERBAIKAN UTAMA DI SINI (pakai 's'):
+module.exports = app;
