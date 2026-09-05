@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const path = require('path');
 
 const app = express();
@@ -10,44 +10,51 @@ const API_SECRET = process.env.API_SECRET || 'dragonsteel_secret_key_123';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Setup
-const dbPath = path.join(__dirname, 'database.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) console.error('Error opening database', err.message);
-    else console.log('Connected to SQLite database.');
+// Konfigurasi Database PostgreSQL (Neon / External)
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
-// Initialize Tables
-db.run(`CREATE TABLE IF NOT EXISTS licenses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    license_key TEXT UNIQUE NOT NULL,
-    owner_name TEXT NOT NULL,
-    product_name TEXT DEFAULT 'General Product',
-    is_active INTEGER DEFAULT 1,
-    expires_at TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`);
+// Inisialisasi Tabel di PostgreSQL secara otomatis saat server berjalan
+async function initDB() {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS licenses (
+                id SERIAL PRIMARY KEY,
+                license_key VARCHAR(255) UNIQUE NOT NULL,
+                owner_name VARCHAR(255) NOT NULL,
+                product_name VARCHAR(100) DEFAULT 'General Product',
+                is_active BOOLEAN DEFAULT TRUE,
+                expires_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('Database table "licenses" verified/created successfully.');
+    } catch (err) {
+        console.error('Error initializing database table:', err.message);
+    }
+}
+initDB();
 
 // ==========================================
 // API ROUTES
 // ==========================================
 
-// 1. Verify Client Hub (Buyer View) - Mengembalikan semua produk milik username tanpa menampilkan key
-app.post('/api/verify', (req, res) => {
+// 1. Verify Client Hub (Buyer View) - Mengambil produk aktif milik username Roblox
+app.post('/api/verify', async (req, res) => {
     const { owner_name } = req.body;
     if (!owner_name) {
         return res.status(400).json({ success: false, message: 'Username wajib diisi!' });
     }
 
-    const query = `SELECT product_name as product, is_active, expires_at FROM licenses WHERE LOWER(owner_name) = LOWER(?) AND is_active = 1`;
-    
-    db.all(query, [owner_name.trim()], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ success: false, message: 'Database error' });
-        }
+    try {
+        const query = `SELECT product_name as product, is_active, expires_at FROM licenses WHERE LOWER(owner_name) = LOWER($1) AND is_active = TRUE`;
+        const { rows } = await pool.query(query, [owner_name.trim()]);
         
         if (rows && rows.length > 0) {
-            // Mengirimkan array data karena satu user bisa punya banyak produk
             return res.json({
                 success: true,
                 multi: true,
@@ -56,32 +63,35 @@ app.post('/api/verify', (req, res) => {
         } else {
             return res.status(404).json({ success: false, message: 'Lisensi tidak ditemukan' });
         }
-    });
+    } catch (err) {
+        console.error('Database query error:', err);
+        return res.status(500).json({ success: false, message: 'Database error' });
+    }
 });
 
-// 2. Roblox Script Verification Endpoint (Untuk di-fetch di dalam game Roblox Studio)
-// Game cukup mengirimkan username Roblox pemain untuk verifikasi akses otomatis tanpa key
-app.post('/api/game-verify', (req, res) => {
+// 2. Roblox Script Verification Endpoint (Untuk di-fetch langsung di dalam game Roblox Studio)
+app.post('/api/game-verify', async (req, res) => {
     const { owner_name, product_name } = req.body;
     
     if (!owner_name) {
         return res.status(400).json({ success: false, authorized: false, message: 'Missing owner_name' });
     }
 
-    let query = `SELECT * FROM licenses WHERE LOWER(owner_name) = LOWER(?) AND is_active = 1`;
-    let params = [owner_name.trim()];
+    try {
+        let query = `SELECT * FROM licenses WHERE LOWER(owner_name) = LOWER($1) AND is_active = TRUE`;
+        let params = [owner_name.trim()];
 
-    if (product_name) {
-        query += ` AND LOWER(product_name) = LOWER(?)`;
-        params.push(product_name.trim());
-    }
+        if (product_name) {
+            query += ` AND LOWER(product_name) = LOWER($2)`;
+            params.push(product_name.trim());
+        }
 
-    db.all(query, params, (err, rows) => {
-        if (err || !rows || rows.length === 0) {
+        const { rows } = await pool.query(query, params);
+        if (!rows || rows.length === 0) {
             return res.json({ success: true, authorized: false, message: 'No active license found for this user.' });
         }
 
-        // Cek masa kedaluwarsa (expires_at) jika ada
+        // Cek masa kedaluwarsa (expires_at)
         const now = new Date();
         const validLicenses = rows.filter(row => {
             if (!row.expires_at) return true; // Permanent
@@ -98,10 +108,12 @@ app.post('/api/game-verify', (req, res) => {
             message: 'Access granted!',
             products: validLicenses.map(l => l.product_name)
         });
-    });
+    } catch (err) {
+        return res.status(500).json({ success: false, authorized: false, message: 'Server error' });
+    }
 });
 
-// Middleware untuk proteksi Admin API
+// Middleware untuk Proteksi Admin API
 function verifyAdminSecret(req, res, next) {
     const secret = req.headers['x-api-secret'];
     if (!secret || secret !== API_SECRET) {
@@ -110,31 +122,39 @@ function verifyAdminSecret(req, res, next) {
     next();
 }
 
-// 3. Get All Licenses (Admin Only)
-app.get('/api/licenses', verifyAdminSecret, (req, res) => {
-    db.all(`SELECT * FROM licenses ORDER BY created_at DESC`, [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ success: false, message: err.message });
-        }
+// 3. Get All Licenses (Admin Only - Untuk ditampilkan di Dashboard Admin)
+app.get('/api/licenses', verifyAdminSecret, async (req, res) => {
+    try {
+        const { rows } = await pool.query(`SELECT * FROM licenses ORDER BY created_at DESC`);
         res.json({ success: true, licenses: rows });
-    });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
-// 4. Create New License (Admin Only)
-app.post('/api/licenses/create', verifyAdminSecret, (req, res) => {
+// 4. Create New License (Admin Only - Untuk membuat key & produk baru)
+app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
     const { license_key, owner_name, product_name, expires_at } = req.body;
 
     if (!license_key || !owner_name) {
         return res.status(400).json({ success: false, message: 'License key and owner name are required' });
     }
 
-    const query = `INSERT INTO licenses (license_key, owner_name, product_name, expires_at) VALUES (?, ?, ?, ?)`;
-    db.run(query, [license_key.trim(), owner_name.trim(), product_name ? product_name.trim() : 'General Product', expires_at || null], function(err) {
-        if (err) {
-            return res.status(400).json({ success: false, message: 'Key sudah terdaftar atau terjadi kesalahan database.' });
-        }
-        res.json({ success: true, message: 'Lisensi berhasil dibuat!', id: this.lastID });
-    });
+    try {
+        const query = `INSERT INTO licenses (license_key, owner_name, product_name, expires_at) VALUES ($1, $2, $3, $4) RETURNING id`;
+        const values = [
+            license_key.trim(), 
+            owner_name.trim(), 
+            product_name ? product_name.trim() : 'General Product', 
+            expires_at || null
+        ];
+        
+        const { rows } = await pool.query(query, values);
+        res.json({ success: true, message: 'Lisensi berhasil dibuat!', id: rows[0].id });
+    } catch (err) {
+        console.error('Insert error:', err);
+        res.status(400).json({ success: false, message: 'Key sudah terdaftar atau terjadi kesalahan database.' });
+    }
 });
 
 // Start Server
