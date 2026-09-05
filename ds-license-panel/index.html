@@ -68,10 +68,14 @@
     <header class="glass-panel border-b border-white/5 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-accent-purple to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-purple-900/30">
-                    DS
+                <!-- Foto Profil / Logo Studio (Ganti link src dengan logo/gambar studio Anda jika ada) -->
+                <div class="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-dark-700 flex items-center justify-center shadow-lg shadow-purple-900/30">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80" alt="Studio Avatar" class="w-full h-full object-cover">
                 </div>
-                <span class="font-bold tracking-wider text-sm md:text-base text-white">DRAGONSTEEL <span class="text-accent-light">STUDIO</span></span>
+                <div>
+                    <span class="font-bold tracking-wider text-sm md:text-base text-white block">DRAGONSTEEL</span>
+                    <span class="text-[10px] text-accent-light tracking-widest uppercase font-semibold">Studio Verification Hub</span>
+                </div>
             </div>
             <div class="flex items-center space-x-2">
                 <button onclick="switchTab('client')" id="btnClient" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 transition">Client Hub</button>
@@ -87,7 +91,7 @@
         <div id="clientSection" class="space-y-6">
             <div class="text-center mb-8">
                 <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight mb-2">Client Verification Hub</h1>
-                <p class="text-gray-400 text-xs md:text-sm">Masukkan username Roblox Anda untuk memeriksa status akses produk.</p>
+                <p class="text-gray-400 text-xs md:text-sm">Masukkan username Roblox Anda untuk memeriksa status akses produk dan lisensi.</p>
             </div>
 
             <div class="glass-panel rounded-2xl p-6 md:p-8">
@@ -110,7 +114,7 @@
 
                 <div id="resultContainer" class="hidden mt-6 pt-6 border-t border-white/5">
                     <h3 class="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">Produk Terdaftar</h3>
-                    <div id="productList" class="grid gap-2.5"></div>
+                    <div id="productList" class="grid gap-3"></div>
                 </div>
 
                 <div id="errorContainer" class="hidden mt-6 p-4 rounded-xl bg-red-950/30 border border-red-900/40 text-red-300 text-xs flex items-center space-x-3">
@@ -160,8 +164,8 @@
                         <table class="w-full text-left text-xs text-gray-300">
                             <thead class="border-b border-white/10 text-gray-400 uppercase">
                                 <tr>
+                                    <th class="py-3 px-2">Produk</th>
                                     <th class="py-3 px-2">Owner</th>
-                                    <th class="py-3 px-2">Product</th>
                                     <th class="py-3 px-2">Key</th>
                                     <th class="py-3 px-2">Status</th>
                                 </tr>
@@ -236,13 +240,19 @@
                     productList.innerHTML = '';
                     data.data.forEach(item => {
                         const expiryText = item.expires_at ? new Date(item.expires_at).toLocaleDateString('id-ID') : 'Permanen';
+                        // Menggunakan gambar default produk abstrak bernuansa gelap-ungu atau kustom jika ada
+                        const productThumbnail = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80";
+                        
                         productList.innerHTML += `
-                            <div class="glass-card p-3.5 rounded-xl flex items-center justify-between border border-white/5">
-                                <div>
-                                    <h4 class="font-semibold text-white text-sm">${item.product}</h4>
-                                    <p class="text-[11px] text-gray-400">Masa Aktif: ${expiryText}</p>
+                            <div class="glass-card p-3.5 rounded-xl flex items-center justify-between border border-white/5 gap-3">
+                                <div class="flex items-center space-x-3">
+                                    <img src="${productThumbnail}" alt="Product" class="w-11 h-11 rounded-lg object-cover border border-white/10 flex-shrink-0">
+                                    <div>
+                                        <h4 class="font-semibold text-white text-sm">${item.product}</h4>
+                                        <p class="text-[11px] text-gray-400">Masa Aktif: <span class="text-gray-300">${expiryText}</span></p>
+                                    </div>
                                 </div>
-                                <span class="px-2.5 py-1 bg-purple-500/10 text-purple-300 text-[11px] font-medium rounded-lg border border-purple-500/20">Verified</span>
+                                <span class="px-2.5 py-1 bg-purple-500/10 text-purple-300 text-[11px] font-medium rounded-lg border border-purple-500/20 flex-shrink-0">Verified</span>
                             </div>`;
                     });
                     resultContainer.classList.remove('hidden');
@@ -270,12 +280,16 @@
                     const tbody = document.getElementById('adminLicenseTable');
                     tbody.innerHTML = '';
                     data.licenses.forEach(l => {
+                        const thumb = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=60&auto=format&fit=crop&q=80";
                         tbody.innerHTML += `
                             <tr class="border-b border-white/5">
-                                <td class="py-3 px-2 font-medium text-white">${l.owner_name}</td>
-                                <td class="py-3 px-2">${l.product_name}</td>
+                                <td class="py-3 px-2 flex items-center space-x-2.5">
+                                    <img src="${thumb}" class="w-8 h-8 rounded object-cover border border-white/10">
+                                    <span class="font-medium text-white">${l.product_name}</span>
+                                </td>
+                                <td class="py-3 px-2 text-gray-300">${l.owner_name}</td>
                                 <td class="py-3 px-2 font-mono text-gray-400">${l.license_key}</td>
-                                <td class="py-3 px-2 text-emerald-400">Active</td>
+                                <td class="py-3 px-2 text-emerald-400 font-semibold">Active</td>
                             </tr>`;
                     });
                 } else {
