@@ -27,6 +27,7 @@ async function initDB() {
                 owner_name VARCHAR(255) NOT NULL,
                 product_name VARCHAR(100) DEFAULT 'General Product',
                 image_url TEXT,
+                download_url TEXT,
                 is_active BOOLEAN DEFAULT TRUE,
                 expires_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -90,7 +91,7 @@ app.post('/api/client-login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'License Key salah atau tidak terdaftar untuk akun ini!' });
         }
 
-        const allProductsQuery = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
+        const allProductsQuery = `SELECT product_name as product, image_url, download_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
         const { rows } = await pool.query(allProductsQuery, [trimmedUsername]);
 
         return res.json({
@@ -110,7 +111,7 @@ app.post('/api/client-refresh', async (req, res) => {
 
     try {
         const robloxInfo = await getRobloxUserInfo(owner_name.trim());
-        const query = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
+        const query = `SELECT product_name as product, image_url, download_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
         const { rows } = await pool.query(query, [owner_name.trim()]);
         
         return res.json({
@@ -188,7 +189,7 @@ app.get('/api/licenses', verifyAdminSecret, async (req, res) => {
 });
 
 app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
-    const { license_key, owner_name, product_name, image_url, expires_at } = req.body;
+    const { license_key, owner_name, product_name, image_url, download_url, expires_at } = req.body;
     if (!license_key || !owner_name) {
         return res.status(400).json({ success: false, message: 'Key and owner are required' });
     }
@@ -199,12 +200,13 @@ app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
     }
 
     try {
-        const query = `INSERT INTO licenses (license_key, owner_name, product_name, image_url, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id`;
+        const query = `INSERT INTO licenses (license_key, owner_name, product_name, image_url, download_url, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
         const values = [
             license_key.trim(), 
             robloxInfo.exactUsername, 
             product_name ? product_name.trim() : 'General Product', 
             image_url ? image_url.trim() : null,
+            download_url ? download_url.trim() : null,
             expires_at || null
         ];
         
@@ -229,5 +231,4 @@ if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => console.log(`Running on port ${PORT}`));
 }
 
-// PERBAIKAN UTAMA DI SINI (pakai 's'):
 module.exports = app;
