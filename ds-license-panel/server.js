@@ -38,10 +38,8 @@ async function initDB() {
 }
 initDB();
 
-// Fungsi helper: Cek user Roblox & Ambil Avatar Headshot-nya
 async function getRobloxUserInfo(username) {
     try {
-        // 1. Dapatkan User ID berdasarkan username
         const userRes = await fetch('https://users.roblox.com/v1/usernames/users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -52,9 +50,8 @@ async function getRobloxUserInfo(username) {
         if (!userData || !userData.data || userData.data.length === 0) return null;
 
         const userId = userData.data[0].id;
-        const exactUsername = userData.data[0].name; // Nama persis dari Roblox
+        const exactUsername = userData.data[0].name;
 
-        // 2. Dapatkan URL Avatar Headshot
         const thumbRes = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`);
         if (!thumbRes.ok) return { userId, exactUsername, avatarUrl: null };
         const thumbData = await thumbRes.json();
@@ -71,40 +68,66 @@ async function getRobloxUserInfo(username) {
     }
 }
 
-// 1. Verify Client Hub (Exact Case Match + Avatar)
-app.post('/api/verify', async (req, res) => {
-    const { owner_name } = req.body;
-    if (!owner_name) {
-        return res.status(400).json({ success: false, message: 'Username wajib diisi!' });
+// 1. Endpoint Login Klien (Memerlukan Username & Salah Satu Key Valid untuk verifikasi awal kepemilikan)
+app.post('/api/client-login', async (req, res) => {
+    const { owner_name, license_key } = req.body;
+    if (!owner_name || !license_key) {
+        return res.status(400).json({ success: false, message: 'Username dan License Key wajib diisi!' });
     }
 
     const trimmedUsername = owner_name.trim();
-    const robloxInfo = await getRobloxUserInfo(trimmedUsername);
+    const trimmedKey = license_key.trim();
 
+    const robloxInfo = await getRobloxUserInfo(trimmedUsername);
     if (!robloxInfo || robloxInfo.exactUsername !== trimmedUsername) {
-        return res.status(404).json({ success: false, message: 'Akun Roblox tidak ditemukan atau huruf besar/kecil tidak persis sama dengan platform Roblox!' });
+        return res.status(404).json({ success: false, message: 'Akun Roblox tidak ditemukan atau penulisan huruf tidak sesuai!' });
     }
 
     try {
-        const query = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
-        const { rows } = await pool.query(query, [trimmedUsername]);
+        // Cek apakah key cocok dengan owner tersebut
+        const checkQuery = `SELECT * FROM licenses WHERE owner_name = $1 AND license_key = $2 AND is_active = TRUE`;
+        const checkRes = await pool.query(checkQuery, [trimmedUsername, trimmedKey]);
         
-        if (rows && rows.length > 0) {
-            return res.json({
-                success: true,
-                multi: true,
-                avatar_url: robloxInfo.avatarUrl,
-                data: rows
-            });
-        } else {
-            return res.status(404).json({ success: false, message: 'Akun Roblox valid, tetapi belum memiliki lisensi produk terdaftar.' });
+        if (checkRes.rows.length === 0) {
+            return res.status(401).json({ success: false, message: 'License Key salah atau tidak terdaftar untuk akun ini!' });
         }
+
+        // Jika valid, tarik SEMUA produk aktif milik username tersebut secara otomatis
+        const allProductsQuery = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
+        const { rows } = await pool.query(allProductsQuery, [trimmedUsername]);
+
+        return res.json({
+            success: true,
+            avatar_url: robloxInfo.avatarUrl,
+            data: rows
+        });
     } catch (err) {
-        return res.status(500).json({ success: false, message: 'Database error' });
+        console.error('Database error:', err);
+        return res.status(500).json({ success: false, message: 'Server database error.' });
     }
 });
 
-// 2. Roblox Script Verification Endpoint
+// 2. Endpoint Refresh Data Otomatis (Untuk mengambil produk terbaru tanpa login ulang)
+app.post('/api/client-refresh', async (req, res) => {
+    const { owner_name } = req.body;
+    if (!owner_name) return res.status(400).json({ success: false });
+
+    try {
+        const robloxInfo = await getRobloxUserInfo(owner_name.trim());
+        const query = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
+        const { rows } = await pool.query(query, [owner_name.trim()]);
+        
+        return res.json({
+            success: true,
+            avatar_url: robloxInfo ? robloxInfo.avatarUrl : null,
+            data: rows
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false });
+    }
+});
+
+// 3. Roblox Script Verification Endpoint (Untuk Game / HttpService)
 app.post('/api/game-verify', async (req, res) => {
     const { owner_name, product_name } = req.body;
     if (!owner_name) {
@@ -113,9 +136,8 @@ app.post('/api/game-verify', async (req, res) => {
 
     const trimmedUsername = owner_name.trim();
     const robloxInfo = await getRobloxUserInfo(trimmedUsername);
-
     if (!robloxInfo || robloxInfo.exactUsername !== trimmedUsername) {
-        return res.json({ success: true, authorized: false, message: 'Invalid Roblox account or case mismatch.' });
+        return res.json({ success: true, authorized: false, message: 'Invalid Roblox account.' });
     }
 
     try {
@@ -176,17 +198,16 @@ app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Key and owner are required' });
     }
 
-    // Validasi opsional saat admin membuat key: pastikan akun Roblox benar-benar ada
     const robloxInfo = await getRobloxUserInfo(owner_name.trim());
     if (!robloxInfo) {
-        return res.status(400).json({ success: false, message: 'Gagal membuat: Username Roblox tidak ditemukan di server Roblox!' });
+        return res.status(400).json({ success: false, message: 'Username Roblox tidak valid di server Roblox!' });
     }
 
     try {
         const query = `INSERT INTO licenses (license_key, owner_name, product_name, image_url, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id`;
         const values = [
             license_key.trim(), 
-            robloxInfo.exactUsername, // Menyimpan dengan kapitalisasi persis dari Roblox
+            robloxInfo.exactUsername, 
             product_name ? product_name.trim() : 'General Product', 
             image_url ? image_url.trim() : null,
             expires_at || null
@@ -213,4 +234,4 @@ if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => console.log(`Running on port ${PORT}`));
 }
 
-module.exports = app;
+module.export = app;
