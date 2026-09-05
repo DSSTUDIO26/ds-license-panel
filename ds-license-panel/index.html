@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRAGON STEEL STUDIO - License & Access Portal</title>
+    <title>DRAGONSTEEL STUDIO - License & Access Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass-panel {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(9, 9, 11, 0.85);
             backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
         }
         .glass-input {
-            background: rgba(3, 7, 18, 0.75);
+            background: rgba(5, 5, 8, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .glass-input:focus {
-            border-color: rgba(99, 102, 241, 0.9);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.8);
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
+<body class="bg-black text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/40 via-black to-black">
 
     <header class="glass-panel border-b border-white/5 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black px-3.5 py-2 rounded-xl text-sm shadow-xl shadow-indigo-500/30">DS</div>
+                <div class="bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-black px-3.5 py-2 rounded-xl text-sm shadow-xl shadow-indigo-600/30">DS</div>
                 <div>
                     <h1 class="font-bold text-sm tracking-wide text-white">DRAGONSTEEL STUDIO</h1>
-                    <p class="text-[11px] text-indigo-300/80">Authorized Roblox Products & Script Suite</p>
+                    <p class="text-[11px] text-slate-400">Enterprise Script & Product Ecosystem</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="switchTab('client')" id="navClientBtn" class="px-3.5 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 text-xs font-semibold rounded-xl transition">Portal Pembeli</button>
                 <button onclick="toggleAdminModal()" class="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-xs font-semibold rounded-xl text-slate-200 border border-white/10 transition shadow-lg">🔐 Admin Portal</button>
             </div>
         </div>
@@ -46,8 +46,8 @@
             <div class="glass-panel rounded-3xl p-8 shadow-2xl relative overflow-hidden">
                 <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="text-center space-y-2 mb-8">
-                    <h2 class="text-2xl font-black text-white tracking-tight">Verifikasi Lisensi & Akses Produk</h2>
-                    <p class="text-xs text-slate-400">Masukkan <strong class="text-slate-200">Username Roblox</strong> untuk memuat profil akun dan lisensi resmi dari Dragonsteel Studio.</p>
+                    <h2 class="text-2xl font-black text-white tracking-tight">Verifikasi Lisensi & Produk</h2>
+                    <p class="text-xs text-slate-400">Masukkan <strong class="text-slate-200">Username Roblox</strong> untuk memuat profil akun dan portofolio produk aktif Anda secara aman.</p>
                 </div>
                 <div class="flex max-w-md mx-auto space-x-2">
                     <input type="text" id="buyerUsername" placeholder="Masukkan Username Roblox Kamu..." class="w-full px-4 py-3.5 glass-input rounded-2xl focus:outline-none text-sm text-white transition placeholder:text-slate-600 font-medium">
@@ -62,20 +62,20 @@
                     <div class="flex items-center space-x-4">
                         <!-- Wadah Foto Profil Custom -->
                         <div class="relative group">
-                            <div class="w-14 h-14 rounded-2xl bg-slate-900 border-2 border-indigo-500/40 overflow-hidden shadow-xl flex items-center justify-center">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-900 border-2 border-indigo-500/30 overflow-hidden shadow-xl flex items-center justify-center">
                                 <img id="studioProfileImg" src="" alt="Profile Image" 
                                      class="w-full h-full object-cover hidden"
                                      onerror="handleProfileImageError()">
-                                <div id="studioProfileFallback" class="w-full h-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-black text-lg">
+                                <div id="studioProfileFallback" class="w-full h-full bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-lg">
                                     DS
                                 </div>
                             </div>
-                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-black rounded-full"></span>
                         </div>
                         <div class="space-y-1">
                             <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border border-indigo-500/30">Verified Client Hub</span>
                             <h3 id="robloxProfileName" class="text-xl font-black text-white pt-0.5">Username</h3>
-                            <p class="text-xs text-slate-400">Hak akses lisensi aktif dari Dragonsteel Studio.</p>
+                            <p class="text-xs text-slate-400">Hak akses lisensi resmi Dragonsteel Studio.</p>
                         </div>
                     </div>
                     <div class="hidden sm:flex px-3 py-1.5 bg-indigo-600/10 border border-indigo-500/20 rounded-xl text-indigo-300 text-xs font-semibold items-center space-x-1.5">
@@ -97,7 +97,7 @@
     </main>
 
     <!-- ADMIN MODAL -->
-    <div id="adminModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div id="adminModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="glass-panel max-w-4xl w-full rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10 space-y-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-white/5 pb-4">
                 <h3 class="font-bold text-white text-base">Dragonsteel Studio Admin Dashboard</h3>
@@ -163,15 +163,11 @@
     </div>
 
     <script>
-        // =========================================================
-        // MASUKKAN LINK FOTO PROFIL / LOGO STUDIO KAMU DI BAWAH INI
-        // (Isi dengan URL gambar seperti Imgur, Unsplash, atau CDN)
-        // =========================================================
-        const MY_PROFILE_IMAGE = ""; // Contoh: "https://i.imgur.com/your-image.png"
+        // Masukkan URL foto profil/logo studio kamu di sini jika ada
+        const MY_PROFILE_IMAGE = ""; 
 
         let cachedSecret = '';
 
-        // Inisialisasi Tampilan Foto Profil
         document.addEventListener("DOMContentLoaded", () => {
             setupProfileImage();
         });
@@ -195,7 +191,6 @@
             document.getElementById('studioProfileFallback').classList.remove('hidden');
         }
 
-        // Katalog Database Gambar & Deskripsi Produk Dragonsteel Studio
         const productCatalog = {
             "ds admin panel": {
                 desc: "Panel kontrol administrator tingkat lanjut dari Dragonsteel Studio untuk manajemen server game Roblox Studio secara real-time.",
@@ -237,12 +232,15 @@
                     listProducts.forEach(item => {
                         const prodNameLower = (item.product || 'general product').toLowerCase();
                         const info = productCatalog[prodNameLower] || productCatalog["general product"];
+                        
+                        // Keamanan: Menyembunyikan karakter key secara total agar aman dari publik
+                        const maskedKey = "DS-****-****-" + (item.key.length >= 4 ? item.key.slice(-4) : "****");
 
                         itemsHtml += `
                             <div class="glass-panel rounded-3xl overflow-hidden border border-white/5 flex flex-col justify-between shadow-xl">
                                 <div>
                                     <div class="h-36 overflow-hidden relative">
-                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10"></div>
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
                                         <img src="${info.image}" alt="Product Image" class="w-full h-full object-cover">
                                         <span class="absolute top-3 right-3 z-20 px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold rounded-lg backdrop-blur-md">Active Access</span>
                                     </div>
@@ -253,8 +251,8 @@
                                 </div>
                                 <div class="p-5 pt-0 space-y-3">
                                     <div class="p-3 glass-input rounded-2xl text-[11px] font-mono text-indigo-300 flex justify-between items-center">
-                                        <span class="truncate mr-2">Key: ${item.key}</span>
-                                        <button onclick="navigator.clipboard.writeText('${item.key}'); alert('License Key disalin!');" class="px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-[10px] text-white shrink-0">Salin</button>
+                                        <span class="truncate mr-2">Key: ${maskedKey}</span>
+                                        <button onclick="navigator.clipboard.writeText('${item.key}'); alert('License Key asli berhasil disalin ke clipboard!');" class="px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-[10px] text-white shrink-0 border border-white/10">Salin Key Asli</button>
                                     </div>
                                     <div class="text-[11px] text-slate-400 flex justify-between">
                                         <span>Masa Aktif:</span>
