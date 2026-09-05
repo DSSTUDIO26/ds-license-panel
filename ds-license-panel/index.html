@@ -3,154 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DS License Panel - Professional Management</title>
+    <title>DS License Panel - Secure Enterprise Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darker: '#090d16',
-                        card: '#111827',
-                        bordercolor: '#1f2937'
-                    }
-                }
-            }
+    <style>
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-    </script>
+        .glass-input {
+            background: rgba(3, 7, 18, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-input:focus {
+            border-color: rgba(99, 102, 241, 0.8);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+    </style>
 </head>
-<body class="bg-darker text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-12">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-16 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
 
     <!-- Navbar Header -->
-    <header class="border-b border-bordercolor bg-card/50 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <header class="glass-panel border-b border-white/5 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 text-white font-bold p-2 rounded-lg text-sm shadow-lg shadow-indigo-500/30">DS</div>
-                <span class="font-bold text-lg tracking-wide text-white">License Control Panel</span>
+                <div class="bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 text-white font-black px-3 py-2 rounded-xl text-sm shadow-lg shadow-indigo-500/30">DS</div>
+                <div>
+                    <h1 class="font-bold text-sm tracking-wide text-white leading-tight">DS License Management System</h1>
+                    <p class="text-[11px] text-indigo-300/80">Secure Roblox Studio Gatekeeper</p>
+                </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <span id="serverStatusBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                    <span class="w-1.5 h-1.5 mr-1.5 bg-yellow-400 rounded-full animate-pulse"></span> Memeriksa Server...
+            <div class="flex items-center space-x-3">
+                <span id="serverStatusBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-inner">
+                    <span class="w-2 h-2 mr-2 bg-amber-400 rounded-full animate-pulse"></span> Connecting...
                 </span>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <main class="max-w-7xl mx-auto px-6 mt-8 space-y-8">
         
-        <!-- KOLOM KIRI: Form Pengecekan & Tambah Key -->
-        <div class="space-y-6">
+        <!-- TOP ANALYTICS STATS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl flex items-center justify-between relative overflow-hidden group hover:border-indigo-500/30 transition">
+                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/10 transition"></div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Lisensi</p>
+                    <h3 id="statTotal" class="text-3xl font-black text-white mt-1">0</h3>
+                </div>
+                <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20 shadow-inner">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+            </div>
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl flex items-center justify-between relative overflow-hidden group hover:border-emerald-500/30 transition">
+                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition"></div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lisensi Aktif</p>
+                    <h3 id="statActive" class="text-3xl font-black text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 shadow-inner">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl flex items-center justify-between relative overflow-hidden group hover:border-rose-500/30 transition">
+                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-rose-500/5 rounded-full blur-xl group-hover:bg-rose-500/10 transition"></div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Kedaluwarsa / Nonaktif</p>
+                    <h3 id="statExpired" class="text-3xl font-black text-rose-400 mt-1">0</h3>
+                </div>
+                <div class="p-3 bg-rose-500/10 text-rose-400 rounded-2xl border border-rose-500/20 shadow-inner">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRID UTAMA PANEL -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Card Cek Lisensi -->
-            <div class="bg-card border border-bordercolor rounded-2xl p-6 shadow-xl">
-                <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    Cek Status Lisensi
-                </h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">License Key</label>
-                        <input type="text" id="checkKey" placeholder="DS-XXXX-XXXX" class="w-full px-4 py-2.5 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-indigo-500 text-sm text-white transition">
-                    </div>
-                    <button onclick="verifyLicense()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition duration-200 text-sm shadow-lg shadow-indigo-600/20">Verifikasi Key</button>
-                    <div id="checkResult" class="hidden p-3.5 rounded-xl bg-darker border border-bordercolor text-xs space-y-1"></div>
-                </div>
-            </div>
-
-            <!-- Card Admin: Tambah Lisensi Baru -->
-            <div class="bg-card border border-bordercolor rounded-2xl p-6 shadow-xl">
-                <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Generate Lisensi Baru
-                </h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">API Secret (Admin)</label>
-                        <input type="password" id="adminSecret" placeholder="Masukkan API_SECRET..." class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-white transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">New License Key</label>
-                        <input type="text" id="newKey" placeholder="Contoh: DS-VIP-ROBLOX" class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-white transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Nama Pemilik / Pembeli</label>
-                        <input type="text" id="newOwner" placeholder="Username Roblox" class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-white transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Tanggal Expired (Opsional)</label>
-                        <input type="date" id="newExpire" class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-slate-300 transition">
-                    </div>
-                    <button onclick="createLicense()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition duration-200 text-sm shadow-lg shadow-emerald-600/20">Simpan ke Database</button>
-                    <p id="createMsg" class="text-xs text-center mt-2"></p>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- KOLOM KANAN: Tabel Daftar Semua Lisensi -->
-        <div class="lg:col-span-2">
-            <div class="bg-card border border-bordercolor rounded-2xl p-6 shadow-xl h-full flex flex-col">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-semibold text-white flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                        Database Daftar Lisensi
+            <!-- KOLOM KIRI: Aksi & Kontrol -->
+            <div class="space-y-6">
+                
+                <!-- Simulasi Cek Key -->
+                <div class="glass-panel rounded-2xl p-6 shadow-2xl">
+                    <h2 class="text-sm font-bold text-white mb-4 flex items-center uppercase tracking-wider">
+                        <svg class="w-4 h-4 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        Simulasi Verifikasi Game
                     </h2>
-                    <button onclick="loadLicenses()" class="px-3 py-1.5 bg-bordercolor hover:bg-slate-700 text-xs font-medium rounded-lg text-slate-300 transition">Muat Ulang Tabel</button>
+                    <div class="space-y-3">
+                        <input type="text" id="checkKey" placeholder="Masukkan license key..." class="w-full px-4 py-2.5 glass-input rounded-xl focus:outline-none text-sm text-white transition placeholder:text-slate-500 font-mono">
+                        <button onclick="verifyLicense()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition duration-200 text-sm shadow-lg shadow-indigo-600/30 border border-indigo-400/20">Uji Cek Lisensi</button>
+                        <div id="checkResult" class="hidden p-3.5 rounded-xl glass-input text-xs space-y-1"></div>
+                    </div>
                 </div>
 
-                <div class="overflow-x-auto flex-grow">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead>
-                            <tr class="border-b border-bordercolor text-slate-400 text-xs uppercase tracking-wider">
-                                <th class="py-3 px-4">Key</th>
-                                <th class="py-3 px-4">Owner</th>
-                                <th class="py-3 px-4">Status</th>
-                                <th class="py-3 px-4">Expired</th>
-                            </tr>
-                        </thead>
-                        <tbody id="licenseTableBody" class="divide-y divide-bordercolor/50 text-slate-300">
-                            <tr>
-                                <td colspan="4" class="py-6 text-center text-slate-500">Masukkan API Secret di panel kiri lalu klik "Muat Ulang Tabel" untuk melihat data.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Generator Key Baru -->
+                <div class="glass-panel rounded-2xl p-6 shadow-2xl">
+                    <h2 class="text-sm font-bold text-white mb-4 flex items-center uppercase tracking-wider">
+                        <svg class="w-4 h-4 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Generate Lisensi Baru
+                    </h2>
+                    <div class="space-y-3.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">API Secret (Admin)</label>
+                            <input type="password" id="adminSecret" placeholder="Masukkan API_SECRET..." class="w-full px-3.5 py-2 glass-input rounded-xl focus:outline-none text-sm text-white transition placeholder:text-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">License Key</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="newKey" placeholder="DS-VIP-XXXX" class="w-full px-3.5 py-2 glass-input rounded-xl focus:outline-none text-sm text-white transition font-mono placeholder:text-slate-600">
+                                <button onclick="generateRandomKey()" class="px-3 bg-white/5 hover:bg-white/10 text-xs rounded-xl text-slate-300 transition border border-white/10 font-medium">Acak</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Nama Pemilik / Pembeli</label>
+                            <input type="text" id="newOwner" placeholder="Username Roblox / Discord" class="w-full px-3.5 py-2 glass-input rounded-xl focus:outline-none text-sm text-white transition placeholder:text-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Tanggal Kedaluwarsa (Opsional)</label>
+                            <input type="date" id="newExpire" class="w-full px-3.5 py-2 glass-input rounded-xl focus:outline-none text-sm text-slate-300 transition">
+                        </div>
+                        <button onclick="createLicense()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition duration-200 text-sm shadow-lg shadow-emerald-600/30 border border-emerald-400/20 mt-1">Simpan ke Database</button>
+                        <p id="createMsg" class="text-xs text-center mt-2"></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- KOLOM KANAN: Tabel Data & Manajemen -->
+            <div class="lg:col-span-2">
+                <div class="glass-panel rounded-2xl p-6 shadow-2xl h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-sm font-bold text-white flex items-center uppercase tracking-wider">
+                            <svg class="w-4 h-4 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                            Database Records Hub
+                        </h2>
+                        <button onclick="loadLicenses()" class="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-xs font-semibold rounded-xl transition shadow-sm">Muat Ulang Data</button>
+                    </div>
+
+                    <div class="overflow-x-auto flex-grow rounded-xl border border-white/5">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-white/5 text-slate-400 text-[11px] uppercase tracking-wider border-b border-white/5">
+                                    <th class="py-3 px-4">License Key</th>
+                                    <th class="py-3 px-4">Owner</th>
+                                    <th class="py-3 px-4">Status</th>
+                                    <th class="py-3 px-4">Expires</th>
+                                    <th class="py-3 px-4 text-right">Aksi Cepat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="licenseTableBody" class="divide-y divide-white/5 text-slate-300">
+                                <tr>
+                                    <td colspan="5" class="py-16 text-center text-slate-500 text-xs">Masukkan API Secret di panel kiri lalu klik "Muat Ulang Data" untuk mengamankan akses database.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </main>
 
-    <!-- JavaScript Client Logic -->
+    <!-- JavaScript Controller Logic -->
     <script>
-        // Cek Status Server saat pertama buka
         async function checkServer() {
             try {
                 const res = await fetch('/api/status');
                 const data = await res.json();
                 const badge = document.getElementById('serverStatusBadge');
                 if (data.success) {
-                    badge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                    badge.innerHTML = '<span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full"></span> Server Online';
+                    badge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-inner";
+                    badge.innerHTML = '<span class="w-2 h-2 mr-2 bg-emerald-400 rounded-full"></span> Server Online';
                 }
             } catch (e) {
                 const badge = document.getElementById('serverStatusBadge');
-                badge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20";
-                badge.innerHTML = '<span class="w-1.5 h-1.5 mr-1.5 bg-red-400 rounded-full"></span> Server Offline';
+                badge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-inner";
+                badge.innerHTML = '<span class="w-2 h-2 mr-2 bg-rose-400 rounded-full"></span> Server Offline';
             }
         }
         checkServer();
 
-        // Fungsi Cek Lisensi
+        function generateRandomKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let key = 'DS-';
+            for(let i=0; i<12; i++) {
+                if(i > 0 && i % 4 === 0) key += '-';
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('newKey').value = key;
+        }
+
         async function verifyLicense() {
-            const key = document.getElementById('checkKey').value;
+            const key = document.getElementById('checkKey').value.trim();
             const resBox = document.getElementById('checkResult');
-            if (!key) { alert('Masukkan license key!'); return; }
-
+            if (!key) { alert('Masukkan license key terlebih dahulu!'); return; }
             resBox.classList.remove('hidden');
-            resBox.innerHTML = 'Memeriksa ke database...';
-
+            resBox.innerHTML = 'Memeriksa ke server database...';
             try {
                 const response = await fetch('/api/verify', {
                     method: 'POST',
@@ -159,25 +210,24 @@
                 });
                 const data = await response.json();
                 if (data.success) {
-                    resBox.innerHTML = `<span class="text-emerald-400 font-bold">✔ VALID</span><br><b>Owner:</b> ${data.data.owner}<br><b>Expired:</b> ${data.data.expires_at ? data.data.expires_at.split('T')[0] : 'Selamanya'}`;
+                    resBox.innerHTML = `<span class="text-emerald-400 font-bold">✔ VALID LICENSE</span><br><b>Owner:</b> ${data.data.owner}<br><b>Expired:</b> ${data.data.expires_at ? data.data.expires_at.split('T')[0] : 'Selamanya'}`;
                 } else {
-                    resBox.innerHTML = `<span class="text-rose-400 font-bold">✖ TIDAK VALID</span><br>${data.message}`;
+                    resBox.innerHTML = `<span class="text-rose-400 font-bold">✖ INVALID / INACTIVE</span><br>${data.message}`;
                 }
             } catch (err) {
-                resBox.innerHTML = `<span class="text-rose-400">Gagal terhubung ke server.</span>`;
+                resBox.innerHTML = `<span class="text-rose-400 font-bold">Koneksi server gagal.</span>`;
             }
         }
 
-        // Fungsi Buat Lisensi Baru
         async function createLicense() {
-            const secret = document.getElementById('adminSecret').value;
-            const key = document.getElementById('newKey').value;
-            const owner = document.getElementById('newOwner').value;
+            const secret = document.getElementById('adminSecret').value.trim();
+            const key = document.getElementById('newKey').value.trim();
+            const owner = document.getElementById('newOwner').value.trim();
             const expires_at = document.getElementById('newExpire').value || null;
             const msg = document.getElementById('createMsg');
 
             if (!secret || !key || !owner) {
-                msg.className = "text-xs text-center mt-2 text-rose-400";
+                msg.className = "text-xs text-center mt-2 text-rose-400 font-semibold";
                 msg.innerText = "API Secret, Key, dan Owner wajib diisi!";
                 return;
             }
@@ -185,75 +235,80 @@
             try {
                 const response = await fetch('/api/licenses/create', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-api-secret': secret
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-api-secret': secret },
                     body: JSON.stringify({ license_key: key, owner_name: owner, expires_at })
                 });
                 const data = await response.json();
                 if (data.success) {
-                    msg.className = "text-xs text-center mt-2 text-emerald-400";
-                    msg.innerText = "Berhasil membuat lisensi baru!";
+                    msg.className = "text-xs text-center mt-2 text-emerald-400 font-semibold";
+                    msg.innerText = "Lisensi baru berhasil disimpan!";
                     document.getElementById('newKey').value = '';
                     document.getElementById('newOwner').value = '';
                     loadLicenses();
                 } else {
-                    msg.className = "text-xs text-center mt-2 text-rose-400";
+                    msg.className = "text-xs text-center mt-2 text-rose-400 font-semibold";
                     msg.innerText = data.message;
                 }
             } catch (e) {
-                msg.className = "text-xs text-center mt-2 text-rose-400";
-                msg.innerText = "Terjadi kesalahan sistem.";
+                msg.className = "text-xs text-center mt-2 text-rose-400 font-semibold";
+                msg.innerText = "Gagal memproses permintaan.";
             }
         }
 
-        // Fungsi Load Daftar Lisensi ke Tabel
         async function loadLicenses() {
-            const secret = document.getElementById('adminSecret').value;
+            const secret = document.getElementById('adminSecret').value.trim();
             const tbody = document.getElementById('licenseTableBody');
+            if (!secret) { alert('Masukkan API Secret terlebih dahulu di panel kiri!'); return; }
 
-            if (!secret) {
-                alert('Masukkan API Secret di kolom admin terlebih dahulu untuk memuat tabel!');
-                return;
-            }
-
-            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Memuat data dari database...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="py-16 text-center text-slate-400 text-xs animate-pulse">Menghubungkan dan mendekripsi data database...</td></tr>`;
 
             try {
-                const response = await fetch('/api/licenses', {
-                    headers: { 'x-api-secret': secret }
-                });
+                const response = await fetch('/api/licenses', { headers: { 'x-api-secret': secret } });
                 const data = await response.json();
 
                 if (data.success) {
+                    document.getElementById('statTotal').innerText = data.licenses.length;
+                    let activeCount = 0;
+                    let expiredCount = 0;
+                    const now = new Date();
+
                     if (data.licenses.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Belum ada lisensi di database.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="5" class="py-16 text-center text-slate-500 text-xs">Belum ada data lisensi di dalam database.</td></tr>`;
                         return;
                     }
+
                     tbody.innerHTML = '';
                     data.licenses.forEach(item => {
-                        const statusBadge = item.is_active 
-                            ? '<span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Aktif</span>' 
-                            : '<span class="px-2 py-0.5 rounded text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20">Nonaktif</span>';
+                        const isExpired = item.expires_at && new Date(item.expires_at) < now;
+                        if (item.is_active && !isExpired) activeCount++;
+                        else expiredCount++;
+
+                        const statusBadge = (item.is_active && !isExpired)
+                            ? '<span class="px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Active</span>' 
+                            : '<span class="px-2.5 py-1 rounded-full text-[11px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">Expired/Inactive</span>';
                         
                         tbody.innerHTML += `
-                            <tr class="hover:bg-slate-800/50 transition">
-                                <td class="py-3 px-4 font-mono text-indigo-300">${item.license_key}</td>
-                                <td class="py-3 px-4 text-white font-medium">${item.owner_name}</td>
-                                <td class="py-3 px-4">${statusBadge}</td>
-                                <td class="py-3 px-4 text-slate-400">${item.expires_at ? item.expires_at.split('T')[0] : 'Selamanya'}</td>
+                            <tr class="hover:bg-white/[0.02] transition">
+                                <td class="py-3.5 px-4 font-mono text-indigo-300 text-xs select-all">${item.license_key}</td>
+                                <td class="py-3.5 px-4 text-white font-medium">${item.owner_name}</td>
+                                <td class="py-3.5 px-4">${statusBadge}</td>
+                                <td class="py-3.5 px-4 text-slate-400 text-xs">${item.expires_at ? item.expires_at.split('T')[0] : 'Selamanya'}</td>
+                                <td class="py-3.5 px-4 text-right">
+                                    <button onclick="navigator.clipboard.writeText('${item.license_key}'); alert('License key berhasil disalin ke clipboard!');" class="px-3 py-1 bg-white/5 hover:bg-white/10 text-xs rounded-xl text-slate-300 transition border border-white/10 font-medium">Salin Key</button>
+                                </td>
                             </tr>
                         `;
                     });
+
+                    document.getElementById('statActive').innerText = activeCount;
+                    document.getElementById('statExpired').innerText = expiredCount;
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-rose-400">Gagal: ${data.message} (Cek API Secret Anda)</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-16 text-center text-rose-400 text-xs font-semibold">Gagal otorisasi: API Secret salah atau tidak valid.</td></tr>`;
                 }
             } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-rose-400">Gagal mengambil data dari server.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="py-16 text-center text-rose-400 text-xs">Gagal mengambil data dari server.</td></tr>`;
             }
         }
     </script>
 </body>
 </html>
-
