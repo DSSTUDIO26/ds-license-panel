@@ -3,115 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DS License Portal - Multi-Product Management</title>
+    <title>DS License Portal - Enterprise Multi-Product Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(20px);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .glass-input {
-            background: rgba(3, 7, 18, 0.6);
+            background: rgba(3, 7, 18, 0.65);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .glass-input:focus {
-            border-color: rgba(99, 102, 241, 0.8);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.9);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-16 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/50 via-slate-950 to-slate-950">
 
     <header class="glass-panel border-b border-white/5 sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black px-3 py-2 rounded-xl text-sm shadow-lg shadow-indigo-500/30">DS</div>
+                <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black px-3.5 py-2 rounded-xl text-sm shadow-xl shadow-indigo-500/30">DS</div>
                 <div>
-                    <h1 class="font-bold text-sm tracking-wide text-white">DS Multi-Product License Portal</h1>
-                    <p class="text-[11px] text-indigo-300/80">Sistem Lisensi Resmi Roblox Studio</p>
+                    <h1 class="font-bold text-sm tracking-wide text-white">DS License & Multi-Product Hub</h1>
+                    <p class="text-[11px] text-indigo-300/80">Sistem Manajemen Akses Terpadu Roblox Studio</p>
                 </div>
             </div>
-            <button onclick="toggleAdminModal()" class="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 text-xs font-semibold rounded-xl text-slate-300 border border-white/10 transition">
-                Admin Login
+            <button onclick="toggleAdminModal()" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-xs font-semibold rounded-xl text-slate-200 border border-white/10 transition shadow-lg flex items-center space-x-2">
+                <span>🔐 Admin Portal</span>
             </button>
         </div>
     </header>
 
     <main class="max-w-xl mx-auto px-6 mt-16 space-y-8">
         <div class="glass-panel rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="text-center space-y-2 mb-8">
-                <h2 class="text-2xl font-black text-white tracking-tight">Cek Status Lisensi Kamu</h2>
-                <p class="text-xs text-slate-400">Masukkan <strong class="text-slate-200">Username Roblox</strong> untuk melihat lisensi produk yang kamu miliki.</p>
+                <h2 class="text-2xl font-black text-white tracking-tight">Cek Status Lisensi Pembeli</h2>
+                <p class="text-xs text-slate-400">Masukkan <strong class="text-slate-200">Username Roblox</strong> kamu untuk memeriksa seluruh hak akses produk yang aktif.</p>
             </div>
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Username Roblox</label>
                     <input type="text" id="buyerUsername" placeholder="Contoh: RobloxUsernameKamu" class="w-full px-4 py-3.5 glass-input rounded-2xl focus:outline-none text-sm text-white transition placeholder:text-slate-600 font-medium">
                 </div>
-                <button onclick="buyerCheckStatus()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-3.5 rounded-2xl transition duration-200 text-sm shadow-xl shadow-indigo-600/30 border border-indigo-400/20">Cek Lisensi Saya</button>
-                <div id="buyerResult" class="hidden p-4 rounded-2xl glass-input text-xs space-y-2 mt-4"></div>
+                <button onclick="buyerCheckStatus()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-3.5 rounded-2xl transition duration-200 text-sm shadow-xl shadow-indigo-600/30 border border-indigo-400/20">Cek Status Akses</button>
+                <div id="buyerResult" class="hidden p-4 rounded-2xl glass-input text-xs space-y-3 mt-4"></div>
             </div>
         </div>
     </main>
 
     <!-- ADMIN MODAL -->
-    <div id="adminModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="glass-panel max-w-4xl w-full rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10 space-y-6 relative max-h-[90vh] overflow-y-auto">
+    <div id="adminModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass-panel max-w-5xl w-full rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10 space-y-6 relative max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                <h3 class="font-bold text-white text-lg">Secure Admin Dashboard (Multi-Product)</h3>
-                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white text-sm font-bold px-3 py-1 bg-white/5 rounded-xl">Tutup</button>
+                <div class="flex items-center space-x-2">
+                    <span class="text-indigo-400 font-bold">⚡</span>
+                    <h3 class="font-bold text-white text-base">Secure Enterprise Admin Dashboard</h3>
+                </div>
+                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white text-xs font-bold px-3.5 py-1.5 bg-white/5 rounded-xl border border-white/10 transition">Tutup</button>
             </div>
 
-            <div id="adminAuthBox" class="space-y-4 py-4">
-                <p class="text-xs text-slate-400">Masukkan API Secret untuk membuka akses manajemen database:</p>
-                <div class="flex space-x-3">
-                    <input type="password" id="modalSecretInput" placeholder="Masukkan API_SECRET..." class="w-full px-4 py-3 glass-input rounded-xl text-sm text-white focus:outline-none">
-                    <button onclick="unlockAdmin()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg">Buka Akses</button>
+            <div id="adminAuthBox" class="space-y-4 py-8 max-w-md mx-auto text-center">
+                <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto text-indigo-400 font-bold text-lg border border-indigo-500/20">🔒</div>
+                <div class="space-y-1">
+                    <h4 class="font-bold text-white text-sm">Autentikasi Diperlukan</h4>
+                    <p class="text-xs text-slate-400">Masukkan API Secret untuk mengakses panel kontrol database.</p>
                 </div>
-                <p id="authError" class="text-xs text-rose-400 font-semibold"></p>
+                <div class="flex space-x-2 pt-2">
+                    <input type="password" id="modalSecretInput" placeholder="Masukkan API_SECRET..." class="w-full px-4 py-3 glass-input rounded-xl text-xs text-white focus:outline-none">
+                    <button onclick="unlockAdmin()" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg transition whitespace-nowrap">Buka</button>
+                </div>
+                <p id="authError" class="text-xs text-rose-400 font-semibold pt-1"></p>
             </div>
 
             <div id="adminDashboardContent" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="glass-panel p-4 rounded-2xl"><p class="text-[11px] text-slate-400 uppercase font-semibold">Total Lisensi</p><h4 id="statTotal" class="text-2xl font-black text-white mt-1">0</h4></div>
-                    <div class="glass-panel p-4 rounded-2xl"><p class="text-[11px] text-slate-400 uppercase font-semibold">Aktif</p><h4 id="statActive" class="text-2xl font-black text-emerald-400 mt-1">0</h4></div>
-                    <div class="glass-panel p-4 rounded-2xl"><p class="text-[11px] text-slate-400 uppercase font-semibold">Kedaluwarsa</p><h4 id="statExpired" class="text-2xl font-black text-rose-400 mt-1">0</h4></div>
+                    <div class="glass-panel p-4 rounded-2xl border border-white/5"><p class="text-[11px] text-slate-400 uppercase font-semibold">Total Lisensi</p><h4 id="statTotal" class="text-2xl font-black text-white mt-1">0</h4></div>
+                    <div class="glass-panel p-4 rounded-2xl border border-white/5"><p class="text-[11px] text-slate-400 uppercase font-semibold">Aktif</p><h4 id="statActive" class="text-2xl font-black text-emerald-400 mt-1">0</h4></div>
+                    <div class="glass-panel p-4 rounded-2xl border border-white/5"><p class="text-[11px] text-slate-400 uppercase font-semibold">Kedaluwarsa</p><h4 id="statExpired" class="text-2xl font-black text-rose-400 mt-1">0</h4></div>
                 </div>
 
-                <!-- Generator Form dengan Pilihan Produk -->
-                <div class="glass-panel p-5 rounded-2xl space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-white">Generate License Baru</h4>
+                <div class="glass-panel p-6 rounded-2xl space-y-4 border border-white/5">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-white">Generate License Baru (Multi-Product)</h4>
+                        <span class="text-[10px] text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Sistem Otomatis</span>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="flex space-x-2">
-                            <input type="text" id="newKey" placeholder="DS-KEY-XXXX" class="w-full px-3 py-2 glass-input rounded-xl text-xs text-white font-mono">
-                            <button onclick="generateRandomKey()" class="px-3 bg-white/5 text-xs rounded-xl text-slate-300 border border-white/10">Acak</button>
+                            <input type="text" id="newKey" placeholder="DS-KEY-XXXX" class="w-full px-3.5 py-2.5 glass-input rounded-xl text-xs text-white font-mono">
+                            <button onclick="generateRandomKey()" class="px-3.5 bg-white/5 hover:bg-white/10 text-xs rounded-xl text-slate-300 border border-white/10 transition">Acak</button>
                         </div>
-                        <input type="text" id="newOwner" placeholder="Username Roblox Pembeli" class="px-3 py-2 glass-input rounded-xl text-xs text-white">
+                        <input type="text" id="newOwner" placeholder="Username Roblox Pembeli" class="px-3.5 py-2.5 glass-input rounded-xl text-xs text-white">
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" id="newProduct" placeholder="Nama Produk (Cth: DS Admin Panel / DS Anti Cheat)" class="px-3 py-2 glass-input rounded-xl text-xs text-white">
-                        <input type="date" id="newExpire" class="px-3 py-2 glass-input rounded-xl text-xs text-slate-300">
+                        <input type="text" id="newProduct" placeholder="Nama Produk (Cth: DS Admin Panel / DS Anti Cheat)" class="px-3.5 py-2.5 glass-input rounded-xl text-xs text-white">
+                        <input type="date" id="newExpire" class="px-3.5 py-2.5 glass-input rounded-xl text-xs text-slate-300">
                     </div>
-                    <button onclick="createLicense()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-semibold shadow-lg">Simpan Lisensi Baru</button>
-                    <p id="createMsg" class="text-xs text-center"></p>
+                    <button onclick="createLicense()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/20 transition">Simpan & Daftarkan Lisensi Baru</button>
+                    <p id="createMsg" class="text-xs text-center font-semibold"></p>
                 </div>
 
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
                         <h4 class="text-xs font-bold uppercase tracking-wider text-white">Database Records</h4>
-                        <button onclick="loadLicenses()" class="px-3 py-1 bg-white/5 hover:bg-white/15 text-xs text-indigo-300 rounded-lg border border-white/10">Refresh Data</button>
+                        <button onclick="loadLicenses()" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-xs text-indigo-300 rounded-xl border border-white/10 transition">🔄 Refresh Data</button>
                     </div>
-                    <div class="overflow-x-auto rounded-xl border border-white/5 max-h-60 overflow-y-auto">
+                    <div class="overflow-x-auto rounded-2xl border border-white/5 max-h-64 overflow-y-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-white/5 text-slate-400 uppercase">
+                            <thead class="bg-white/5 text-slate-400 uppercase sticky top-0 backdrop-blur-md">
                                 <tr>
-                                    <th class="py-2.5 px-3">Key</th>
-                                    <th class="py-2.5 px-3">Owner</th>
-                                    <th class="py-2.5 px-3">Product</th>
-                                    <th class="py-2.5 px-3">Status</th>
-                                    <th class="py-2.5 px-3">Expires</th>
-                                    <th class="py-2.5 px-3 text-right">Aksi</th>
+                                    <th class="py-3 px-4">Key</th>
+                                    <th class="py-3 px-4">Owner</th>
+                                    <th class="py-3 px-4">Product</th>
+                                    <th class="py-3 px-4">Status</th>
+                                    <th class="py-3 px-4">Expires</th>
+                                    <th class="py-3 px-4 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="licenseTableBody" class="divide-y divide-white/5 text-slate-300"></tbody>
@@ -141,10 +151,12 @@
                 const data = await response.json();
                 if (data.success) {
                     resBox.innerHTML = `
-                        <div class="text-emerald-400 font-bold mb-1">✔ LISENSI DITEMUKAN</div>
-                        <div><b>Username Roblox:</b> ${data.data.owner}</div>
-                        <div><b>Produk:</b> <span class="text-indigo-300 font-semibold">${data.data.product}</span></div>
-                        <div><b>License Key:</b> <span class="font-mono text-indigo-300 select-all">${data.data.key}</span></div>
+                        <div class="text-emerald-400 font-bold mb-1 flex items-center space-x-1.5"><span>✔</span><span>LISENSI DITEMUKAN</span></div>
+                        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                            <div><b>Roblox:</b> ${data.data.owner}</div>
+                            <div><b>Produk:</b> <span class="text-indigo-300 font-semibold">${data.data.product}</span></div>
+                        </div>
+                        <div class="pt-1"><b>License Key:</b> <span class="font-mono text-indigo-300 select-all bg-white/5 px-2 py-0.5 rounded">${data.data.key}</span></div>
                         <div><b>Masa Aktif:</b> ${data.data.expires_at ? data.data.expires_at.split('T')[0] : 'Selamanya (Permanent)'}</div>
                     `;
                 } else {
@@ -209,14 +221,14 @@
                     : '<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">Inactive</span>';
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-white/[0.02]">
-                        <td class="py-2.5 px-3 font-mono text-indigo-300">${item.license_key}</td>
-                        <td class="py-2.5 px-3 text-white font-medium">${item.owner_name}</td>
-                        <td class="py-2.5 px-3 text-indigo-200 font-semibold">${item.product_name || 'General'}</td>
-                        <td class="py-2.5 px-3">${badge}</td>
-                        <td class="py-2.5 px-3 text-slate-400">${item.expires_at ? item.expires_at.split('T')[0] : 'Permanent'}</td>
-                        <td class="py-2.5 px-3 text-right">
-                            <button onclick="navigator.clipboard.writeText('${item.license_key}'); alert('Key disalin!');" class="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-[10px] rounded-lg text-slate-300 border border-white/10 transition">Salin</button>
+                    <tr class="hover:bg-white/[0.02] transition">
+                        <td class="py-3 px-4 font-mono text-indigo-300">${item.license_key}</td>
+                        <td class="py-3 px-4 text-white font-medium">${item.owner_name}</td>
+                        <td class="py-3 px-4 text-indigo-200 font-semibold">${item.product_name || 'General Product'}</td>
+                        <td class="py-3 px-4">${badge}</td>
+                        <td class="py-3 px-4 text-slate-400">${item.expires_at ? item.expires_at.split('T')[0] : 'Permanent'}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="navigator.clipboard.writeText('${item.license_key}'); alert('Key disalin ke clipboard!');" class="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-[10px] rounded-lg text-slate-300 border border-white/10 transition">Salin</button>
                         </td>
                     </tr>
                 `;
@@ -257,7 +269,7 @@
                 const data = await res.json();
                 if (data.success) {
                     msg.className = "text-xs text-center text-emerald-400 font-semibold";
-                    msg.innerText = "Berhasil membuat lisensi produk!";
+                    msg.innerText = "Berhasil membuat lisensi produk baru!";
                     document.getElementById('newKey').value = '';
                     document.getElementById('newOwner').value = '';
                     document.getElementById('newProduct').value = '';
@@ -268,7 +280,7 @@
                 }
             } catch (e) {
                 msg.className = "text-xs text-center text-rose-400 font-semibold";
-                msg.innerText = "Gagal memproses.";
+                msg.innerText = "Gagal memproses permintaan.";
             }
         }
     </script>
