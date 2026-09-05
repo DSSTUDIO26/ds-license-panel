@@ -1,141 +1,259 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DS License Management Panel</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f6f9;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    .form-group {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      padding: 10px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-    th {
-      background-color: #f8f9fa;
-    }
-    .badge {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: white;
-      background-color: #28a745;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>DS License Management</h2>
-    
-    <div class="form-group">
-      <input type="text" id="licenseInput" placeholder="Masukkan Kode Lisensi Baru">
-      <button onclick="addLicense()">Tambah Lisensi</button>
-    </div>
-
-    <h3>Daftar Lisensi</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Lisensi Key</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="licenseTable">
-        <!-- Data lisensi akan dipanggil dari server -->
-      </tbody>
-    </table>
-  </div>
-
-  <script>
-    async function loadLicenses() {
-      try {
-        const res = await fetch('/api/licenses');
-        const data = await res.json();
-        const tbody = document.getElementById('licenseTable');
-        tbody.innerHTML = '';
-        data.forEach(item => {
-          tbody.innerHTML += `
-            <tr>
-              <td>${item.id}</td>
-              <td>${item.license_key}</td>
-              <td><span class="badge">${item.status}</span></td>
-            </tr>
-          `;
-        });
-      } catch (e) {
-        console.error('Error loading licenses:', e);
-      }
-    }
-
-    async function addLicense() {
-      const key = document.getElementById('licenseInput').value;
-      if (!key) return alert('Lisensi tidak boleh kosong');
-
-      try {
-        const res = await fetch('/api/add-license', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key })
-        });
-        const result = await res.json();
-        if (result.success) {
-          alert('Lisensi berhasil ditambahkan!');
-          document.getElementById('licenseInput').value = '';
-          loadLicenses();
-        } else {
-          alert(result.error || 'Gagal menambahkan lisensi');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS License Panel - Professional Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darker: '#090d16',
+                        card: '#111827',
+                        bordercolor: '#1f2937'
+                    }
+                }
+            }
         }
-      } catch (e) {
-        alert('Terjadi kesalahan koneksi');
-      }
-    }
+    </script>
+</head>
+<body class="bg-darker text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-12">
 
-    loadLicenses();
-  </script>
+    <!-- Navbar Header -->
+    <header class="border-b border-bordercolor bg-card/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white font-bold p-2 rounded-lg text-sm shadow-lg shadow-indigo-500/30">DS</div>
+                <span class="font-bold text-lg tracking-wide text-white">License Control Panel</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span id="serverStatusBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-yellow-400 rounded-full animate-pulse"></span> Memeriksa Server...
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- KOLOM KIRI: Form Pengecekan & Tambah Key -->
+        <div class="space-y-6">
+            
+            <!-- Card Cek Lisensi -->
+            <div class="bg-card border border-bordercolor rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Cek Status Lisensi
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">License Key</label>
+                        <input type="text" id="checkKey" placeholder="DS-XXXX-XXXX" class="w-full px-4 py-2.5 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-indigo-500 text-sm text-white transition">
+                    </div>
+                    <button onclick="verifyLicense()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition duration-200 text-sm shadow-lg shadow-indigo-600/20">Verifikasi Key</button>
+                    <div id="checkResult" class="hidden p-3.5 rounded-xl bg-darker border border-bordercolor text-xs space-y-1"></div>
+                </div>
+            </div>
+
+            <!-- Card Admin: Tambah Lisensi Baru -->
+            <div class="bg-card border border-bordercolor rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Generate Lisensi Baru
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">API Secret (Admin)</label>
+                        <input type="password" id="adminSecret" placeholder="Masukkan API_SECRET..." class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">New License Key</label>
+                        <input type="text" id="newKey" placeholder="Contoh: DS-VIP-ROBLOX" class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Nama Pemilik / Pembeli</label>
+                        <input type="text" id="newOwner" placeholder="Username Roblox" class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Tanggal Expired (Opsional)</label>
+                        <input type="date" id="newExpire" class="w-full px-4 py-2 bg-darker border border-bordercolor rounded-xl focus:outline-none focus:border-emerald-500 text-sm text-slate-300 transition">
+                    </div>
+                    <button onclick="createLicense()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition duration-200 text-sm shadow-lg shadow-emerald-600/20">Simpan ke Database</button>
+                    <p id="createMsg" class="text-xs text-center mt-2"></p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- KOLOM KANAN: Tabel Daftar Semua Lisensi -->
+        <div class="lg:col-span-2">
+            <div class="bg-card border border-bordercolor rounded-2xl p-6 shadow-xl h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Database Daftar Lisensi
+                    </h2>
+                    <button onclick="loadLicenses()" class="px-3 py-1.5 bg-bordercolor hover:bg-slate-700 text-xs font-medium rounded-lg text-slate-300 transition">Muat Ulang Tabel</button>
+                </div>
+
+                <div class="overflow-x-auto flex-grow">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-bordercolor text-slate-400 text-xs uppercase tracking-wider">
+                                <th class="py-3 px-4">Key</th>
+                                <th class="py-3 px-4">Owner</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4">Expired</th>
+                            </tr>
+                        </thead>
+                        <tbody id="licenseTableBody" class="divide-y divide-bordercolor/50 text-slate-300">
+                            <tr>
+                                <td colspan="4" class="py-6 text-center text-slate-500">Masukkan API Secret di panel kiri lalu klik "Muat Ulang Tabel" untuk melihat data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript Client Logic -->
+    <script>
+        // Cek Status Server saat pertama buka
+        async function checkServer() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                const badge = document.getElementById('serverStatusBadge');
+                if (data.success) {
+                    badge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                    badge.innerHTML = '<span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full"></span> Server Online';
+                }
+            } catch (e) {
+                const badge = document.getElementById('serverStatusBadge');
+                badge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20";
+                badge.innerHTML = '<span class="w-1.5 h-1.5 mr-1.5 bg-red-400 rounded-full"></span> Server Offline';
+            }
+        }
+        checkServer();
+
+        // Fungsi Cek Lisensi
+        async function verifyLicense() {
+            const key = document.getElementById('checkKey').value;
+            const resBox = document.getElementById('checkResult');
+            if (!key) { alert('Masukkan license key!'); return; }
+
+            resBox.classList.remove('hidden');
+            resBox.innerHTML = 'Memeriksa ke database...';
+
+            try {
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ license_key: key })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resBox.innerHTML = `<span class="text-emerald-400 font-bold">✔ VALID</span><br><b>Owner:</b> ${data.data.owner}<br><b>Expired:</b> ${data.data.expires_at ? data.data.expires_at.split('T')[0] : 'Selamanya'}`;
+                } else {
+                    resBox.innerHTML = `<span class="text-rose-400 font-bold">✖ TIDAK VALID</span><br>${data.message}`;
+                }
+            } catch (err) {
+                resBox.innerHTML = `<span class="text-rose-400">Gagal terhubung ke server.</span>`;
+            }
+        }
+
+        // Fungsi Buat Lisensi Baru
+        async function createLicense() {
+            const secret = document.getElementById('adminSecret').value;
+            const key = document.getElementById('newKey').value;
+            const owner = document.getElementById('newOwner').value;
+            const expires_at = document.getElementById('newExpire').value || null;
+            const msg = document.getElementById('createMsg');
+
+            if (!secret || !key || !owner) {
+                msg.className = "text-xs text-center mt-2 text-rose-400";
+                msg.innerText = "API Secret, Key, dan Owner wajib diisi!";
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/licenses/create', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-api-secret': secret
+                    },
+                    body: JSON.stringify({ license_key: key, owner_name: owner, expires_at })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    msg.className = "text-xs text-center mt-2 text-emerald-400";
+                    msg.innerText = "Berhasil membuat lisensi baru!";
+                    document.getElementById('newKey').value = '';
+                    document.getElementById('newOwner').value = '';
+                    loadLicenses();
+                } else {
+                    msg.className = "text-xs text-center mt-2 text-rose-400";
+                    msg.innerText = data.message;
+                }
+            } catch (e) {
+                msg.className = "text-xs text-center mt-2 text-rose-400";
+                msg.innerText = "Terjadi kesalahan sistem.";
+            }
+        }
+
+        // Fungsi Load Daftar Lisensi ke Tabel
+        async function loadLicenses() {
+            const secret = document.getElementById('adminSecret').value;
+            const tbody = document.getElementById('licenseTableBody');
+
+            if (!secret) {
+                alert('Masukkan API Secret di kolom admin terlebih dahulu untuk memuat tabel!');
+                return;
+            }
+
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Memuat data dari database...</td></tr>`;
+
+            try {
+                const response = await fetch('/api/licenses', {
+                    headers: { 'x-api-secret': secret }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.licenses.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">Belum ada lisensi di database.</td></tr>`;
+                        return;
+                    }
+                    tbody.innerHTML = '';
+                    data.licenses.forEach(item => {
+                        const statusBadge = item.is_active 
+                            ? '<span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Aktif</span>' 
+                            : '<span class="px-2 py-0.5 rounded text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20">Nonaktif</span>';
+                        
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-800/50 transition">
+                                <td class="py-3 px-4 font-mono text-indigo-300">${item.license_key}</td>
+                                <td class="py-3 px-4 text-white font-medium">${item.owner_name}</td>
+                                <td class="py-3 px-4">${statusBadge}</td>
+                                <td class="py-3 px-4 text-slate-400">${item.expires_at ? item.expires_at.split('T')[0] : 'Selamanya'}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-rose-400">Gagal: ${data.message} (Cek API Secret Anda)</td></tr>`;
+                }
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-rose-400">Gagal mengambil data dari server.</td></tr>`;
+            }
+        }
+    </script>
 </body>
 </html>
+
