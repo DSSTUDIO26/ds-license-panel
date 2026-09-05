@@ -60,19 +60,28 @@
         .glow-button {
             box-shadow: 0 4px 25px rgba(124, 58, 237, 0.35);
         }
+        /* Toast Animation */
+        #toast {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-accent-purple selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 opacity-0 pointer-events-none transform translate-y-2 px-4 py-3 rounded-xl glass-panel text-xs text-white border border-purple-500/30 shadow-2xl flex items-center space-x-2">
+        <span id="toastMessage">Notifikasi berhasil</span>
+    </div>
 
     <!-- Header / Navbar Glass -->
     <header class="glass-panel border-b border-white/5 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-dark-700 flex items-center justify-center shadow-lg shadow-purple-900/30">
-                    <img id="" src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true" alt="Studio Avatar" class="w-full h-full object-cover">
+                    <img id="headerLogo" src="" alt="Studio Avatar" class="w-full h-full object-cover">
                 </div>
                 <div>
-                    <span id="brandTitle" class="font-bold tracking-wider text-sm md:text-base text-white block">DRAGON STEEL STUDIO</span>
+                    <span id="brandTitle" class="font-bold tracking-wider text-sm md:text-base text-white block">DRAGON STELL STUDIO</span>
                     <span class="text-[10px] text-accent-light tracking-widest uppercase font-semibold">Studio Verification Hub</span>
                 </div>
             </div>
@@ -146,7 +155,10 @@
                 <div class="glass-panel rounded-2xl p-6 space-y-4">
                     <h3 class="text-sm font-bold text-white uppercase tracking-wider">Buat Lisensi Baru</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" id="newKey" placeholder="License Key (bebas/acak)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
+                        <div class="flex space-x-2">
+                            <input type="text" id="newKey" placeholder="License Key" class="w-full glass-input rounded-xl px-4 py-3 text-white text-xs">
+                            <button onclick="generateRandomKey()" class="px-3 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/30 text-purple-200 rounded-xl text-xs font-semibold transition" title="Acak Key">Acak</button>
+                        </div>
                         <input type="text" id="newOwner" placeholder="Username Roblox Pemilik" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
                         <input type="text" id="newProduct" placeholder="Nama Produk" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
                         <input type="text" id="newImage" placeholder="URL Gambar Produk (Opsional)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
@@ -159,7 +171,10 @@
 
                 <!-- License List Table -->
                 <div class="glass-panel rounded-2xl p-6 space-y-4">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">Semua Data Lisensi</h3>
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Semua Data Lisensi</h3>
+                        <input type="text" id="adminSearch" onkeyup="filterAdminTable()" placeholder="Cari produk / owner..." class="w-full md:w-64 glass-input rounded-xl px-3 py-2 text-white text-xs focus:outline-none">
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-gray-300">
                             <thead class="border-b border-white/10 text-gray-400 uppercase">
@@ -167,7 +182,7 @@
                                     <th class="py-3 px-2">Produk</th>
                                     <th class="py-3 px-2">Owner</th>
                                     <th class="py-3 px-2">Key</th>
-                                    <th class="py-3 px-2">Status</th>
+                                    <th class="py-3 px-2 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="adminLicenseTable" class="divide-y divide-white/5">
@@ -193,17 +208,36 @@
         // ==========================================
         const CONFIG = {
             studioName: "DRAGON STELL STUDIO",
-            // Masukkan link gambar logo header di bawah ini:
-            headerLogoUrl: "https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/DJ%20SYSTEM%20IMG.jpeg?raw=true",
-            // Masukkan link gambar default jika produk tidak punya gambar kustom:
+            headerLogoUrl: "https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true",
             defaultProductThumbnail: "https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/DJ%20SYSTEM%20IMG.jpeg?raw=true"
         };
 
-        // Jalankan config saat halaman dimuat
         document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('brandTitle').innerText = CONFIG.studioName;
             document.getElementById('headerLogo').src = CONFIG.headerLogoUrl;
         });
+
+        // Toast Notification Function
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+            }, 3000);
+        }
+
+        // Generator Key Acak Otomatis
+        function generateRandomKey() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let key = "DS-";
+            for (let i = 0; i < 16; i++) {
+                if (i > 0 && i % 4 === 0) key += "-";
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('newKey').value = key;
+            showToast("Key acak berhasil dibuat!");
+        }
 
         function switchTab(tab) {
             const clientSec = document.getElementById('clientSection');
@@ -257,7 +291,6 @@
                     productList.innerHTML = '';
                     data.data.forEach(item => {
                         const expiryText = item.expires_at ? new Date(item.expires_at).toLocaleDateString('id-ID') : 'Permanen';
-                        // Memakai gambar dari database jika ada, jika kosong pakai default dari CONFIG
                         const productThumbnail = item.image_url || CONFIG.defaultProductThumbnail;
                         
                         productList.innerHTML += `
@@ -284,6 +317,8 @@
             }
         }
 
+        let allLicensesCache = [];
+
         async function loadAdminData() {
             const secret = document.getElementById('adminSecretInput').value.trim();
             try {
@@ -294,27 +329,53 @@
                 if (data.success) {
                     document.getElementById('adminLoginBox').classList.add('hidden');
                     document.getElementById('adminDashboard').classList.remove('hidden');
-                    const tbody = document.getElementById('adminLicenseTable');
-                    tbody.innerHTML = '';
-                    data.licenses.forEach(l => {
-                        const thumb = l.image_url || CONFIG.defaultProductThumbnail;
-                        tbody.innerHTML += `
-                            <tr class="border-b border-white/5">
-                                <td class="py-3 px-2 flex items-center space-x-2.5">
-                                    <img src="${thumb}" class="w-8 h-8 rounded object-cover border border-white/10 flex-shrink-0">
-                                    <span class="font-medium text-white">${l.product_name}</span>
-                                </td>
-                                <td class="py-3 px-2 text-gray-300">${l.owner_name}</td>
-                                <td class="py-3 px-2 font-mono text-gray-400">${l.license_key}</td>
-                                <td class="py-3 px-2 text-emerald-400 font-semibold">Active</td>
-                            </tr>`;
-                    });
+                    allLicensesCache = data.licenses;
+                    renderAdminTable(allLicensesCache);
                 } else {
-                    alert('API Secret salah!');
+                    showToast('API Secret salah!');
                 }
             } catch (e) {
-                alert('Gagal mengambil data admin.');
+                showToast('Gagal mengambil data admin.');
             }
+        }
+
+        function renderAdminTable(licenses) {
+            const tbody = document.getElementById('adminLicenseTable');
+            tbody.innerHTML = '';
+            if (licenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-gray-500">Tidak ada data lisensi.</td></tr>`;
+                return;
+            }
+            licenses.forEach(l => {
+                const thumb = l.image_url || CONFIG.defaultProductThumbnail;
+                tbody.innerHTML += `
+                    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition">
+                        <td class="py-3 px-2 flex items-center space-x-2.5">
+                            <img src="${thumb}" class="w-8 h-8 rounded object-cover border border-white/10 flex-shrink-0">
+                            <span class="font-medium text-white">${l.product_name}</span>
+                        </td>
+                        <td class="py-3 px-2 text-gray-300">${l.owner_name}</td>
+                        <td class="py-3 px-2 font-mono text-gray-400">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="truncate max-w-[120px]">${l.license_key}</span>
+                                <button onclick="navigator.clipboard.writeText('${l.license_key}'); showToast('Key disalin!');" class="text-purple-400 hover:text-purple-300 text-[10px] underline">Salin</button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-2 text-right">
+                            <button onclick="deleteLicense('${l.id}')" class="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-[10px] border border-red-500/20 transition">Hapus</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function filterAdminTable() {
+            const keyword = document.getElementById('adminSearch').value.toLowerCase();
+            const filtered = allLicensesCache.filter(l => 
+                l.product_name.toLowerCase().includes(keyword) || 
+                l.owner_name.toLowerCase().includes(keyword) || 
+                l.license_key.toLowerCase().includes(keyword)
+            );
+            renderAdminTable(filtered);
         }
 
         async function createLicense() {
@@ -324,6 +385,11 @@
             const product_name = document.getElementById('newProduct').value.trim();
             const image_url = document.getElementById('newImage').value.trim();
             const expires_at = document.getElementById('newExpires').value;
+
+            if (!license_key || !owner_name || !product_name) {
+                showToast('Key, Owner, dan Nama Produk wajib diisi!');
+                return;
+            }
 
             try {
                 const res = await fetch('/api/licenses/create', {
@@ -336,13 +402,38 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Lisensi berhasil dibuat!');
+                    showToast('Lisensi berhasil dibuat!');
+                    document.getElementById('newKey').value = '';
+                    document.getElementById('newOwner').value = '';
+                    document.getElementById('newProduct').value = '';
+                    document.getElementById('newImage').value = '';
+                    document.getElementById('newExpires').value = '';
                     loadAdminData();
                 } else {
-                    alert(data.message);
+                    showToast(data.message || 'Gagal membuat lisensi.');
                 }
             } catch (e) {
-                alert('Gagal membuat lisensi.');
+                showToast('Terjadi kesalahan koneksi.');
+            }
+        }
+
+        async function deleteLicense(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus lisensi ini?")) return;
+            const secret = document.getElementById('adminSecretInput').value.trim();
+            try {
+                const res = await fetch(`/api/licenses/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'x-api-secret': secret }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Lisensi berhasil dihapus!');
+                    loadAdminData();
+                } else {
+                    showToast(data.message || 'Gagal menghapus.');
+                }
+            } catch (e) {
+                showToast('Gagal terhubung ke server.');
             }
         }
     </script>
