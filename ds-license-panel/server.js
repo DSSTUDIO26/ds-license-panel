@@ -8,11 +8,8 @@ const API_SECRET = process.env.API_SECRET || 'dragonsteel_secret_key_123';
 
 // Middleware
 app.use(express.json());
-
-// Karena index.html ada di root, gunakan folder saat ini (.) untuk file statis
 app.use(express.static(__dirname));
 
-// Route explicit untuk root URL (/)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -25,7 +22,7 @@ const pool = new Pool({
     }
 });
 
-// Inisialisasi Tabel di PostgreSQL secara otomatis saat server berjalan
+// Inisialisasi Tabel di PostgreSQL secara otomatis
 async function initDB() {
     try {
         await pool.query(`
@@ -47,20 +44,55 @@ async function initDB() {
 }
 initDB();
 
+// Fungsi helper untuk memvalidasi apakah username benar-benar ada di Roblox
+async function checkRobloxUserExists(username) {
+    try {
+        const response = await fetch('https://users.roblox.com/v1/usernames/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                usernames: [username],
+                excludeBannedUsers: true
+            })
+        });
+        
+        if (!response.ok) return false;
+        const data = await response.json();
+        
+        // Jika data ditemukan dan ada ID-nya, berarti akun Roblox valid
+        if (data && data.data && data.data.length > 0) {
+            return true;
+        }
+        return false;
+    } catch (err) {
+        console.error('Gagal memvalidasi ke API Roblox:', err);
+        return false; // Jika API roblox error/gagal terhubung
+    }
+}
+
 // ==========================================
 // API ROUTES
 // ==========================================
 
-// 1. Verify Client Hub (Buyer View)
+// 1. Verify Client Hub (Buyer View) dengan Validasi Akun Roblox Asli
 app.post('/api/verify', async (req, res) => {
     const { owner_name } = req.body;
     if (!owner_name) {
         return res.status(400).json({ success: false, message: 'Username wajib diisi!' });
     }
 
+    const trimmedUsername = owner_name.trim();
+
+    // Langkah 1: Validasi ke server Roblox apakah akun ini nyata/valid
+    const isValidRobloxUser = await checkRobloxUserExists(trimmedUsername);
+    if (!isValidRobloxUser) {
+        return res.status(404).json({ success: false, message: 'Akun Roblox tidak ditemukan atau tidak valid di platform Roblox!' });
+    }
+
+    // Langkah 2: Jika valid di Roblox, cari lisensinya di database Anda
     try {
         const query = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE LOWER(owner_name) = LOWER($1) AND is_active = TRUE`;
-        const { rows } = await pool.query(query, [owner_name.trim()]);
+        const { rows } = await pool.query(query, [trimmedUsername]);
         
         if (rows && rows.length > 0) {
             return res.json({
@@ -69,7 +101,7 @@ app.post('/api/verify', async (req, res) => {
                 data: rows
             });
         } else {
-            return res.status(404).json({ success: false, message: 'Lisensi tidak ditemukan' });
+            return res.status(404).json({ success: false, message: 'Akun Roblox valid, tetapi belum memiliki lisensi produk.' });
         }
     } catch (err) {
         console.error('Database query error:', err);
@@ -77,7 +109,7 @@ app.post('/api/verify', async (req, res) => {
     }
 });
 
-// 2. Roblox Script Verification Endpoint
+// 2. Roblox Script Verification Endpoint (Untuk Game / HttpService)
 app.post('/api/game-verify', async (req, res) => {
     const { owner_name, product_name } = req.body;
     
@@ -85,9 +117,17 @@ app.post('/api/game-verify', async (req, res) => {
         return res.status(400).json({ success: false, authorized: false, message: 'Missing owner_name' });
     }
 
+    const trimmedUsername = owner_name.trim();
+
+    // Validasi akun ke server Roblox
+    const isValidRobloxUser = await checkRobloxUserExists(trimmedUsername);
+    if (!isValidRobloxUser) {
+        return res.json({ success: true, authorized: false, message: 'Invalid Roblox account.' });
+    }
+
     try {
         let query = `SELECT * FROM licenses WHERE LOWER(owner_name) = LOWER($1) AND is_active = TRUE`;
-        let params = [owner_name.trim()];
+        let params = [trimmedUsername];
 
         if (product_name) {
             query += ` AND LOWER(product_name) = LOWER($2)`;
