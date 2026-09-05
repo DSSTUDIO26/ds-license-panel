@@ -5,43 +5,83 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
-
 app.use(express.static(__dirname));
+
+// Rate limiter sederhana untuk mencegah brute-force login admin
+const loginAttempts = new Map();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_TIME = 15 * 60 * 1000; // 15 menit
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Koneksi Database PostgreSQL dengan konfigurasi pool yang aman
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
+// Middleware Keamanan untuk Verifikasi API Secret & Brute-Force Protection
 const verifySecret = (req, res, next) => {
-  const secret = req.headers['x-api-secret'] || req.query.secret || req.body.secret;
-  if (secret !== process.env.API_SECRET) {
-    return res.status(403).json({ success: false, message: 'Unauthorized: Invalid API Secret' });
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  
+  // Cek apakah IP sedang diblokir sementara
+  const currentAttempt = loginAttempts.get(clientIp);
+  if (currentAttempt && currentAttempt.count >= MAX_ATTEMPTS) {
+    if (Date.now() - currentAttempt.timestamp < LOCKOUT_TIME) {
+      return res.status(429).json({ 
+        success: false, 
+        message: 'Terlalu banyak percobaan gagal. Coba lagi setelah 15 menit.' 
+      });
+    } else {
+      loginAttempts.delete(clientIp); // Reset setelah waktu habis
+    }
   }
+
+  // Ambil secret dari berbagai sumber dengan aman
+  const secret = req.headers['x-api-secret'] || req.headers['authorization'] || req.body?.secret || req.query?.secret;
+  const expectedSecret = process.env.API_SECRET;
+
+  if (!expectedSecret) {
+    console.error("CRITICAL ERROR: API_SECRET belum diset di Environment Variables Vercel!");
+    return res.status(500).json({ success: false, message: 'Kesalahan konfigurasi server.' });
+  }
+
+  // Validasi kecocokan secret
+  if (!secret || secret.trim() !== expectedSecret.trim()) {
+    // Catat kegagalan untuk proteksi brute-force
+    const record = loginAttempts.get(clientIp) || { count: 0, timestamp: Date.now() };
+    record.count++;
+    record.timestamp = Date.now();
+    loginAttempts.set(clientIp, record);
+
+    return res.status(403).json({ success: false, message: 'Unauthorized: API Secret salah atau tidak valid.' });
+  }
+
+  // Jika berhasil login, bersihkan catatan gagal untuk IP tersebut
+  loginAttempts.delete(clientIp);
   next();
 };
 
+// Endpoint Cek Status Server
 app.get('/api/status', (req, res) => {
-  res.json({ success: true, message: 'DS License Panel API is online!' });
+  res.json({ success: true, message: 'DS License Panel API is online and secure!' });
 });
 
-// Diperbarui: Mendukung pencarian via license_key ATAU owner_name (Username Roblox)
+// Endpoint Verifikasi Lisensi untuk Klien/Pembeli (Publik)
 app.post('/api/verify', async (req, res) => {
   const { license_key, owner_name } = req.body;
   const searchParam = license_key || owner_name;
 
-  if (!searchParam) {
-    return res.status(400).json({ success: false, message: 'License key or username required' });
+  if (!searchParam || typeof searchParam !== 'string' || searchParam.trim() === '') {
+    return res.status(400).json({ success: false, message: 'License key atau username wajib diisi' });
   }
 
   try {
     const result = await pool.query(
       'SELECT * FROM licenses WHERE (license_key = $1 OR owner_name ILIKE $1) AND is_active = true',
-      [searchParam]
+      [searchParam.trim()]
     );
 
     if (result.rows.length === 0) {
@@ -50,6 +90,7 @@ app.post('/api/verify', async (req, res) => {
 
     const license = result.rows[0];
 
+    // Cek kedaluwarsa lisensi
     if (license.expires_at && new Date(license.expires_at) < new Date()) {
       return res.status(403).json({ success: false, message: 'Lisensi telah kedaluwarsa' });
     }
@@ -64,38 +105,47 @@ app.post('/api/verify', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Database error' });
+    console.error('Database Error /api/verify:', err.message);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server database' });
   }
 });
 
+// Endpoint Membuat Lisensi Baru (Dilindungi Admin Secret)
 app.post('/api/licenses/create', verifySecret, async (req, res) => {
   const { license_key, owner_name, expires_at } = req.body;
+
+  if (!license_key || !owner_name) {
+    return res.status(400).json({ success: false, message: 'License key dan owner name wajib diisi' });
+  }
+
   try {
     await pool.query(
       'INSERT INTO licenses (license_key, owner_name, expires_at, is_active) VALUES ($1, $2, $3, true)',
-      [license_key, owner_name, expires_at || null]
+      [license_key.trim(), owner_name.trim(), expires_at || null]
     );
-    res.json({ success: true, message: 'License created successfully' });
+    res.json({ success: true, message: 'Lisensi berhasil dibuat' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to create license' });
+    console.error('Database Error /api/licenses/create:', err.message);
+    res.status(500).json({ success: false, message: 'Gagal membuat lisensi (kemungkinan Key sudah terdaftar)' });
   }
 });
 
+// Endpoint Mengambil Seluruh Daftar Lisensi (Dilindungi Admin Secret)
 app.get('/api/licenses', verifySecret, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM licenses ORDER BY created_at DESC');
     res.json({ success: true, licenses: result.rows });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to fetch licenses' });
+    console.error('Database Error /api/licenses:', err.message);
+    res.status(500).json({ success: false, message: 'Gagal mengambil data dari database' });
   }
 });
 
+// Ekspor modul untuk Vercel Serverless Function
 module.exports = app;
 
+// Jalankan server lokal jika bukan di lingkungan production Vercel
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Development server running on port ${PORT}`));
 }
