@@ -7,69 +7,44 @@ const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Rate limiter sederhana untuk mencegah brute-force login admin
-const loginAttempts = new Map();
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_TIME = 15 * 60 * 1000; // 15 menit
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Koneksi Database PostgreSQL dengan konfigurasi pool yang aman
+// Koneksi Database PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// Middleware Keamanan untuk Verifikasi API Secret & Brute-Force Protection
+// Middleware Verifikasi Secret Admin yang Aman & Debugging Friendly
 const verifySecret = (req, res, next) => {
-  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-  
-  // Cek apakah IP sedang diblokir sementara
-  const currentAttempt = loginAttempts.get(clientIp);
-  if (currentAttempt && currentAttempt.count >= MAX_ATTEMPTS) {
-    if (Date.now() - currentAttempt.timestamp < LOCKOUT_TIME) {
-      return res.status(429).json({ 
-        success: false, 
-        message: 'Terlalu banyak percobaan gagal. Coba lagi setelah 15 menit.' 
-      });
-    } else {
-      loginAttempts.delete(clientIp); // Reset setelah waktu habis
-    }
-  }
-
-  // Ambil secret dari berbagai sumber dengan aman
   const secret = req.headers['x-api-secret'] || req.headers['authorization'] || req.body?.secret || req.query?.secret;
   const expectedSecret = process.env.API_SECRET;
 
+  // Cek jika env belum diset sama sekali di Vercel
   if (!expectedSecret) {
     console.error("CRITICAL ERROR: API_SECRET belum diset di Environment Variables Vercel!");
-    return res.status(500).json({ success: false, message: 'Kesalahan konfigurasi server.' });
+    return res.status(500).json({ success: false, message: 'Server configuration error: API_SECRET not configured.' });
   }
 
-  // Validasi kecocokan secret
+  // Debugging log (bisa dilihat di Vercel Logs)
+  console.log("Mencoba autentikasi admin...");
+  console.log("Secret yang dikirim client:", secret ? "Terisi" : "Kosong/Tidak Ada");
+
   if (!secret || secret.trim() !== expectedSecret.trim()) {
-    // Catat kegagalan untuk proteksi brute-force
-    const record = loginAttempts.get(clientIp) || { count: 0, timestamp: Date.now() };
-    record.count++;
-    record.timestamp = Date.now();
-    loginAttempts.set(clientIp, record);
-
-    return res.status(403).json({ success: false, message: 'Unauthorized: API Secret salah atau tidak valid.' });
+    return res.status(403).json({ success: false, message: 'API Secret salah! Akses ditolak.' });
   }
 
-  // Jika berhasil login, bersihkan catatan gagal untuk IP tersebut
-  loginAttempts.delete(clientIp);
   next();
 };
 
-// Endpoint Cek Status Server
+// Cek Status Server
 app.get('/api/status', (req, res) => {
-  res.json({ success: true, message: 'DS License Panel API is online and secure!' });
+  res.json({ success: true, message: 'DS License Panel API is online!' });
 });
 
-// Endpoint Verifikasi Lisensi untuk Klien/Pembeli (Publik)
+// Endpoint Verifikasi Lisensi (Publik untuk Buyer)
 app.post('/api/verify', async (req, res) => {
   const { license_key, owner_name } = req.body;
   const searchParam = license_key || owner_name;
@@ -90,7 +65,6 @@ app.post('/api/verify', async (req, res) => {
 
     const license = result.rows[0];
 
-    // Cek kedaluwarsa lisensi
     if (license.expires_at && new Date(license.expires_at) < new Date()) {
       return res.status(403).json({ success: false, message: 'Lisensi telah kedaluwarsa' });
     }
@@ -123,14 +97,14 @@ app.post('/api/licenses/create', verifySecret, async (req, res) => {
       'INSERT INTO licenses (license_key, owner_name, expires_at, is_active) VALUES ($1, $2, $3, true)',
       [license_key.trim(), owner_name.trim(), expires_at || null]
     );
-    res.json({ success: true, message: 'Lisensi berhasil dibuat' });
+    res.json({ success: true, message: 'License created successfully' });
   } catch (err) {
     console.error('Database Error /api/licenses/create:', err.message);
-    res.status(500).json({ success: false, message: 'Gagal membuat lisensi (kemungkinan Key sudah terdaftar)' });
+    res.status(500).json({ success: false, message: 'Gagal membuat lisensi (kemungkinan Key duplikat)' });
   }
 });
 
-// Endpoint Mengambil Seluruh Daftar Lisensi (Dilindungi Admin Secret)
+// Endpoint Mengambil Daftar Lisensi (Dilindungi Admin Secret)
 app.get('/api/licenses', verifySecret, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM licenses ORDER BY created_at DESC');
@@ -141,10 +115,9 @@ app.get('/api/licenses', verifySecret, async (req, res) => {
   }
 });
 
-// Ekspor modul untuk Vercel Serverless Function
+// Ekspor untuk Vercel Serverless
 module.exports = app;
 
-// Jalankan server lokal jika bukan di lingkungan production Vercel
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`Development server running on port ${PORT}`));
