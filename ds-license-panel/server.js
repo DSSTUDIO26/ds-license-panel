@@ -129,57 +129,46 @@ app.post('/api/client-refresh', async (req, res) => {
     }
 });
 
-// Endpoint Verifikasi dari Game Roblox dengan Logika Eksklusif (Pribadi vs Komunitas)
+// Endpoint Verifikasi dari Game Roblox secara Otomatis (Support Grup & Pribadi)
 app.post('/api/game-verify', async (req, res) => {
-    const { owner_name, product_name, creator_type, creator_id } = req.body;
+    const { product_name, creator_type, creator_id } = req.body;
     
-    if (!owner_name) {
-        return res.status(400).json({ success: false, authorized: false, message: 'Missing owner_name' });
-    }
-
-    const trimmedUsername = owner_name.trim();
-    const robloxInfo = await getRobloxUserInfo(trimmedUsername);
-    if (!robloxInfo || robloxInfo.exactUsername !== trimmedUsername) {
-        return res.json({ success: true, authorized: false, message: 'Invalid Roblox account.' });
+    if (!creator_id) {
+        return res.status(400).json({ success: false, authorized: false, message: 'Missing creator_id' });
     }
 
     try {
-        // Ambil semua lisensi aktif yang berkaitan dengan owner atau group
-        let query = `SELECT * FROM licenses WHERE (owner_name = $1 OR group_id IS NOT NULL) AND is_active = TRUE`;
-        let params = [trimmedUsername];
+        let query = '';
+        let params = [];
+
+        // Jika game dipublikasikan lewat Group Komunitas
+        if (creator_type === 'Group') {
+            query = `SELECT * FROM licenses WHERE group_id = $1 AND is_active = TRUE`;
+            params = [String(creator_id)];
+        } else {
+            // Jika dipublikasikan lewat Akun Pribadi (User)
+            query = `SELECT * FROM licenses WHERE group_id IS NULL AND is_active = TRUE`;
+            params = [];
+        }
 
         if (product_name) {
-            query += ` AND product_name = $2`;
+            query += (params.length > 0 ? ` AND` : ` WHERE`) + ` product_name = $${params.length + 1}`;
             params.push(product_name.trim());
         }
 
         const { rows } = await pool.query(query, params);
         if (!rows || rows.length === 0) {
-            return res.json({ success: true, authorized: false, message: 'No active license found.' });
+            return res.json({ success: true, authorized: false, message: 'No active license found for this Creator ID.' });
         }
 
         const now = new Date();
         const validLicenses = rows.filter(row => {
             if (row.expires_at && new Date(row.expires_at) <= now) return false;
-
-            // PENERAPAN LOGIKA EKSKLUSIF KETAT:
-            if (row.group_id) {
-                // Jika lisensi berbasis komunitas (Group ID), game HARUS di-upload lewat Group tersebut (creator_type == 'Group' & creator_id cocok)
-                if (creator_type === 'Group' && String(creator_id) === String(row.group_id)) {
-                    return true;
-                }
-                return false;
-            } else {
-                // Jika lisensi berbasis akun pribadi, game HARUS di-upload lewat User pribadi (creator_type == 'User')
-                if (creator_type === 'User') {
-                    return true;
-                }
-                return false;
-            }
+            return true;
         });
 
         if (validLicenses.length === 0) {
-            return res.json({ success: true, authorized: false, message: 'License type mismatch (Personal vs Group exclusivity violation).' });
+            return res.json({ success: true, authorized: false, message: 'License expired.' });
         }
 
         return res.json({
@@ -189,6 +178,7 @@ app.post('/api/game-verify', async (req, res) => {
             products: validLicenses.map(l => l.product_name)
         });
     } catch (err) {
+        console.error('Verify error:', err);
         return res.status(500).json({ success: false, authorized: false, message: 'Server error' });
     }
 });
@@ -262,5 +252,4 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 module.exports = app;
-
 
