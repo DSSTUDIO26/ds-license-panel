@@ -34,7 +34,6 @@ app.get('/api/status', (req, res) => {
   res.json({ success: true, message: 'Server online.' });
 });
 
-// Endpoint Verifikasi Lisensi (Publik / Roblox Studio)
 app.post('/api/verify', async (req, res) => {
   const { license_key, owner_name, product_name } = req.body;
   const searchParam = license_key || owner_name;
@@ -47,7 +46,6 @@ app.post('/api/verify', async (req, res) => {
     let query = 'SELECT * FROM licenses WHERE (license_key = $1 OR owner_name ILIKE $1) AND is_active = true';
     let params = [searchParam.trim()];
 
-    // Jika produk disertakan dalam request verifikasi
     if (product_name) {
       query += ' AND product_name ILIKE $2';
       params.push(product_name.trim());
@@ -81,7 +79,6 @@ app.post('/api/verify', async (req, res) => {
   }
 });
 
-// Endpoint Tambah Lisensi (Admin - Dengan Product Name)
 app.post('/api/licenses/create', verifySecret, async (req, res) => {
   const { license_key, owner_name, product_name, expires_at } = req.body;
 
@@ -89,7 +86,7 @@ app.post('/api/licenses/create', verifySecret, async (req, res) => {
     return res.status(400).json({ success: false, message: 'License key dan owner name wajib diisi.' });
   }
 
-  const productName = product_name ? product_name.trim() : 'Default Product';
+  const productName = product_name ? product_name.trim() : 'General Product';
 
   try {
     await pool.query(
@@ -103,7 +100,6 @@ app.post('/api/licenses/create', verifySecret, async (req, res) => {
   }
 });
 
-// Endpoint Ambil Semua Lisensi (Admin)
 app.get('/api/licenses', verifySecret, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM licenses ORDER BY created_at DESC');
