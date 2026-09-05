@@ -8,11 +8,14 @@ const API_SECRET = process.env.API_SECRET || 'dragonsteel_secret_key_123';
 
 // Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Route explicit untuk memastikan index.html terbuka di root URL (/)
+// Menggunakan path absolut agar aman di Vercel / serverless environment
+const publicPath = path.join(process.cwd(), 'public');
+app.use(express.static(publicPath));
+
+// Route explicit untuk root URL (/)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 // Konfigurasi Database PostgreSQL (Neon / External)
@@ -48,7 +51,7 @@ initDB();
 // API ROUTES
 // ==========================================
 
-// 1. Verify Client Hub (Buyer View) - Mengambil produk aktif milik username Roblox
+// 1. Verify Client Hub (Buyer View)
 app.post('/api/verify', async (req, res) => {
     const { owner_name } = req.body;
     if (!owner_name) {
@@ -161,7 +164,11 @@ app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
     }
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Dragonsteel Studio Server berjalan di port ${PORT}`);
-});
+// Start Server (Opsional jika dijalankan secara lokal)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Dragonsteel Studio Server berjalan di port ${PORT}`);
+    });
+}
+
+module.exports = app;
