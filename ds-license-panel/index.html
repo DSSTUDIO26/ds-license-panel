@@ -68,12 +68,11 @@
     <header class="glass-panel border-b border-white/5 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <!-- Foto Profil / Logo Studio (Ganti link src dengan logo/gambar studio Anda jika ada) -->
                 <div class="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-dark-700 flex items-center justify-center shadow-lg shadow-purple-900/30">
-                    <img src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true" alt="Studio Avatar" class="w-full h-full object-cover">
+                    <img id="headerLogo" src="" alt="Studio Avatar" class="w-full h-full object-cover">
                 </div>
                 <div>
-                    <span class="font-bold tracking-wider text-sm md:text-base text-white block">DRAGONSTEEL</span>
+                    <span id="brandTitle" class="font-bold tracking-wider text-sm md:text-base text-white block">DRAGONSTEEL</span>
                     <span class="text-[10px] text-accent-light tracking-widest uppercase font-semibold">Studio Verification Hub</span>
                 </div>
             </div>
@@ -150,7 +149,8 @@
                         <input type="text" id="newKey" placeholder="License Key (bebas/acak)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
                         <input type="text" id="newOwner" placeholder="Username Roblox Pemilik" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
                         <input type="text" id="newProduct" placeholder="Nama Produk" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
-                        <input type="date" id="newExpires" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
+                        <input type="text" id="newImage" placeholder="URL Gambar Produk (Opsional)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
+                        <input type="date" id="newExpires" class="glass-input rounded-xl px-4 py-3 text-white text-xs md:col-span-2">
                     </div>
                     <button onclick="createLicense()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl text-xs transition">
                         + Simpan Lisensi Baru ke Database
@@ -186,8 +186,25 @@
         &copy; 2026 Dragonsteel Studio. Secure Enterprise Infrastructure.
     </footer>
 
-    <!-- Script Logic -->
+    <!-- Script Logic & Configuration -->
     <script>
+        // ==========================================
+        // PUSAT CONFIGURATION (GANTI DI SINI SAJA)
+        // ==========================================
+        const CONFIG = {
+            studioName: "DRAGONSTEEL",
+            // Masukkan link gambar logo header di bawah ini:
+            headerLogoUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80",
+            // Masukkan link gambar default jika produk tidak punya gambar kustom:
+            defaultProductThumbnail: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80"
+        };
+
+        // Jalankan config saat halaman dimuat
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('brandTitle').innerText = CONFIG.studioName;
+            document.getElementById('headerLogo').src = CONFIG.headerLogoUrl;
+        });
+
         function switchTab(tab) {
             const clientSec = document.getElementById('clientSection');
             const adminSec = document.getElementById('adminSection');
@@ -240,8 +257,8 @@
                     productList.innerHTML = '';
                     data.data.forEach(item => {
                         const expiryText = item.expires_at ? new Date(item.expires_at).toLocaleDateString('id-ID') : 'Permanen';
-                        // Menggunakan gambar default produk abstrak bernuansa gelap-ungu atau kustom jika ada
-                        const productThumbnail = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80";
+                        // Memakai gambar dari database jika ada, jika kosong pakai default dari CONFIG
+                        const productThumbnail = item.image_url || CONFIG.defaultProductThumbnail;
                         
                         productList.innerHTML += `
                             <div class="glass-card p-3.5 rounded-xl flex items-center justify-between border border-white/5 gap-3">
@@ -262,7 +279,7 @@
                 }
             } catch (err) {
                 loading.classList.add('hidden');
-                errorContainer.classList.remove('hidden');
+                errorContainer.classList.add('hidden');
                 errorMessage.innerText = 'Koneksi ke server gagal.';
             }
         }
@@ -280,11 +297,11 @@
                     const tbody = document.getElementById('adminLicenseTable');
                     tbody.innerHTML = '';
                     data.licenses.forEach(l => {
-                        const thumb = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=60&auto=format&fit=crop&q=80";
+                        const thumb = l.image_url || CONFIG.defaultProductThumbnail;
                         tbody.innerHTML += `
                             <tr class="border-b border-white/5">
                                 <td class="py-3 px-2 flex items-center space-x-2.5">
-                                    <img src="${thumb}" class="w-8 h-8 rounded object-cover border border-white/10">
+                                    <img src="${thumb}" class="w-8 h-8 rounded object-cover border border-white/10 flex-shrink-0">
                                     <span class="font-medium text-white">${l.product_name}</span>
                                 </td>
                                 <td class="py-3 px-2 text-gray-300">${l.owner_name}</td>
@@ -305,6 +322,7 @@
             const license_key = document.getElementById('newKey').value.trim();
             const owner_name = document.getElementById('newOwner').value.trim();
             const product_name = document.getElementById('newProduct').value.trim();
+            const image_url = document.getElementById('newImage').value.trim();
             const expires_at = document.getElementById('newExpires').value;
 
             try {
@@ -314,7 +332,7 @@
                         'Content-Type': 'application/json',
                         'x-api-secret': secret
                     },
-                    body: JSON.stringify({ license_key, owner_name, product_name, expires_at })
+                    body: JSON.stringify({ license_key, owner_name, product_name, image_url, expires_at })
                 });
                 const data = await res.json();
                 if (data.success) {
