@@ -59,14 +59,13 @@ async function checkRobloxUserExists(username) {
         if (!response.ok) return false;
         const data = await response.json();
         
-        // Jika data ditemukan dan ada ID-nya, berarti akun Roblox valid
         if (data && data.data && data.data.length > 0) {
             return true;
         }
         return false;
     } catch (err) {
         console.error('Gagal memvalidasi ke API Roblox:', err);
-        return false; // Jika API roblox error/gagal terhubung
+        return false;
     }
 }
 
@@ -74,7 +73,7 @@ async function checkRobloxUserExists(username) {
 // API ROUTES
 // ==========================================
 
-// 1. Verify Client Hub (Buyer View) dengan Validasi Akun Roblox Asli
+// 1. Verify Client Hub (Buyer View) - Exact Case Match
 app.post('/api/verify', async (req, res) => {
     const { owner_name } = req.body;
     if (!owner_name) {
@@ -83,15 +82,15 @@ app.post('/api/verify', async (req, res) => {
 
     const trimmedUsername = owner_name.trim();
 
-    // Langkah 1: Validasi ke server Roblox apakah akun ini nyata/valid
+    // Validasi ke server Roblox
     const isValidRobloxUser = await checkRobloxUserExists(trimmedUsername);
     if (!isValidRobloxUser) {
         return res.status(404).json({ success: false, message: 'Akun Roblox tidak ditemukan atau tidak valid di platform Roblox!' });
     }
 
-    // Langkah 2: Jika valid di Roblox, cari lisensinya di database Anda
+    // Pencarian di Database dengan pencocokan PERSIS (Case-Sensitive, menggunakan operator = biasa tanpa LOWER)
     try {
-        const query = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE LOWER(owner_name) = LOWER($1) AND is_active = TRUE`;
+        const query = `SELECT product_name as product, image_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
         const { rows } = await pool.query(query, [trimmedUsername]);
         
         if (rows && rows.length > 0) {
@@ -101,7 +100,7 @@ app.post('/api/verify', async (req, res) => {
                 data: rows
             });
         } else {
-            return res.status(404).json({ success: false, message: 'Akun Roblox valid, tetapi belum memiliki lisensi produk.' });
+            return res.status(404).json({ success: false, message: 'Akun Roblox valid, tetapi penulisan huruf besar/kecil tidak cocok dengan database.' });
         }
     } catch (err) {
         console.error('Database query error:', err);
@@ -109,7 +108,7 @@ app.post('/api/verify', async (req, res) => {
     }
 });
 
-// 2. Roblox Script Verification Endpoint (Untuk Game / HttpService)
+// 2. Roblox Script Verification Endpoint (Untuk Game / HttpService) - Exact Case Match
 app.post('/api/game-verify', async (req, res) => {
     const { owner_name, product_name } = req.body;
     
@@ -119,24 +118,23 @@ app.post('/api/game-verify', async (req, res) => {
 
     const trimmedUsername = owner_name.trim();
 
-    // Validasi akun ke server Roblox
     const isValidRobloxUser = await checkRobloxUserExists(trimmedUsername);
     if (!isValidRobloxUser) {
         return res.json({ success: true, authorized: false, message: 'Invalid Roblox account.' });
     }
 
     try {
-        let query = `SELECT * FROM licenses WHERE LOWER(owner_name) = LOWER($1) AND is_active = TRUE`;
+        let query = `SELECT * FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
         let params = [trimmedUsername];
 
         if (product_name) {
-            query += ` AND LOWER(product_name) = LOWER($2)`;
+            query += ` AND product_name = $2`;
             params.push(product_name.trim());
         }
 
         const { rows } = await pool.query(query, params);
         if (!rows || rows.length === 0) {
-            return res.json({ success: true, authorized: false, message: 'No active license found for this user.' });
+            return res.json({ success: true, authorized: false, message: 'No active license found with exact case match.' });
         }
 
         const now = new Date();
