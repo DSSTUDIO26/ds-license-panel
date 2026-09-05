@@ -20,7 +20,7 @@ const verifySecret = (req, res, next) => {
   const expectedSecret = process.env.API_SECRET;
 
   if (!expectedSecret) {
-    return res.status(500).json({ success: false, message: 'API_SECRET belum dikonfigurasi di Vercel.' });
+    return res.status(500).json({ success: false, message: 'API_SECRET belum dikonfigurasi di environment variable.' });
   }
 
   if (!secret || secret.trim() !== expectedSecret.trim()) {
@@ -31,7 +31,7 @@ const verifySecret = (req, res, next) => {
 };
 
 app.get('/api/status', (req, res) => {
-  res.json({ success: true, message: 'Server online.' });
+  res.json({ success: true, message: 'Dragonsteel Studio API Server online.' });
 });
 
 app.post('/api/verify', async (req, res) => {
@@ -137,5 +137,5 @@ module.exports = app;
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Server lokal berjalan di port ${PORT}`));
+  app.listen(PORT, () => console.log(`Dragonsteel Studio Server lokal berjalan di port ${PORT}`));
 }
