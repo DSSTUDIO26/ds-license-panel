@@ -25,6 +25,7 @@ async function initDB() {
                 id SERIAL PRIMARY KEY,
                 license_key VARCHAR(255) UNIQUE NOT NULL,
                 owner_name VARCHAR(255) NOT NULL,
+                group_id VARCHAR(100),
                 product_name VARCHAR(100) DEFAULT 'General Product',
                 image_url TEXT,
                 download_url TEXT,
@@ -33,6 +34,8 @@ async function initDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        // Otomatis tambahkan kolom group_id jika tabel lama sudah terlanjur dibuat tanpa kolom ini
+        await pool.query(`ALTER TABLE licenses ADD COLUMN IF NOT EXISTS group_id VARCHAR(100);`);
     } catch (err) {
         console.error('Error init DB:', err.message);
     }
@@ -84,14 +87,15 @@ app.post('/api/client-login', async (req, res) => {
     }
 
     try {
-        const checkQuery = `SELECT * FROM licenses WHERE owner_name = $1 AND license_key = $2 AND is_active = TRUE`;
+        // Cek lisensi yang cocok dengan owner_name atau mencakup group_id milik owner tersebut
+        const checkQuery = `SELECT * FROM licenses WHERE (owner_name = $1 OR group_id IS NOT NULL) AND license_key = $2 AND is_active = TRUE`;
         const checkRes = await pool.query(checkQuery, [trimmedUsername, trimmedKey]);
         
         if (checkRes.rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'License Key salah atau tidak terdaftar untuk akun ini!' });
+            return res.status(401).json({ success: false, message: 'License Key salah atau tidak terdaftar!' });
         }
 
-        const allProductsQuery = `SELECT product_name as product, image_url, download_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
+        const allProductsQuery = `SELECT product_name as product, image_url, download_url, is_active, expires_at, group_id FROM licenses WHERE (owner_name = $1 OR group_id IS NOT NULL) AND is_active = TRUE`;
         const { rows } = await pool.query(allProductsQuery, [trimmedUsername]);
 
         return res.json({
@@ -110,9 +114,10 @@ app.post('/api/client-refresh', async (req, res) => {
     if (!owner_name) return res.status(400).json({ success: false });
 
     try {
-        const robloxInfo = await getRobloxUserInfo(owner_name.trim());
-        const query = `SELECT product_name as product, image_url, download_url, is_active, expires_at FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
-        const { rows } = await pool.query(query, [owner_name.trim()]);
+        const trimmedUsername = owner_name.trim();
+        const robloxInfo = await getRobloxUserInfo(trimmedUsername);
+        const query = `SELECT product_name as product, image_url, download_url, is_active, expires_at, group_id FROM licenses WHERE (owner_name = $1 OR group_id IS NOT NULL) AND is_active = TRUE`;
+        const { rows } = await pool.query(query, [trimmedUsername]);
         
         return res.json({
             success: true,
@@ -124,8 +129,10 @@ app.post('/api/client-refresh', async (req, res) => {
     }
 });
 
+// Endpoint Verifikasi dari Game Roblox dengan Logika Eksklusif (Pribadi vs Komunitas)
 app.post('/api/game-verify', async (req, res) => {
-    const { owner_name, product_name } = req.body;
+    const { owner_name, product_name, creator_type, creator_id } = req.body;
+    
     if (!owner_name) {
         return res.status(400).json({ success: false, authorized: false, message: 'Missing owner_name' });
     }
@@ -137,7 +144,8 @@ app.post('/api/game-verify', async (req, res) => {
     }
 
     try {
-        let query = `SELECT * FROM licenses WHERE owner_name = $1 AND is_active = TRUE`;
+        // Ambil semua lisensi aktif yang berkaitan dengan owner atau group
+        let query = `SELECT * FROM licenses WHERE (owner_name = $1 OR group_id IS NOT NULL) AND is_active = TRUE`;
         let params = [trimmedUsername];
 
         if (product_name) {
@@ -152,12 +160,26 @@ app.post('/api/game-verify', async (req, res) => {
 
         const now = new Date();
         const validLicenses = rows.filter(row => {
-            if (!row.expires_at) return true;
-            return new Date(row.expires_at) > now;
+            if (row.expires_at && new Date(row.expires_at) <= now) return false;
+
+            // PENERAPAN LOGIKA EKSKLUSIF KETAT:
+            if (row.group_id) {
+                // Jika lisensi berbasis komunitas (Group ID), game HARUS di-upload lewat Group tersebut (creator_type == 'Group' & creator_id cocok)
+                if (creator_type === 'Group' && String(creator_id) === String(row.group_id)) {
+                    return true;
+                }
+                return false;
+            } else {
+                // Jika lisensi berbasis akun pribadi, game HARUS di-upload lewat User pribadi (creator_type == 'User')
+                if (creator_type === 'User') {
+                    return true;
+                }
+                return false;
+            }
         });
 
         if (validLicenses.length === 0) {
-            return res.json({ success: true, authorized: false, message: 'Licenses expired.' });
+            return res.json({ success: true, authorized: false, message: 'License type mismatch (Personal vs Group exclusivity violation).' });
         }
 
         return res.json({
@@ -189,21 +211,28 @@ app.get('/api/licenses', verifyAdminSecret, async (req, res) => {
 });
 
 app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
-    const { license_key, owner_name, product_name, image_url, download_url, expires_at } = req.body;
-    if (!license_key || !owner_name) {
-        return res.status(400).json({ success: false, message: 'Key and owner are required' });
+    const { license_key, owner_name, group_id, product_name, image_url, download_url, expires_at } = req.body;
+    if (!license_key) {
+        return res.status(400).json({ success: false, message: 'License key is required' });
     }
 
-    const robloxInfo = await getRobloxUserInfo(owner_name.trim());
-    if (!robloxInfo) {
-        return res.status(400).json({ success: false, message: 'Username Roblox tidak valid di server Roblox!' });
+    let finalOwner = owner_name ? owner_name.trim() : "COMMUNITY_GROUP";
+    let finalGroupId = group_id ? group_id.trim() : null;
+
+    if (!finalGroupId && owner_name) {
+        const robloxInfo = await getRobloxUserInfo(owner_name.trim());
+        if (!robloxInfo) {
+            return res.status(400).json({ success: false, message: 'Username Roblox tidak valid di server Roblox!' });
+        }
+        finalOwner = robloxInfo.exactUsername;
     }
 
     try {
-        const query = `INSERT INTO licenses (license_key, owner_name, product_name, image_url, download_url, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
+        const query = `INSERT INTO licenses (license_key, owner_name, group_id, product_name, image_url, download_url, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`;
         const values = [
             license_key.trim(), 
-            robloxInfo.exactUsername, 
+            finalOwner, 
+            finalGroupId,
             product_name ? product_name.trim() : 'General Product', 
             image_url ? image_url.trim() : null,
             download_url ? download_url.trim() : null,
@@ -213,6 +242,7 @@ app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
         const { rows } = await pool.query(query, values);
         res.json({ success: true, message: 'Lisensi berhasil dibuat!', id: rows[0].id });
     } catch (err) {
+        console.error(err);
         res.status(400).json({ success: false, message: 'Key sudah terdaftar.' });
     }
 });
@@ -232,3 +262,5 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 module.exports = app;
+
+
