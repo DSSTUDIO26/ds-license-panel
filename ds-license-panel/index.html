@@ -312,16 +312,27 @@
             products.forEach(item => {
                 const expiryText = item.expires_at ? new Date(item.expires_at).toLocaleDateString('id-ID') : 'Permanen';
                 const thumb = item.image_url || CONFIG.defaultProductThumbnail;
+                
+                let downloadBtn = '';
+                if (item.download_url) {
+                    downloadBtn = `<a href="${item.download_url}" target="_blank" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl transition shadow-md shadow-purple-900/30 flex items-center space-x-1.5">
+                        <span>Download .rbxm</span>
+                    </a>`;
+                }
+
                 list.innerHTML += `
-                    <div class="glass-card p-3.5 rounded-xl flex items-center justify-between border border-white/5 gap-3">
+                    <div class="glass-card p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between border border-white/5 gap-4">
                         <div class="flex items-center space-x-3">
-                            <img src="${thumb}" class="w-11 h-11 rounded-lg object-cover border border-white/10 flex-shrink-0">
+                            <img src="${thumb}" class="w-12 h-12 rounded-lg object-cover border border-white/10 flex-shrink-0">
                             <div>
-                                <h4 class="font-semibold text-white text-sm">${item.product}</h4>
+                                <h4 class="font-semibold text-white text-sm">${item.product || item.product_name || 'Roblox Script'}</h4>
                                 <p class="text-[11px] text-gray-400">Aktif hingga: <span class="text-gray-300">${expiryText}</span></p>
                             </div>
                         </div>
-                        <span class="px-2.5 py-1 bg-purple-500/10 text-purple-300 text-[11px] font-medium rounded-lg border border-purple-500/20">Active Access</span>
+                        <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                            <span class="px-2.5 py-1 bg-purple-500/10 text-purple-300 text-[11px] font-medium rounded-lg border border-purple-500/20">Active</span>
+                            ${downloadBtn}
+                        </div>
                     </div>`;
             });
         }
