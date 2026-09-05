@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DS License Portal - Enterprise Multi-Product Suite</title>
+    <title>DRAGONSTEEL STUDIO - License & Access Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass-panel {
@@ -28,8 +28,8 @@
             <div class="flex items-center space-x-3">
                 <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black px-3.5 py-2 rounded-xl text-sm shadow-xl shadow-indigo-500/30">DS</div>
                 <div>
-                    <h1 class="font-bold text-sm tracking-wide text-white">DS Enterprise Ecosystem</h1>
-                    <p class="text-[11px] text-indigo-300/80">Authorized Roblox Script & Product Hub</p>
+                    <h1 class="font-bold text-sm tracking-wide text-white">DRAGONSTEEL STUDIO</h1>
+                    <p class="text-[11px] text-indigo-300/80">Authorized Roblox Products & Script Suite</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -46,35 +46,47 @@
             <div class="glass-panel rounded-3xl p-8 shadow-2xl relative overflow-hidden">
                 <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="text-center space-y-2 mb-8">
-                    <h2 class="text-2xl font-black text-white tracking-tight">Verifikasi Akses & Produk</h2>
-                    <p class="text-xs text-slate-400">Masukkan <strong class="text-slate-200">Username Roblox</strong> untuk memuat profil akun dan portofolio produk sah milikmu.</p>
+                    <h2 class="text-2xl font-black text-white tracking-tight">Verifikasi Lisensi & Akses Produk</h2>
+                    <p class="text-xs text-slate-400">Masukkan <strong class="text-slate-200">Username Roblox</strong> untuk memuat profil akun dan lisensi resmi dari Dragonsteel Studio.</p>
                 </div>
                 <div class="flex max-w-md mx-auto space-x-2">
-                    <input type="text" id="buyerUsername" placeholder="Username Roblox Kamu..." class="w-full px-4 py-3.5 glass-input rounded-2xl focus:outline-none text-sm text-white transition placeholder:text-slate-600 font-medium">
+                    <input type="text" id="buyerUsername" placeholder="Masukkan Username Roblox Kamu..." class="w-full px-4 py-3.5 glass-input rounded-2xl focus:outline-none text-sm text-white transition placeholder:text-slate-600 font-medium">
                     <button onclick="buyerCheckStatus()" class="px-6 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-2xl transition text-sm shadow-xl shadow-indigo-600/30 whitespace-nowrap">Hubungkan</button>
                 </div>
             </div>
 
             <!-- HASIL PROFIL & KATALOG PRODUK PEMBELI -->
             <div id="buyerDashboardArea" class="hidden space-y-6">
-                <!-- Profil Akun Roblox -->
-                <div class="glass-panel p-6 rounded-3xl flex items-center space-x-5 border border-white/5">
-                    <div class="relative">
-                        <img id="robloxAvatarImg" src="" alt="Avatar" class="w-20 h-20 rounded-2xl bg-slate-900 border-2 border-indigo-500/40 object-cover shadow-xl">
-                        <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-indigo-500/30">Verified Client</span>
+                <!-- Info Header Pembeli dengan Foto Profil Custom -->
+                <div class="glass-panel p-6 rounded-3xl flex items-center justify-between border border-white/5">
+                    <div class="flex items-center space-x-4">
+                        <!-- Wadah Foto Profil Custom -->
+                        <div class="relative group">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-900 border-2 border-indigo-500/40 overflow-hidden shadow-xl flex items-center justify-center">
+                                <img id="studioProfileImg" src="" alt="Profile Image" 
+                                     class="w-full h-full object-cover hidden"
+                                     onerror="handleProfileImageError()">
+                                <div id="studioProfileFallback" class="w-full h-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-black text-lg">
+                                    DS
+                                </div>
+                            </div>
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
                         </div>
-                        <h3 id="robloxProfileName" class="text-xl font-black text-white">Username</h3>
-                        <p class="text-xs text-slate-400">Status Akun: <span class="text-emerald-400 font-semibold">Aktif & Terautentikasi</span></p>
+                        <div class="space-y-1">
+                            <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border border-indigo-500/30">Verified Client Hub</span>
+                            <h3 id="robloxProfileName" class="text-xl font-black text-white pt-0.5">Username</h3>
+                            <p class="text-xs text-slate-400">Hak akses lisensi aktif dari Dragonsteel Studio.</p>
+                        </div>
+                    </div>
+                    <div class="hidden sm:flex px-3 py-1.5 bg-indigo-600/10 border border-indigo-500/20 rounded-xl text-indigo-300 text-xs font-semibold items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Dragonsteel Verified</span>
                     </div>
                 </div>
 
                 <!-- Grid Produk yang Dimiliki Pembeli -->
                 <div class="space-y-4">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">Daftar Produk & Hak Akses Anda</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">Daftar Produk & Akses Sah Anda</h3>
                     <div id="buyerProductsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Card Produk Dinamis -->
                     </div>
@@ -88,7 +100,7 @@
     <div id="adminModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="glass-panel max-w-4xl w-full rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10 space-y-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                <h3 class="font-bold text-white text-base">Secure Enterprise Admin Dashboard</h3>
+                <h3 class="font-bold text-white text-base">Dragonsteel Studio Admin Dashboard</h3>
                 <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white text-xs font-bold px-3 py-1 bg-white/5 rounded-xl border border-white/10">Tutup</button>
             </div>
 
@@ -109,7 +121,7 @@
                 </div>
 
                 <div class="glass-panel p-5 rounded-2xl space-y-4 border border-white/5">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-white">Generate License Baru (Multi-Product)</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white">Generate Lisensi Baru</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="flex space-x-2">
                             <input type="text" id="newKey" placeholder="DS-KEY-XXXX" class="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-white font-mono">
@@ -151,20 +163,50 @@
     </div>
 
     <script>
+        // =========================================================
+        // MASUKKAN LINK FOTO PROFIL / LOGO STUDIO KAMU DI BAWAH INI
+        // (Isi dengan URL gambar seperti Imgur, Unsplash, atau CDN)
+        // =========================================================
+        const MY_PROFILE_IMAGE = ""; // Contoh: "https://i.imgur.com/your-image.png"
+
         let cachedSecret = '';
 
-        // Katalog Database Gambar & Deskripsi Produk (Ganti URL gambar sesuai keinginanmu)
+        // Inisialisasi Tampilan Foto Profil
+        document.addEventListener("DOMContentLoaded", () => {
+            setupProfileImage();
+        });
+
+        function setupProfileImage() {
+            const imgElem = document.getElementById('studioProfileImg');
+            const fallbackElem = document.getElementById('studioProfileFallback');
+
+            if (MY_PROFILE_IMAGE && MY_PROFILE_IMAGE.trim() !== "") {
+                imgElem.src = MY_PROFILE_IMAGE;
+                imgElem.classList.remove('hidden');
+                fallbackElem.classList.add('hidden');
+            } else {
+                imgElem.classList.add('hidden');
+                fallbackElem.classList.remove('hidden');
+            }
+        }
+
+        function handleProfileImageError() {
+            document.getElementById('studioProfileImg').classList.add('hidden');
+            document.getElementById('studioProfileFallback').classList.remove('hidden');
+        }
+
+        // Katalog Database Gambar & Deskripsi Produk Dragonsteel Studio
         const productCatalog = {
             "ds admin panel": {
-                desc: "Panel kontrol administrator tingkat lanjut untuk manajemen server game Roblox Studio secara real-time.",
+                desc: "Panel kontrol administrator tingkat lanjut dari Dragonsteel Studio untuk manajemen server game Roblox Studio secara real-time.",
                 image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&auto=format&fit=crop&q=60"
             },
             "ds anti cheat": {
-                desc: "Sistem keamanan tangguh pencegah exploit, injector, dan tindakan ilegal otomatis di dalam game.",
+                desc: "Sistem keamanan Dragonsteel Studio yang tangguh untuk mencegah exploit, injector, dan tindakan ilegal otomatis.",
                 image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60"
             },
             "general product": {
-                desc: "Modul utilitas dan skrip pendukung eksklusif untuk pengembangan game berstandar enterprise.",
+                desc: "Modul utilitas dan skrip eksklusif buatan Dragonsteel Studio untuk pengembangan game berstandar enterprise.",
                 image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60"
             }
         };
@@ -174,14 +216,11 @@
             if (!username) return alert('Mohon masukkan username Roblox kamu!');
 
             const dashboardArea = document.getElementById('buyerDashboardArea');
+            const gridContainer = document.getElementById('buyerProductsGrid');
+            
+            gridContainer.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400 text-xs">Mencari data lisensi di database...</div>`;
             dashboardArea.classList.remove('hidden');
             document.getElementById('robloxProfileName').innerText = username;
-            
-            // Mengambil avatar Roblox langsung dari thumbnail publik Roblox
-            document.getElementById('robloxAvatarImg').src = `https://www.roblox.com/headshot-thumbnail/image?username=${encodeURIComponent(username)}&width=150&height=150&format=png`;
-
-            const gridContainer = document.getElementById('buyerProductsGrid');
-            gridContainer.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400 text-xs">Menghubungkan ke database lisensi produk...</div>`;
 
             try {
                 const response = await fetch('/api/verify', {
@@ -228,10 +267,12 @@
 
                     gridContainer.innerHTML = itemsHtml;
                 } else {
-                    gridContainer.innerHTML = `<div class="col-span-2 text-center py-12 glass-panel rounded-3xl text-xs text-rose-400 font-semibold">Username "${username}" tidak memiliki lisensi produk aktif di database.</div>`;
+                    dashboardArea.classList.add('hidden');
+                    alert(`Username "${username}" tidak ditemukan atau tidak memiliki lisensi produk di Dragonsteel Studio.`);
                 }
             } catch (err) {
-                gridContainer.innerHTML = `<div class="col-span-2 text-center py-12 glass-panel rounded-3xl text-xs text-rose-400">Gagal menyambungkan ke server database.</div>`;
+                dashboardArea.classList.add('hidden');
+                alert('Gagal menyambungkan ke server database.');
             }
         }
 
