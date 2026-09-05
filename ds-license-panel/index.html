@@ -93,7 +93,7 @@
                 </div>
             </div>
 
-            <!-- Dashboard Klien (Multi Produk Otomatis) -->
+            <!-- Dashboard Klien -->
             <div id="clientDashboard" class="hidden space-y-6">
                 <div class="glass-panel rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between border border-purple-500/30 gap-4">
                     <div class="flex items-center space-x-4">
@@ -123,7 +123,7 @@
         <div id="adminSection" class="hidden space-y-6">
             <div class="text-center mb-8">
                 <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight mb-2">Admin Portal</h1>
-                <p class="text-gray-400 text-xs md:text-sm">Kelola key dan lisensi produk.</p>
+                <p class="text-gray-400 text-xs md:text-sm">Kelola key dan lisensi produk (Akun Pribadi vs Komunitas Group ID).</p>
             </div>
 
             <div id="adminLoginBox" class="glass-panel rounded-2xl p-6 md:p-8 space-y-4">
@@ -139,14 +139,29 @@
             <div id="adminDashboard" class="hidden space-y-6">
                 <div class="glass-panel rounded-2xl p-6 space-y-4">
                     <h3 class="text-sm font-bold text-white uppercase tracking-wider">Buat Lisensi Baru</h3>
+                    
+                    <!-- Pilihan Tipe Lisensi -->
+                    <div class="grid grid-cols-2 gap-2 p-1 glass-input rounded-xl">
+                        <button type="button" onclick="setLicenseType('personal')" id="typePersonalBtn" class="py-2 text-xs font-bold rounded-lg bg-purple-600 text-white transition">Akun Pribadi</button>
+                        <button type="button" onclick="setLicenseType('group')" id="typeGroupBtn" class="py-2 text-xs font-bold rounded-lg text-gray-400 transition">Komunitas (Group ID)</button>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="flex space-x-2">
                             <input type="text" id="newKey" placeholder="License Key" class="w-full glass-input rounded-xl px-4 py-3 text-white text-xs">
-                            <button onclick="generateRandomKey()" class="px-3 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/30 text-purple-200 rounded-xl text-xs font-semibold">Acak</button>
+                            <button onclick="generateRandomKey()" class="px-3 bg-purple-600/35 hover:bg-purple-600/50 border border-purple-500/30 text-purple-200 rounded-xl text-xs font-semibold">Acak</button>
                         </div>
-                        <input type="text" id="newOwner" placeholder="Username Roblox (Persis)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
-                        <input type="text" id="newProduct" placeholder="Nama Produk" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
-                        <input type="text" id="newImage" placeholder="URL Gambar Produk (Opsional)" class="glass-input rounded-xl px-4 py-3 text-white text-xs">
+                        
+                        <!-- Input Dinamis Berdasarkan Tipe -->
+                        <div id="ownerInputContainer">
+                            <input type="text" id="newOwner" placeholder="Username Roblox Pemilik" class="w-full glass-input rounded-xl px-4 py-3 text-white text-xs">
+                        </div>
+                        <div id="groupInputContainer" class="hidden">
+                            <input type="text" id="newGroup" placeholder="Group ID Komunitas (Contoh: 123456)" class="w-full glass-input rounded-xl px-4 py-3 text-white text-xs">
+                        </div>
+
+                        <input type="text" id="newProduct" placeholder="Nama Produk" class="glass-input rounded-xl px-4 py-3 text-white text-xs md:col-span-2">
+                        <input type="text" id="newImage" placeholder="URL Gambar Produk (Opsional)" class="glass-input rounded-xl px-4 py-3 text-white text-xs md:col-span-2">
                         <input type="text" id="newDownload" placeholder="URL Download .rbxm (Opsional)" class="glass-input rounded-xl px-4 py-3 text-white text-xs md:col-span-2">
                         <input type="date" id="newExpires" class="glass-input rounded-xl px-4 py-3 text-white text-xs md:col-span-2">
                     </div>
@@ -165,7 +180,7 @@
                             <thead class="border-b border-white/10 text-gray-400 uppercase">
                                 <tr>
                                     <th class="py-3 px-2">Produk</th>
-                                    <th class="py-3 px-2">Owner Roblox</th>
+                                    <th class="py-3 px-2">Tipe & Target Ikatan</th>
                                     <th class="py-3 px-2">Key</th>
                                     <th class="py-3 px-2 text-right">Aksi</th>
                                 </tr>
@@ -189,6 +204,8 @@
             defaultProductThumbnail: "https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/DJ%20SYSTEM%20IMG.jpeg?raw=true"
         };
 
+        let currentLicenseMode = 'personal'; // 'personal' atau 'group'
+
         document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('brandTitle').innerText = CONFIG.studioName;
             document.getElementById('headerLogo').src = CONFIG.headerLogoUrl;
@@ -198,6 +215,28 @@
                 refreshClientDataSilent(savedUser);
             }
         });
+
+        function setLicenseType(mode) {
+            currentLicenseMode = mode;
+            const btnPersonal = document.getElementById('typePersonalBtn');
+            const btnGroup = document.getElementById('typeGroupBtn');
+            const ownerContainer = document.getElementById('ownerInputContainer');
+            const groupContainer = document.getElementById('groupInputContainer');
+
+            if (mode === 'personal') {
+                btnPersonal.className = "py-2 text-xs font-bold rounded-lg bg-purple-600 text-white transition";
+                btnGroup.className = "py-2 text-xs font-bold rounded-lg text-gray-400 transition";
+                ownerContainer.classList.remove('hidden');
+                groupContainer.classList.add('hidden');
+                document.getElementById('newGroup').value = '';
+            } else {
+                btnGroup.className = "py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition";
+                btnPersonal.className = "py-2 text-xs font-bold rounded-lg text-gray-400 transition";
+                groupContainer.classList.remove('hidden');
+                ownerContainer.classList.add('hidden');
+                document.getElementById('newOwner').value = '';
+            }
+        }
 
         function showToast(message) {
             const toast = document.getElementById('toast');
@@ -321,6 +360,10 @@
                     </a>`;
                 }
 
+                let licenseTypeBadge = item.group_id ? 
+                    `<span class="text-[10px] bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/20 block mt-1">Eksklusif Komunitas (Group ID: ${item.group_id})</span>` : 
+                    `<span class="text-[10px] bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20 block mt-1">Lisensi Akun Pribadi</span>`;
+
                 list.innerHTML += `
                     <div class="glass-card p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between border border-white/5 gap-4">
                         <div class="flex items-center space-x-3">
@@ -328,10 +371,11 @@
                             <div>
                                 <h4 class="font-semibold text-white text-sm">${item.product || item.product_name || 'Roblox Script'}</h4>
                                 <p class="text-[11px] text-gray-400">Aktif hingga: <span class="text-gray-300">${expiryText}</span></p>
+                                ${licenseTypeBadge}
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                            <span class="px-2.5 py-1 bg-purple-500/10 text-purple-300 text-[11px] font-medium rounded-lg border border-purple-500/20">Active</span>
+                            <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-300 text-[11px] font-medium rounded-lg border border-emerald-500/20">Active</span>
                             ${downloadBtn}
                         </div>
                     </div>`;
@@ -376,13 +420,22 @@
             }
             licenses.forEach(l => {
                 const thumb = l.image_url || CONFIG.defaultProductThumbnail;
+                let targetDisplay = '';
+                if (l.group_id) {
+                    targetDisplay = `<span class="text-indigo-400 font-semibold">Komunitas</span><br><span class="text-[10px] text-gray-400">Group ID: ${l.group_id}</span>`;
+                } else {
+                    targetDisplay = `<span class="text-purple-400 font-semibold">Pribadi</span><br><span class="text-[10px] text-gray-300">${l.owner_name}</span>`;
+                }
+
                 tbody.innerHTML += `
                     <tr class="border-b border-white/5 hover:bg-white/[0.02]">
                         <td class="py-3 px-2 flex items-center space-x-2.5">
                             <img src="${thumb}" class="w-8 h-8 rounded object-cover border border-white/10">
                             <span class="font-medium text-white">${l.product_name}</span>
                         </td>
-                        <td class="py-3 px-2 text-gray-300 font-semibold">${l.owner_name}</td>
+                        <td class="py-3 px-2 text-xs">
+                            ${targetDisplay}
+                        </td>
                         <td class="py-3 px-2 font-mono text-gray-400">
                             <div class="flex items-center space-x-1.5">
                                 <span class="truncate max-w-[120px]">${l.license_key}</span>
@@ -401,7 +454,8 @@
             const filtered = allLicensesCache.filter(l => 
                 l.product_name.toLowerCase().includes(keyword) || 
                 l.owner_name.toLowerCase().includes(keyword) || 
-                l.license_key.toLowerCase().includes(keyword)
+                l.license_key.toLowerCase().includes(keyword) ||
+                (l.group_id && l.group_id.toLowerCase().includes(keyword))
             );
             renderAdminTable(filtered);
         }
@@ -409,28 +463,41 @@
         async function createLicense() {
             const secret = document.getElementById('adminSecretInput').value.trim();
             const license_key = document.getElementById('newKey').value.trim();
-            const owner_name = document.getElementById('newOwner').value.trim();
             const product_name = document.getElementById('newProduct').value.trim();
             const image_url = document.getElementById('newImage').value.trim();
             const download_url = document.getElementById('newDownload').value.trim();
             const expires_at = document.getElementById('newExpires').value;
 
-            if (!license_key || !owner_name) {
-                showToast('Key dan Owner wajib diisi!');
-                return;
+            let owner_name = "";
+            let group_id = "";
+
+            if (currentLicenseMode === 'personal') {
+                owner_name = document.getElementById('newOwner').value.trim();
+                if (!license_key || !owner_name) {
+                    showToast('Key dan Username Owner wajib diisi!');
+                    return;
+                }
+            } else {
+                group_id = document.getElementById('newGroup').value.trim();
+                if (!license_key || !group_id) {
+                    showToast('Key dan Group ID Komunitas wajib diisi!');
+                    return;
+                }
+                owner_name = "GROUP_COMMUNITY_" + group_id; // Default placeholder untuk owner jika berbasis grup
             }
 
             try {
                 const res = await fetch('/api/licenses/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-api-secret': secret },
-                    body: JSON.stringify({ license_key, owner_name, product_name, image_url, download_url, expires_at })
+                    body: JSON.stringify({ license_key, owner_name, group_id, product_name, image_url, download_url, expires_at })
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
                     showToast('Lisensi berhasil dibuat!');
                     document.getElementById('newKey').value = '';
                     document.getElementById('newOwner').value = '';
+                    document.getElementById('newGroup').value = '';
                     document.getElementById('newProduct').value = '';
                     document.getElementById('newImage').value = '';
                     document.getElementById('newDownload').value = '';
