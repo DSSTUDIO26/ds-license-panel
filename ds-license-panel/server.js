@@ -10,6 +10,11 @@ const API_SECRET = process.env.API_SECRET || 'dragonsteel_secret_key_123';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Route explicit untuk memastikan index.html terbuka di root URL (/)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Konfigurasi Database PostgreSQL (Neon / External)
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -69,7 +74,7 @@ app.post('/api/verify', async (req, res) => {
     }
 });
 
-// 2. Roblox Script Verification Endpoint (Untuk di-fetch langsung di dalam game Roblox Studio)
+// 2. Roblox Script Verification Endpoint
 app.post('/api/game-verify', async (req, res) => {
     const { owner_name, product_name } = req.body;
     
@@ -91,10 +96,9 @@ app.post('/api/game-verify', async (req, res) => {
             return res.json({ success: true, authorized: false, message: 'No active license found for this user.' });
         }
 
-        // Cek masa kedaluwarsa (expires_at)
         const now = new Date();
         const validLicenses = rows.filter(row => {
-            if (!row.expires_at) return true; // Permanent
+            if (!row.expires_at) return true;
             return new Date(row.expires_at) > now;
         });
 
@@ -122,7 +126,7 @@ function verifyAdminSecret(req, res, next) {
     next();
 }
 
-// 3. Get All Licenses (Admin Only - Untuk ditampilkan di Dashboard Admin)
+// 3. Get All Licenses (Admin Only)
 app.get('/api/licenses', verifyAdminSecret, async (req, res) => {
     try {
         const { rows } = await pool.query(`SELECT * FROM licenses ORDER BY created_at DESC`);
@@ -132,7 +136,7 @@ app.get('/api/licenses', verifyAdminSecret, async (req, res) => {
     }
 });
 
-// 4. Create New License (Admin Only - Untuk membuat key & produk baru)
+// 4. Create New License (Admin Only)
 app.post('/api/licenses/create', verifyAdminSecret, async (req, res) => {
     const { license_key, owner_name, product_name, expires_at } = req.body;
 
