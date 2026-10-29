@@ -4,7 +4,6 @@ const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
 const crypto = require('crypto');
-const { get, del } = require('@vercel/blob');
 
 const app = express();
 app.disable('x-powered-by');
@@ -61,9 +60,6 @@ function validHttpUrl(v) {
   if (v == null || v === '') return null;
   try { const u = new URL(v); return ['https:', 'http:'].includes(u.protocol) ? u.toString() : undefined; }
   catch { return undefined; }
-}
-function safeFilename(v) {
-  return path.basename(String(v || 'file')).replace(/[^a-zA-Z0-9._ -]/g, '_').slice(0, 140) || 'file';
 }
 function sessionSig(exp) {
   return crypto.createHmac('sha256', API_SECRET).update(`dss-admin:${OWNER_ROBLOX_USER_ID}:${exp}`).digest('hex');
@@ -184,16 +180,6 @@ async function initDB() {
       product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
       PRIMARY KEY(license_id, product_id)
     );
-    CREATE TABLE IF NOT EXISTS dss_file_tickets(
-      token_hash VARCHAR(64) PRIMARY KEY, product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-      kind VARCHAR(16) NOT NULL, owner_user_id VARCHAR(32), license_id BIGINT NOT NULL REFERENCES licenses(id) ON DELETE CASCADE,
-      expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-    CREATE INDEX IF NOT EXISTS idx_licenses_owner_user_id ON licenses(owner_user_id);
-    CREATE INDEX IF NOT EXISTS idx_licenses_group_id ON licenses(group_id);
-    CREATE INDEX IF NOT EXISTS idx_licenses_active_expiry ON licenses(is_active, expires_at);
-    CREATE INDEX IF NOT EXISTS idx_license_products_product_id ON license_products(product_id);
-    CREATE INDEX IF NOT EXISTS idx_dss_tickets_expiry ON dss_file_tickets(expires_at);
   `);
 
   await pool.query(`
@@ -202,8 +188,6 @@ async function initDB() {
     JOIN products p ON p.product_name=NULLIF(BTRIM(l.product_name),'')
     ON CONFLICT DO NOTHING
   `);
-  
-  await pool.query(`DELETE FROM dss_file_tickets WHERE expires_at < NOW()`);
   console.log('DSS schema ready.');
 }
 
