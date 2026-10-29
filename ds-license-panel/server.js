@@ -298,6 +298,38 @@ app.post('/api/admin-logout', (req, res) => {
   res.json({ success: true, message: 'Sesi Admin ditutup.' });
 });
 
+// Endpoint khusus untuk mengambil detail game/map asli secara aman di server
+app.post('/api/game-details', async (req, res) => {
+  const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
+  if (!placeId) return res.status(400).json({ success: false, message: 'place_id wajib diisi.' });
+  try {
+    let name = `Experience #${placeId}`;
+    let icon = 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
+    let creatorName = 'Dragon Stell Studio';
+
+    const universeRes = await robloxFetch(`https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`);
+    const universeId = universeRes?.universeId;
+
+    if (universeId) {
+      const gameRes = await robloxFetch(`https://games.roblox.com/v1/games?universeIds=${encodeURIComponent(universeId)}`);
+      const gameData = gameRes?.data?.[0];
+      if (gameData?.name) name = gameData.name;
+      if (gameData?.creator?.name) creatorName = gameData.creator.name;
+    }
+
+    try {
+      const thumbRes = await robloxFetch(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${encodeURIComponent(placeId)}&size=512x512&format=Png&isCircular=false`);
+      const thumbUrl = thumbRes?.data?.[0]?.imageUrl;
+      if (thumbUrl) icon = thumbUrl;
+    } catch {}
+
+    res.json({ success: true, name, icon, creatorName });
+  } catch (e) {
+    console.error('game-details error:', e.message);
+    res.json({ success: true, name: `Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', creatorName: 'Dragon Stell Studio' });
+  }
+});
+
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24), productName = cleanText(req.body?.product_name, 120);
   if (!placeId) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id wajib diisi.' });
