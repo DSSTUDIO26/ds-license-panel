@@ -135,29 +135,6 @@ button:disabled {
 <!-- Toast Notification -->
 <div id="toast" class="fixed z-50 bottom-6 right-6 opacity-0 translate-y-2 pointer-events-none glass rounded-xl px-4 py-3 text-xs shadow-2xl max-w-[90vw] border border-amber-500/20 font-medium"></div>
 
-<!-- Modal Detail Experience / Project -->
-<div id="experienceModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-  <div class="glass rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-5 border border-amber-500/30 shadow-2xl animate-fade">
-    <div class="flex items-center justify-between">
-      <div>
-        <span class="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest">Roblox Experience Inspector</span>
-        <h3 class="text-lg font-bold text-white mt-0.5" id="modalExpTitle">Memuat Data Project...</h3>
-      </div>
-      <button type="button" onclick="closeExpModal()" class="btn text-gray-400 hover:text-white bg-white/5 rounded-xl p-2 cursor-pointer">✕</button>
-    </div>
-    <div class="w-full h-48 sm:h-56 rounded-2xl bg-black/50 overflow-hidden border border-white/10 relative flex items-center justify-center">
-      <img id="modalExpImg" src="" alt="Thumbnail" class="w-full h-full object-cover hidden">
-      <div id="modalExpLoader" class="text-xs text-amber-300 animate-pulse">Menghubungkan ke Roblox API...</div>
-    </div>
-    <div class="space-y-2 text-xs">
-      <div class="flex justify-between p-3 rounded-xl bg-black/40 border border-white/5"><span class="muted">Place ID:</span> <span id="modalExpId" class="font-mono text-amber-200"></span></div>
-      <div class="flex justify-between p-3 rounded-xl bg-black/40 border border-white/5"><span class="muted">Universe ID:</span> <span id="modalExpUniverse" class="font-mono text-white"></span></div>
-      <div class="flex justify-between p-3 rounded-xl bg-black/40 border border-white/5"><span class="muted">Creator:</span> <span id="modalExpCreator" class="font-semibold text-white"></span></div>
-    </div>
-    <button type="button" onclick="closeExpModal()" class="btn gold rounded-xl w-full py-3 text-xs font-bold uppercase tracking-wider cursor-pointer">Tutup</button>
-  </div>
-</div>
-
 <!-- Header -->
 <header class="glass sticky top-0 z-40 border-x-0 border-t-0 shadow-lg">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
@@ -211,7 +188,7 @@ button:disabled {
       <div class="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] muted"><span>Proteksi Sistem Aktif</span><span class="text-amber-400 font-medium">Encrypted Session</span></div>
     </div>
 
-    <!-- Dashboard Klien (Tersembunyi sebelum login) -->
+    <!-- Dashboard Klien -->
     <div id="clientDashboard" class="hidden space-y-6 animate-fade">
       <div class="glass rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center justify-between shadow-2xl relative overflow-hidden border border-amber-500/20">
         <div class="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -490,7 +467,7 @@ function togglePasswordVisibility() {
     icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>`;
   } else {
     keyInput.type = 'password';
-    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>`;
+    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7"/>`;
   }
 }
 
@@ -582,18 +559,20 @@ async function showClient(d) {
 
 async function fetchExperienceDetails(placeId) {
   if(expCache.has(placeId)) return expCache.get(placeId);
-  const data = { name: `Project Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', universeId: '-', creator: 'Dragon Stell Studio' };
+  const data = { name: `Project Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', creator: 'Dragon Stell Studio' };
   try {
     const res = await api('/api/game-verify', { method: 'POST', body: JSON.stringify({ place_id: placeId, product_name: 'Dummy' }) });
     const c = res.creator || {};
-    data.universeId = c.universeId || res.universe_id || '-';
+    const universeId = c.universeId || res.universe_id || null;
     data.creator = c.creatorName || c.name || 'Dragon Stell Studio';
     
-    try {
-      const gameRes = await fetch(`https://games.roblox.com/v1/games?universeIds=${data.universeId}`);
-      const gameJson = await gameRes.json();
-      if(gameJson?.data?.[0]?.name) data.name = gameJson.data[0].name;
-    } catch {}
+    if (universeId) {
+      try {
+        const gameRes = await fetch(`https://games.roblox.com/v1/games?universeIds=${universeId}`);
+        const gameJson = await gameRes.json();
+        if(gameJson?.data?.[0]?.name) data.name = gameJson.data[0].name;
+      } catch {}
+    }
 
     try {
       const thumbRes = await fetch(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${placeId}&size=512x512&format=Png&isCircular=false`);
@@ -614,6 +593,7 @@ async function renderClientProjects() {
   let html = '';
   for(const pid of customProjects) {
     const info = await fetchExperienceDetails(pid);
+    const robloxGameUrl = `https://www.roblox.com/games/${pid}`;
     html += `
       <article class="product-card shadow-xl">
         <div>
@@ -621,47 +601,19 @@ async function renderClientProjects() {
             <img src="${safe(info.icon)}" alt="${safe(info.name)}" loading="lazy" onerror="this.src='https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true'">
           </div>
           <div class="p-5 space-y-2.5">
-            <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">PLACE ID: ${safe(pid)}</span>
             <h3 class="font-bold text-base sm:text-lg leading-snug text-white">${safe(info.name)}</h3>
             <div class="text-xs muted space-y-1 pt-1 border-t border-white/5">
-              <div class="flex justify-between"><span>Universe ID:</span> <span class="font-mono text-white">${safe(info.universeId)}</span></div>
-              <div class="flex justify-between"><span>Creator:</span> <span class="font-medium text-white">${safe(info.creator)}</span></div>
+              <div class="flex justify-between"><span>Kreator:</span> <span class="font-medium text-white">${safe(info.creator)}</span></div>
             </div>
           </div>
         </div>
         <div class="p-5 pt-0">
-          <button type="button" onclick="inspectExperience('${safe(pid)}')" class="btn gold rounded-xl w-full py-2.5 text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer">🔍 Inspeksi Detail</button>
+          <a href="${robloxGameUrl}" target="_blank" class="btn gold rounded-xl w-full py-2.5 text-xs font-bold uppercase tracking-wider shadow-md text-center block cursor-pointer">🔗 Hubungkan ke Roblox</a>
         </div>
       </article>
     `;
   }
   container.innerHTML = html || '<div class="glass rounded-2xl p-6 muted text-xs text-center col-span-full">Belum ada Project Experience terdaftar.</div>';
-}
-
-async function inspectExperience(placeId) {
-  const modal = $('experienceModal'), title = $('modalExpTitle'), img = $('modalExpImg'), loader = $('modalExpLoader'), pId = $('modalExpId'), uni = $('modalExpUniverse'), creator = $('modalExpCreator');
-  if(modal) modal.classList.remove('hidden');
-  if(title) title.textContent = `Memuat Project ${placeId}...`;
-  if(img) img.classList.add('hidden');
-  if(loader) loader.classList.remove('hidden');
-  if(pId) pId.textContent = placeId;
-  if(uni) uni.textContent = 'Mencari...';
-  if(creator) creator.textContent = 'Mencari...';
-
-  const info = await fetchExperienceDetails(placeId);
-  if(title) title.textContent = info.name;
-  if(uni) uni.textContent = info.universeId;
-  if(creator) creator.textContent = info.creator;
-  if(img && loader) {
-    img.src = info.icon;
-    img.classList.remove('hidden');
-    loader.classList.add('hidden');
-  }
-}
-
-function closeExpModal() { 
-  const modal = $('experienceModal');
-  if(modal) modal.classList.add('hidden'); 
 }
 
 function saveProjectExperience() {
