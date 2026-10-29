@@ -298,7 +298,6 @@ app.post('/api/admin-logout', (req, res) => {
   res.json({ success: true, message: 'Sesi Admin ditutup.' });
 });
 
-// Endpoint khusus untuk mengambil detail game/map asli beserta jumlah kunjungan (visits)
 app.post('/api/game-details', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
   if (!placeId) return res.status(400).json({ success: false, message: 'place_id wajib diisi.' });
@@ -333,48 +332,33 @@ app.post('/api/game-details', async (req, res) => {
 });
 
 app.post('/api/game-verify', async (req, res) => {
-  const placeId = cleanText(String(req.body?.place_id ?? ''), 24), productName = cleanText(req.body?.product_name, 120);
+  const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
   if (!placeId) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id wajib diisi.' });
   try {
     let creator;
     try {
       creator = await getPlaceCreator(placeId);
     } catch (err) {
-      creator = { placeId, universeId: '0', creatorType: 'Group', creatorId: '0', creatorName: 'Dragon Stell Studio' };
+      return res.json({ success: true, product_name: null });
     }
-    
-    if (!productName) {
-      return res.json({ success: true, authorized: true, creator });
-    }
-
     const isGroup = String(creator.creatorType).toLowerCase() === 'group';
     const { rows } = await pool.query(`
-      SELECT l.id, l.owner_name, l.owner_user_id, l.group_id, l.expires_at, p.product_name, p.product_code
-      FROM licenses l 
+      SELECT p.product_name FROM licenses l 
       JOIN license_products lp ON lp.license_id = l.id 
       JOIN products p ON p.id = lp.product_id
-      WHERE l.is_active = TRUE 
-        AND p.is_active = TRUE
+      WHERE l.is_active = TRUE AND p.is_active = TRUE
         AND (l.expires_at IS NULL OR l.expires_at > NOW()) 
-        AND LOWER(BTRIM(p.product_name)) = LOWER(BTRIM($1))
         AND (
-          ($2::boolean = TRUE AND l.group_id = $3 AND l.owner_user_id IS NULL)
-          OR ($2::boolean = FALSE AND l.group_id IS NULL AND l.owner_user_id = $3)
-          OR ($3 = '0')
+          ($1::boolean = TRUE AND l.group_id = $2 AND l.owner_user_id IS NULL)
+          OR ($1::boolean = FALSE AND l.group_id IS NULL AND l.owner_user_id = $2)
         )
       LIMIT 1
-    `, [productName, isGroup, creator.creatorId]);
+    `, [isGroup, creator.creatorId]);
 
-    if (!rows.length) return res.json({ success: true, authorized: false, code: 'NOT_LICENSED', message: 'Tidak ada lisensi aktif untuk produk dan pemilik experience ini.', creator });
-    res.json({
-      success: true, authorized: true, code: 'AUTHORIZED', message: 'Lisensi valid.',
-      product_name: rows[0].product_name, product_code: rows[0].product_code,
-      place_id: creator.placeId, universe_id: creator.universeId, creator_type: creator.creatorType,
-      creator_id: creator.creatorId, expires_at: rows[0].expires_at, creator
-    });
+    if (!rows.length) return res.json({ success: true, product_name: null });
+    res.json({ success: true, product_name: rows[0].product_name });
   } catch (e) {
-    console.error('game-verify:', e.message);
-    res.status(e.statusCode || 503).json({ success: false, authorized: false, code: 'VERIFY_UNAVAILABLE', message: 'Verifikasi Roblox sementara tidak tersedia.' });
+    res.json({ success: true, product_name: null });
   }
 });
 
