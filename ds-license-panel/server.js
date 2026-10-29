@@ -1,4 +1,4 @@
-// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Vercel Blob URL Support
+// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Update Product URL Support
 'use strict';
 const express = require('express');
 const { Pool } = require('pg');
@@ -166,13 +166,6 @@ async function initDB() {
         (owner_user_id IS NULL AND group_id IS NOT NULL)
       )
     );
-    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS owner_user_id VARCHAR(32);
-    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS group_id VARCHAR(32);
-    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS product_name VARCHAR(120) DEFAULT 'General Product';
-    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS image_url TEXT;
-    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS download_url TEXT;
-    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
-    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
     ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;
     ALTER TABLE products ADD COLUMN IF NOT EXISTS download_url TEXT;
     CREATE TABLE IF NOT EXISTS license_products(
@@ -180,13 +173,6 @@ async function initDB() {
       product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
       PRIMARY KEY(license_id, product_id)
     );
-  `);
-
-  await pool.query(`
-    INSERT INTO license_products(license_id,product_id)
-    SELECT l.id,p.id FROM licenses l
-    JOIN products p ON p.product_name=NULLIF(BTRIM(l.product_name),'')
-    ON CONFLICT DO NOTHING
   `);
   console.log('DSS schema ready.');
 }
@@ -378,6 +364,26 @@ app.post('/api/products', verifyAdmin, async (req, res) => {
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ success: false, message: 'Kode atau nama produk sudah digunakan.' });
     res.status(500).json({ success: false, message: 'Gagal membuat produk.' });
+  }
+});
+
+// Endpoint untuk Edit / Update Produk yang sudah ada
+app.put('/api/products/:id', verifyAdmin, async (req, res) => {
+  const id = cleanText(req.params.id, 20);
+  const name = cleanText(req.body?.product_name, 120), description = cleanText(req.body?.description, 1000);
+  const image = validHttpUrl(req.body?.image_url), download = validHttpUrl(req.body?.download_url);
+  if (!/^\d+$/.test(id) || !name) return res.status(400).json({ success: false, message: 'ID atau nama produk tidak valid.' });
+  const code = cleanText(req.body?.product_code, 80).toUpperCase() || name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70);
+  try {
+    const { rows } = await pool.query(
+      'UPDATE products SET product_code=$1, product_name=$2, description=$3, image_url=$4, download_url=$5, updated_at=NOW() WHERE id=$6 RETURNING *',
+      [code, name, description || null, image, download, id]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' });
+    res.json({ success: true, product: rows[0] });
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ success: false, message: 'Kode atau nama produk sudah digunakan.' });
+    res.status(500).json({ success: false, message: 'Gagal memperbarui produk.' });
   }
 });
 
