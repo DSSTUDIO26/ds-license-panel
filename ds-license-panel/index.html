@@ -8,7 +8,6 @@
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{font-family:'Plus Jakarta Sans',sans-serif;background:#07080b;color:#f4f4f5;background-image:radial-gradient(circle at 12% 0%,#25200f 0,transparent 32%),radial-gradient(circle at 100% 30%,#14132a 0,transparent 30%);background-attachment:fixed}.glass{background:rgba(16,17,22,.91);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(14px)}.field{background:#090a0e;border:1px solid #2b2c33;outline:none}.field:focus{border-color:#c7a85b}.gold{background:linear-gradient(110deg,#b18b3d,#e8d59a);color:#15120a}.muted{color:#a1a1aa}.btn{transition:.15s}.btn:hover{filter:brightness(1.12)}button:disabled{opacity:.5;cursor:not-allowed}#toast{transition:opacity .2s,transform .2s}
 
-/* Perbaikan Tampilan Showcase & Cover Produk agar Lebih Profesional & Jelas */
 .product-card{min-width:0;overflow:hidden;border-radius:20px;background:#0a0b10;border:1px solid rgba(255,255,255,.08);transition:all .2s ease}
 .product-card:hover{border-color:rgba(185,155,81,.4);transform:translateY(-2px);box-shadow:0 10px 30px -10px rgba(185,155,81,.15)}
 .product-cover{width:100%;aspect-ratio:16/9;min-height:190px;background:#090a0e;display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.08);position:relative}
@@ -32,21 +31,21 @@
 <div><label class="block text-xs uppercase tracking-wider muted mb-2">Username Roblox</label><input id="loginUsername" class="field w-full rounded-xl px-4 py-3 text-sm" placeholder="Username persis dari Roblox" autocomplete="username"></div>
 <div><label class="block text-xs uppercase tracking-wider muted mb-2">License Key</label><input id="loginKey" type="password" class="field w-full rounded-xl px-4 py-3 text-sm" placeholder="Masukkan License Key" autocomplete="current-password"></div>
 <button id="portalLoginBtn" onclick="portalLogin()" class="btn gold rounded-xl w-full py-3 font-bold text-sm">LOGIN SECURELY</button><p id="clientError" class="hidden text-sm text-red-300"></p>
-<p class="muted text-[11px] text-center">Gunakan username Roblox dan salah satu License Key yang kamu miliki. Lisensi grup hanya dapat diakses oleh owner grup Roblox.</p>
+<p class="muted text-[11px] text-center">Gunakan username Roblox dan salah satu License Key yang kamu miliki.</p>
 </div>
 <div id="clientDashboard" class="hidden space-y-5">
 <div class="glass rounded-2xl p-4 sm:p-5 flex flex-wrap gap-4 items-center justify-between">
 <div class="flex items-center gap-3 min-w-0"><img id="clientAvatar" class="w-14 h-14 rounded-full bg-black border border-amber-300/40 object-cover" alt="Avatar Roblox"><div class="min-w-0"><p class="text-[10px] uppercase tracking-widest text-amber-300">Roblox Profile</p><b id="clientName" class="break-words"></b><p id="clientExpiry" class="muted text-xs mt-1"></p></div></div>
 <div class="flex gap-2"><button onclick="refreshClient()" class="btn border border-white/10 rounded-lg px-3 py-2 text-xs">Refresh</button><button onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-lg px-3 py-2 text-xs">Keluar</button></div>
 </div>
-<nav class="glass rounded-xl p-2 flex gap-2 overflow-x-auto" aria-label="Navigasi akun">
+<nav class="glass rounded-xl p-2 flex gap-2 overflow-x-auto">
 <button id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-lg px-4 py-2 text-xs font-bold whitespace-nowrap">Beranda</button>
 <button id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav border border-white/10 rounded-lg px-4 py-2 text-xs whitespace-nowrap">Showcase Produk</button>
 <button id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav border border-white/10 rounded-lg px-4 py-2 text-xs whitespace-nowrap">Lisensi Saya</button>
 </nav>
 <div id="client-home" class="client-page space-y-5">
 <div class="grid sm:grid-cols-3 gap-3"><div class="glass rounded-xl p-4"><p class="muted text-xs">Produk dimiliki</p><p id="statProducts" class="text-2xl font-extrabold text-amber-200 mt-2">0</p></div><div class="glass rounded-xl p-4"><p class="muted text-xs">Status akun</p><p class="text-lg font-bold text-emerald-300 mt-2">Terverifikasi</p></div><div class="glass rounded-xl p-4"><p class="muted text-xs">Jenis akses</p><p id="statAccessType" class="text-lg font-bold mt-2">Lisensi</p></div></div>
-<div class="glass rounded-2xl p-5"><h2 class="font-bold text-lg">Selamat datang kembali</h2><p class="muted text-sm mt-2">Showcase Produk menampilkan seluruh katalog yang dijual DSS Studio. Lisensi Saya menampilkan produk dan key yang benar-benar dimiliki akun atau grup kamu.</p><button onclick="showClientTab('showcase')" class="gold rounded-lg px-4 py-2 text-xs font-bold mt-4">Lihat produk saya →</button></div>
+<div class="glass rounded-2xl p-5"><h2 class="font-bold text-lg">Selamat datang kembali</h2><p class="muted text-sm mt-2">Showcase Produk menampilkan seluruh katalog yang dijual DSS Studio.</p><button onclick="showClientTab('showcase')" class="gold rounded-lg px-4 py-2 text-xs font-bold mt-4">Lihat produk saya →</button></div>
 </div>
 <div id="client-showcase" class="client-page hidden space-y-4"><div class="flex items-end justify-between gap-3"><div><h2 class="text-xl font-extrabold">Showcase Produk</h2><p class="muted text-sm mt-1">Semua produk aktif yang dijual oleh DRAGON STELL STUDIO.</p></div><span id="productCount" class="text-xs text-amber-300"></span></div><div id="clientProducts" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div></div>
 <div id="client-licenses" class="client-page hidden space-y-4"><h2 class="text-xl font-extrabold">Lisensi Saya</h2><p class="muted text-sm">Daftar semua lisensi yang terverifikasi untuk akun pribadi dan grup Roblox yang kamu miliki.</p><div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div></div>
@@ -57,23 +56,28 @@
 <div id="adminPanel" class="hidden space-y-5">
 <div class="glass rounded-2xl p-4 flex items-center justify-between gap-3"><div><p class="text-xs uppercase tracking-wider text-amber-300">Owner Session</p><p class="muted text-xs mt-1">Akses admin terverifikasi melalui Roblox User ID</p></div><button onclick="logoutAdmin()" class="btn border border-red-500/30 text-red-300 rounded-lg px-3 py-2 text-xs">Keluar Admin</button></div>
 <div class="grid lg:grid-cols-2 gap-5">
-<div class="glass rounded-2xl p-5 space-y-4"><div><h2 class="font-bold text-lg">Tambah Produk</h2><p class="muted text-xs mt-1">Masukkan URL Blob untuk gambar dan file download.</p></div>
+<div class="glass rounded-2xl p-5 space-y-4">
+<div><h2 id="formTitle" class="font-bold text-lg">Tambah Produk</h2><p class="muted text-xs mt-1">Masukkan URL Blob untuk gambar dan file download.</p></div>
+<input type="hidden" id="editProductId">
 <input id="productName" class="field rounded-xl px-3 py-3 w-full text-sm" placeholder="Nama produk, contoh: Role System">
 <input id="productCode" class="field rounded-xl px-3 py-3 w-full text-sm" placeholder="Kode opsional, contoh: ROLE_SYSTEM">
 <textarea id="productDescription" class="field rounded-xl px-3 py-3 w-full text-sm" rows="2" placeholder="Deskripsi singkat"></textarea>
-<div><label class="block text-xs muted mb-1">Image URL (Vercel Blob / Link Gambar)</label><input id="productImageUrl" class="field rounded-xl px-3 py-3 w-full text-sm font-mono text-xs" placeholder="https://... (link gambar)"></div>
-<div><label class="block text-xs muted mb-1">Download URL (Vercel Blob / Link File .rbxm)</label><input id="productDownloadUrl" class="field rounded-xl px-3 py-3 w-full text-sm font-mono text-xs" placeholder="https://... (link file download)"></div>
-<button id="createProductBtn" onclick="createProduct()" class="btn rounded-xl border border-amber-300/30 text-amber-200 py-3 w-full text-sm font-bold">+ Tambah Produk Baru</button>
+<div><label class="block text-xs muted mb-1">Image URL (Link Gambar)</label><input id="productImageUrl" class="field rounded-xl px-3 py-3 w-full text-sm font-mono text-xs" placeholder="https://..."></div>
+<div><label class="block text-xs muted mb-1">Download URL (Link File .rbxm)</label><input id="productDownloadUrl" class="field rounded-xl px-3 py-3 w-full text-sm font-mono text-xs" placeholder="https://..."></div>
+<div class="flex gap-2">
+  <button id="saveProductBtn" onclick="saveProduct()" class="btn rounded-xl border border-amber-300/30 text-amber-200 py-3 w-full text-sm font-bold">+ Tambah Produk Baru</button>
+  <button id="cancelEditBtn" onclick="resetProductForm()" class="hidden btn rounded-xl border border-white/10 muted py-3 px-4 text-sm font-bold">Batal</button>
+</div>
 <div id="productCatalog" class="space-y-3 pt-2"></div>
 </div>
-<div class="glass rounded-2xl p-5 space-y-4"><div><h2 class="font-bold text-lg">Buat Lisensi</h2><p class="muted text-xs mt-1">Pilih tepat satu produk. Key tidak dapat dipakai oleh pemilik lain.</p></div>
+<div class="glass rounded-2xl p-5 space-y-4"><div><h2 class="font-bold text-lg">Buat Lisensi</h2><p class="muted text-xs mt-1">Pilih tepat satu produk.</p></div>
 <div class="grid grid-cols-2 gap-2"><button id="personalMode" onclick="setMode('personal')" class="gold rounded-lg py-2 text-xs font-bold">Akun Pribadi</button><button id="groupMode" onclick="setMode('group')" class="border border-white/10 rounded-lg py-2 text-xs">Group Experience</button></div>
 <input id="newKey" class="field rounded-xl px-3 py-3 w-full text-sm" placeholder="License key"><button onclick="generateKey()" class="btn border border-white/10 rounded-lg px-3 py-2 text-xs">Buat key acak</button>
 <div id="ownerFields"><input id="newOwner" class="field rounded-xl px-3 py-3 w-full text-sm" placeholder="Username Roblox pemilik"></div><div id="groupFields" class="hidden"><input id="newGroup" inputmode="numeric" class="field rounded-xl px-3 py-3 w-full text-sm" placeholder="Group ID angka"></div>
 <div><label class="text-xs muted block mb-2">Pilih satu produk</label><div id="licenseProductChoices" class="space-y-2 max-h-56 overflow-y-auto"></div></div>
 <div><label class="text-xs muted block mb-2">Kedaluwarsa (opsional)</label><input id="newExpires" type="date" class="field rounded-xl px-3 py-3 w-full text-sm"></div>
 <button onclick="createLicense()" class="btn gold rounded-xl w-full py-3 text-sm font-extrabold">Simpan Lisensi</button></div></div>
-<div class="glass rounded-2xl p-5 space-y-4"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-bold text-lg">Semua Lisensi</h2><p class="muted text-xs mt-1">Pemilik, produk, status, dan tanggal kedaluwarsa.</p></div><input id="licenseSearch" oninput="renderLicenses()" class="field rounded-lg px-3 py-2 text-sm" placeholder="Cari key / owner / produk"></div>
+<div class="glass rounded-2xl p-5 space-y-4"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-bold text-lg">Semua Lisensi</h2></div><input id="licenseSearch" oninput="renderLicenses()" class="field rounded-lg px-3 py-2 text-sm" placeholder="Cari key / owner / produk"></div>
 <div class="overflow-x-auto"><table class="w-full text-left text-xs min-w-[800px]"><thead class="text-gray-400 border-b border-white/10"><tr><th class="py-3 pr-3">Produk</th><th class="py-3 pr-3">Pemilik</th><th class="py-3 pr-3">License Key</th><th class="py-3 pr-3">Status</th><th class="py-3 pr-3">Expiry</th><th class="py-3">Aksi</th></tr></thead><tbody id="licenseRows" class="divide-y divide-white/5"></tbody></table></div></div>
 </div></section></main>
 <footer class="text-center muted text-xs border-t border-white/5 py-5 mt-8">© 2026 DRAGON STELL STUDIO · Secure License Management</footer>
@@ -114,9 +118,7 @@ async function showClient(d){
           ${p.image_url?`<img src="${safe(p.image_url)}" alt="${safe(p.product)}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\"muted text-xs uppercase tracking-widest\">DSS STUDIO</span>'">`:`<span class="muted text-xs uppercase tracking-widest">DRAGON STELL STUDIO</span>`}
         </div>
         <div class="p-4 sm:p-5 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] uppercase tracking-widest text-amber-300 font-semibold">${safe(p.product_code||'DSS PRODUCT')}</span>
-          </div>
+          <div class="flex items-center justify-between"><span class="text-[10px] uppercase tracking-widest text-amber-300 font-semibold">${safe(p.product_code||'DSS PRODUCT')}</span></div>
           <h3 class="font-bold text-base sm:text-lg leading-snug">${safe(p.product)}</h3>
           ${p.description?`<p class="muted text-xs sm:text-sm leading-relaxed line-clamp-3">${safe(p.description)}</p>`:''}
         </div>
@@ -138,7 +140,8 @@ async function openAdmin(){showTab('admin');$('adminPanel').classList.remove('hi
 async function logoutAdmin(){await api('/api/admin-logout',{method:'POST',body:'{}'}).catch(()=>{});showTab('client');$('adminPanel').classList.add('hidden');$('loginKey').value='';toast('Sesi Admin ditutup.')}
 async function loadAdmin(){const [p,l]=await Promise.all([api('/api/products'),api('/api/licenses')]);products=p.products||[];licenses=l.licenses||[];renderProducts();renderLicenseChoices();renderLicenses()}
 
-async function createProduct(){
+async function saveProduct(){
+  const editId=$('editProductId').value;
   const name=$('productName').value.trim();
   const code=$('productCode').value.trim();
   const description=$('productDescription').value.trim();
@@ -147,24 +150,59 @@ async function createProduct(){
 
   if(!name)return toast('Nama produk wajib diisi.');
   
-  const btn=$('createProductBtn');
+  const btn=$('saveProductBtn');
   btn.disabled=true;
   btn.textContent='MENYIMPAN...';
 
   try{
-    await api('/api/products',{
-      method:'POST',
-      body:JSON.stringify({ product_name: name, product_code: code, description: description, image_url: image_url, download_url: download_url })
-    });
-    ['productName','productCode','productDescription','productImageUrl','productDownloadUrl'].forEach(x=>$(x).value='');
+    if(editId){
+      await api('/api/products/'+editId,{
+        method:'PUT',
+        body:JSON.stringify({ product_name: name, product_code: code, description: description, image_url: image_url, download_url: download_url })
+      });
+      toast('Produk berhasil diperbarui.');
+    }else{
+      await api('/api/products',{
+        method:'POST',
+        body:JSON.stringify({ product_name: name, product_code: code, description: description, image_url: image_url, download_url: download_url })
+      });
+      toast('Produk berhasil ditambahkan.');
+    }
+    resetProductForm();
     await loadAdmin();
-    toast('Produk berhasil ditambahkan.');
   }catch(e){
     toast('Gagal: '+e.message);
   }finally{
     btn.disabled=false;
-    btn.textContent='+ Tambah Produk Baru';
+    btn.textContent=editId? 'Simpan Perubahan' : '+ Tambah Produk Baru';
   }
+}
+
+function editProduct(id){
+  const p=products.find(x=>String(x.id)===String(id));
+  if(!p)return;
+  $('editProductId').value=p.id;
+  $('productName').value=p.product_name||'';
+  $('productCode').value=p.product_code||'';
+  $('productDescription').value=p.description||'';
+  $('productImageUrl').value=p.image_url||'';
+  $('productDownloadUrl').value=p.download_url||'';
+  $('formTitle').textContent='Edit Produk: '+p.product_name;
+  $('saveProductBtn').textContent='Simpan Perubahan';
+  $('cancelEditBtn').classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function resetProductForm(){
+  $('editProductId').value='';
+  $('productName').value='';
+  $('productCode').value='';
+  $('productDescription').value='';
+  $('productImageUrl').value='';
+  $('productDownloadUrl').value='';
+  $('formTitle').textContent='Tambah Produk';
+  $('saveProductBtn').textContent='+ Tambah Produk Baru';
+  $('cancelEditBtn').classList.add('hidden');
 }
 
 function renderProducts(){
@@ -176,6 +214,7 @@ function renderProducts(){
           <p class="muted text-[10px] mt-0.5">${safe(p.product_code)} · ${p.image_url?'<span class="text-emerald-300">Ada Gambar</span>':'Tanpa Gambar'} · ${p.download_url?'<span class="text-emerald-300">Ada File</span>':'Tanpa File'}</p>
         </div>
         <div class="flex gap-2 shrink-0">
+          <button class="text-[10px] rounded-lg px-2.5 py-1 border border-amber-300/30 text-amber-200" onclick="editProduct(${p.id})">Edit</button>
           <button class="text-[10px] rounded-lg px-2.5 py-1 border ${p.is_active?'border-amber-300/30 text-amber-200':'border-white/10 muted'}" onclick="toggleProduct(${p.id},${!p.is_active})">${p.is_active?'Aktif':'Nonaktif'}</button>
           <button class="text-[10px] rounded-lg px-2.5 py-1 border border-red-500/30 text-red-300" onclick="deleteProduct(${p.id})">Hapus</button>
         </div>
@@ -187,7 +226,7 @@ function renderLicenseChoices(){$('licenseProductChoices').innerHTML=products.fi
 async function toggleProduct(id,active){try{await api('/api/products/'+id,{method:'PATCH',body:JSON.stringify({is_active:active})});await loadAdmin();toast('Status produk diperbarui.')}catch(e){toast(e.message)}}
 async function deleteProduct(id){const p=products.find(x=>String(x.id)===String(id));if(!confirm(`Hapus produk “${p?.product_name||id}”?`))return;try{await api('/api/products/'+id,{method:'DELETE'});await loadAdmin();toast('Produk dihapus.')}catch(e){toast(e.message)}}
 async function createLicense(){const selected=document.querySelector('input[name="licenseProduct"]:checked');if(!selected)return toast('Pilih tepat satu produk.');const body={license_key:$('newKey').value.trim(),product_ids:[Number(selected.value)],expires_at:$('newExpires').value||null};if(mode==='personal')body.owner_name=$('newOwner').value.trim();else body.group_id=$('newGroup').value.trim();try{const d=await api('/api/licenses/create',{method:'POST',body:JSON.stringify(body)});toast(d.message||'Lisensi dibuat.');$('newKey').value='';$('newExpires').value='';$('newOwner').value='';$('newGroup').value='';document.querySelectorAll('input[name="licenseProduct"]').forEach(x=>x.checked=false);await loadAdmin()}catch(e){toast(e.message)}}
-function renderLicenses(){const q=($('licenseSearch').value||'').toLowerCase();const rows=licenses.filter(l=>JSON.stringify([l.license_key,l.owner_name,l.owner_display_name,l.group_id,l.owner_user_id,...(l.products||[]).map(p=>p.product_name)]).toLowerCase().includes(q));$('licenseRows').innerHTML=rows.map(l=>{const p=(l.products||[])[0],active=l.is_active&&(!l.expires_at||new Date(l.expires_at)>new Date());const owner=l.owner_display_name||l.owner_name||'Pemilik tidak terdeteksi',avatar=l.owner_avatar_url||'';return `<tr><td class="py-3 pr-3"><div class="font-semibold">${safe(p?.product_name||l.product_name||'-')}</div><div class="muted mt-1">${safe(p?.product_code||'-')}</div><div class="muted mt-1">${(l.products||[]).length===1?'1 produk terikat':(l.products||[]).length===0?'Belum terhubung':'PERIKSA: data multi-produk lama'}</div></td><td class="py-3 pr-3"><div class="flex items-center gap-3 min-w-0"><img src="${safe(avatar)}" alt="" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0" onerror="this.style.display='none'"><div class="min-w-0"><div class="font-semibold break-words">${safe(owner)}</div><div class="muted mt-1 break-all">${l.group_id?'Group ID '+safe(l.group_id):'User ID '+safe(l.owner_user_id||'-')}</div></div></div></td><td class="py-3 pr-3 font-mono break-all">${safe(l.license_key)}</td><td class="py-3 pr-3"><span class="${active?'text-emerald-300':'text-red-300'}">${active?'Aktif':'Nonaktif / Expired'}</span></td><td class="py-3 pr-3">${fmtDate(l.expires_at)}</td><td class="py-3"><div class="flex gap-2"><button onclick="toggleLicense(${l.id},${!l.is_active})" class="border border-white/10 rounded px-2 py-1">${l.is_active?'Nonaktifkan':'Aktifkan'}</button><button onclick="deleteLicense(${l.id})" class="text-red-300 border border-red-500/20 rounded px-2 py-1">Hapus</button></div></td></tr>`}).join('')||'<tr><td colspan="6" class="py-6 muted text-center">Tidak ada lisensi.</td></tr>'}
+function renderLicenses(){const q=($('licenseSearch').value||'').toLowerCase();const rows=licenses.filter(l=>JSON.stringify([l.license_key,l.owner_name,l.owner_display_name,l.group_id,l.owner_user_id,...(l.products||[]).map(p=>p.product_name)]).toLowerCase().includes(q));$('licenseRows').innerHTML=rows.map(l=>{const p=(l.products||[])[0],active=l.is_active&&(!l.expires_at||new Date(l.expires_at)>new Date());const owner=l.owner_display_name||l.owner_name||'Pemilik tidak terdeteksi',avatar=l.owner_avatar_url||'';return `<tr><td class="py-3 pr-3"><div class="font-semibold">${safe(p?.product_name||l.product_name||'-')}</div><div class="muted mt-1">${safe(p?.product_code||'-')}</div></td><td class="py-3 pr-3"><div class="flex items-center gap-3 min-w-0"><img src="${safe(avatar)}" alt="" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0" onerror="this.style.display='none'"><div class="min-w-0"><div class="font-semibold break-words">${safe(owner)}</div><div class="muted mt-1 break-all">${l.group_id?'Group ID '+safe(l.group_id):'User ID '+safe(l.owner_user_id||'-')}</div></div></div></td><td class="py-3 pr-3 font-mono break-all">${safe(l.license_key)}</td><td class="py-3 pr-3"><span class="${active?'text-emerald-300':'text-red-300'}">${active?'Aktif':'Nonaktif / Expired'}</span></td><td class="py-3 pr-3">${fmtDate(l.expires_at)}</td><td class="py-3"><div class="flex gap-2"><button onclick="toggleLicense(${l.id},${!l.is_active})" class="border border-white/10 rounded px-2 py-1">${l.is_active?'Nonaktifkan':'Aktifkan'}</button><button onclick="deleteLicense(${l.id})" class="text-red-300 border border-red-500/20 rounded px-2 py-1">Hapus</button></div></td></tr>`}).join('')||'<tr><td colspan="6" class="py-6 muted text-center">Tidak ada lisensi.</td></tr>'}
 async function toggleLicense(id,active){try{await api('/api/licenses/'+id+'/status',{method:'PATCH',body:JSON.stringify({is_active:active})});await loadAdmin();toast('Status lisensi diperbarui.')}catch(e){toast(e.message)}}
 async function deleteLicense(id){if(!confirm('Hapus lisensi ini secara permanen?'))return;try{await api('/api/licenses/'+id,{method:'DELETE'});await loadAdmin();toast('Lisensi dihapus.')}catch(e){toast(e.message)}}
 window.addEventListener('DOMContentLoaded',async()=>{try{const s=await api('/api/admin-session');if(s.authenticated){await openAdmin();return}}catch{}clientUser=sessionStorage.getItem('dss_user')||'';clientKey=sessionStorage.getItem('dss_key')||'';if(clientUser&&clientKey){try{const d=await api('/api/client-login',{method:'POST',body:JSON.stringify({owner_name:clientUser,license_key:clientKey})});await showClient(d)}catch{logoutClient()}}});
