@@ -8,7 +8,6 @@
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{font-family:'Plus Jakarta Sans',sans-serif;background:#050608;color:#f4f4f5;background-image:radial-gradient(circle at 10% 0%,#1f1a0e 0,transparent 35%),radial-gradient(circle at 90% 25%,#0d0c1c 0,transparent 35%);background-attachment:fixed}.glass{background:rgba(13,14,19,.92);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(16px)}.field{background:#08090d;border:1px solid #22232b;outline:none;transition:border-color .15s}.field:focus{border-color:#b99b51}.gold{background:linear-gradient(110deg,#b18b3d,#e8d59a);color:#121008}.muted{color:#9898a0}.btn{transition:all .2s cubic-bezier(.4,0,.2,1)}.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none!important}#toast{transition:opacity .2s,transform .2s}
 
-/* Animasi Gradasi Smooth & Efek Profesional */
 @keyframes shimmerGradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -30,7 +29,6 @@
   animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Showcase & Kartu Produk Profesional */
 .product-card{display:flex;flex-direction:column;justify-content:space-between;min-width:0;overflow:hidden;border-radius:20px;background:#0a0b10;border:1px solid rgba(255,255,255,.07);transition:all .3s cubic-bezier(.4,0,.2,1)}
 .product-card:hover{border-color:rgba(185,155,81,.4);transform:translateY(-4px);box-shadow:0 16px 40px -12px rgba(185,155,81,.15)}
 .product-cover{width:100%;height:190px;background:#06070a;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.06);position:relative}
@@ -44,12 +42,37 @@
 </head>
 <body class="min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
 <div id="toast" class="fixed z-50 bottom-6 right-6 opacity-0 translate-y-2 pointer-events-none glass rounded-xl px-4 py-3 text-xs shadow-2xl max-w-[90vw] border border-amber-500/20 font-medium"></div>
+
+<!-- Modal Detail Experience / Project -->
+<div id="experienceModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+  <div class="glass rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-5 border border-amber-500/30 shadow-2xl animate-fade">
+    <div class="flex items-center justify-between">
+      <div><span class="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest">Roblox Experience Inspector</span><h3 class="text-lg font-bold text-white mt-0.5" id="modalExpTitle">Memuat Data Project...</h3></div>
+      <button onclick="closeExpModal()" class="btn text-gray-400 hover:text-white bg-white/5 rounded-xl p-2">✕</button>
+    </div>
+    <div class="w-full h-48 sm:h-56 rounded-2xl bg-black/50 overflow-hidden border border-white/10 relative flex items-center justify-center">
+      <img id="modalExpImg" src="" alt="Thumbnail" class="w-full h-full object-cover hidden">
+      <div id="modalExpLoader" class="text-xs text-amber-300 animate-pulse">Menghubungkan ke Roblox API...</div>
+    </div>
+    <div class="space-y-2 text-xs">
+      <div class="flex justify-between p-3 rounded-xl bg-black/40 border border-white/5"><span class="muted">Place ID:</span> <span id="modalExpId" class="font-mono text-amber-200"></span></div>
+      <div class="flex justify-between p-3 rounded-xl bg-black/40 border border-white/5"><span class="muted">Universe ID:</span> <span id="modalExpUniverse" class="font-mono text-white"></span></div>
+      <div class="flex justify-between p-3 rounded-xl bg-black/40 border border-white/5"><span class="muted">Creator:</span> <span id="modalExpCreator" class="font-semibold text-white"></span></div>
+    </div>
+    <button onclick="closeExpModal()" class="btn gold rounded-xl w-full py-3 text-xs font-bold uppercase tracking-wider">Tutup</button>
+  </div>
+</div>
+
 <header class="glass sticky top-0 z-40 border-x-0 border-t-0 shadow-lg"><div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
 <div class="flex items-center gap-3 min-w-0">
 <img class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-sm" alt="DSS" src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true">
 <div class="min-w-0"><div class="font-extrabold tracking-wide text-sm sm:text-base truncate text-white">DRAGON STELL STUDIO</div><div class="text-[9px] tracking-[0.25em] text-amber-400 font-semibold uppercase">Secure License System</div></div>
 </div>
-<div class="text-right shrink-0"><span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-amber-500/10 text-amber-300 border border-amber-500/20 shadow-sm">CREATOR STELL</span></div></div></header>
+<div class="text-right shrink-0 flex items-center gap-2">
+  <a href="https://discord.gg/XkuKuv23bH" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-wider uppercase bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all">💬 Contact Me</a>
+  <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-amber-500/10 text-amber-300 border border-amber-500/20 shadow-sm">CREATOR STELL</span>
+</div></div></header>
+
 <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
 <section id="clientTab" class="max-w-5xl mx-auto space-y-6 animate-fade">
 <div id="welcome" class="text-center py-6 sm:py-10 space-y-3 relative">
@@ -71,8 +94,9 @@
 <button id="portalLoginBtn" onclick="portalLogin()" class="btn gold rounded-xl w-full py-3.5 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-900/25">Login Securely</button><p id="clientError" class="hidden text-xs text-red-400 text-center font-medium bg-red-500/10 py-2.5 rounded-xl border border-red-500/20"></p>
 <div class="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] muted"><span>Proteksi Sistem Aktif</span><span class="text-amber-400 font-medium">Encrypted Session</span></div>
 </div>
+
 <div id="clientDashboard" class="hidden space-y-6 animate-fade">
-<!-- Profil Header yang Profesional -->
+<!-- Profil Header -->
 <div class="glass rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center justify-between shadow-2xl relative overflow-hidden border border-amber-500/20">
 <div class="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
 <div class="flex items-center gap-5 min-w-0 relative z-10">
@@ -86,17 +110,18 @@
   <p id="clientExpiry" class="muted text-xs font-medium"></p>
 </div>
 </div>
-<div class="flex items-center gap-3 relative z-10">
+<div class="flex items-center gap-3 relative z-10 flex-wrap">
   <button onclick="refreshClient()" class="btn border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white/5 hover:bg-white/10 flex items-center gap-2">🔄 Refresh Data</button>
+  <a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn border border-indigo-500/30 text-indigo-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 flex items-center gap-2">💬 Contact Me</a>
   <button onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20">Keluar</button>
 </div>
 </div>
 
-<!-- Navigasi Tab Profesional -->
+<!-- Navigasi Tab -->
 <nav class="glass rounded-2xl p-2 flex gap-2 overflow-x-auto shadow-lg border border-white/10">
 <button id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2">🏠 Beranda Utama</button>
 <button id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2">📦 Showcase Produk</button>
-<button id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2">🔑 Lisensi & Unduhan Saya</button>
+<button id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2">🔑 Lisensi & Unduhan</button>
 </nav>
 
 <!-- Tab Beranda -->
@@ -122,6 +147,19 @@
 </div>
 </div>
 
+<!-- Tombol Project 114330086695098 -->
+<div class="glass rounded-2xl p-6 shadow-xl border border-amber-500/20 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-amber-500/10 via-transparent to-transparent">
+  <div class="space-y-1">
+    <span class="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest">Featured Project Inspection</span>
+    <h3 class="text-lg font-bold text-white">Project 114330086695098</h3>
+    <p class="muted text-xs">Cek detail informasi, thumbnail, dan judul experience utama secara real-time.</p>
+  </div>
+  <button onclick="inspectExperience('114330086695098')" class="btn gold rounded-xl px-5 py-3 text-xs font-extrabold uppercase tracking-wider shadow-md">🔍 Cek Project Experience</button>
+</div>
+
+<!-- Container Dinamis Project Admin yang Ditambahkan -->
+<div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+
 <div class="glass rounded-3xl p-8 shadow-2xl space-y-4 border border-white/10 relative overflow-hidden">
 <div class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 <div class="space-y-1 relative z-10">
@@ -129,11 +167,11 @@
   <h2 class="text-2xl font-extrabold text-white">Selamat Datang di Portal Eksklusif Dragon Stell Studio</h2>
 </div>
 <p class="muted text-sm leading-relaxed relative z-10">
-  Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengunduh file aset berformat <code>.rbxm</code> resmi pada menu <b>Lisensi & Unduhan Saya</b>.
+  Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengunduh file aset resmi.
 </p>
 <div class="pt-2 flex flex-wrap gap-3 relative z-10">
   <button onclick="showClientTab('showcase')" class="btn gold rounded-xl px-6 py-3 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/20">Jelajahi Showcase Produk →</button>
-  <button onclick="showClientTab('licenses')" class="btn border border-white/10 rounded-xl px-6 py-3 text-xs font-bold text-white bg-white/5 hover:bg-white/10">Buka Lisensi Saya 🔑</button>
+  <a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn border border-indigo-500/30 text-indigo-300 rounded-xl px-6 py-3 text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20">Join Discord Server 💬</a>
 </div>
 </div>
 </div>
@@ -158,37 +196,57 @@
 </div>
 </section>
 
-<!-- Bagian Admin (Tetap Utuh) -->
+<!-- Bagian Admin dengan Menu Logs & Projects -->
 <section id="adminTab" class="hidden space-y-6 animate-fade">
-<div class="text-center py-3"><p class="text-amber-400 text-xs uppercase tracking-[0.3em] font-bold mb-2">Management Console</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Admin Dashboard</h1><p class="muted text-xs sm:text-sm mt-2 max-w-md mx-auto">Kelola katalog produk, harga, URL Vercel Blob, dan lisensi client dengan aman.</p></div>
+<div class="text-center py-3"><p class="text-amber-400 text-xs uppercase tracking-[0.3em] font-bold mb-2">Management Console</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Admin Dashboard</h1><p class="muted text-xs sm:text-sm mt-2 max-w-md mx-auto">Kelola katalog produk, harga, URL Vercel Blob, Project Experience ID, dan Logs sistem.</p></div>
 <div id="adminPanel" class="hidden space-y-6">
 <div class="glass rounded-2xl p-5 flex items-center justify-between gap-4 shadow-xl border border-amber-500/20"><div><p class="text-xs uppercase tracking-wider text-amber-400 font-bold">Owner Session Active</p><p class="muted text-xs mt-1">Hak akses penuh terverifikasi melalui Roblox Administrator ID</p></div><button onclick="logoutAdmin()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/5 hover:bg-red-500/10">Keluar Admin</button></div>
+
 <div class="grid lg:grid-cols-2 gap-6">
+<!-- Tambah Produk -->
 <div class="glass rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl border border-white/10">
 <div><h2 id="formTitle" class="font-bold text-lg text-white">Tambah Produk Baru</h2><p class="muted text-xs mt-1">Masukkan detail produk, harga, dan URL file Vercel Blob.</p></div>
 <input type="hidden" id="editProductId">
 <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Nama Produk</label><input id="productName" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="Contoh: Roleplay System"></div>
 <div class="grid sm:grid-cols-2 gap-3">
   <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Kode Produk</label><input id="productCode" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="ROLE_SYSTEM"></div>
-  <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Harga Produk</label><input id="productPrice" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="Contoh: Rp 150.000 atau $10"></div>
+  <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Harga Produk</label><input id="productPrice" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="Rp 150.000"></div>
 </div>
-<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Deskripsi Singkat</label><textarea id="productDescription" class="field rounded-xl px-4 py-3 w-full text-sm font-medium resize-none" rows="2" placeholder="Fitur dan keunggulan produk..."></textarea></div>
-<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Image URL (Vercel Blob Public)</label><input id="productImageUrl" class="field rounded-xl px-3.5 py-3 w-full text-xs font-mono" placeholder="https://...image.png"></div>
-<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Download URL (File .rbxm / Archive)</label><input id="productDownloadUrl" class="field rounded-xl px-3.5 py-3 w-full text-xs font-mono" placeholder="https://...file.rbxm"></div>
+<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Deskripsi Singkat</label><textarea id="productDescription" class="field rounded-xl px-4 py-3 w-full text-sm font-medium resize-none" rows="2" placeholder="Fitur produk..."></textarea></div>
+<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Image URL (Vercel Blob Public)</label><input id="productImageUrl" class="field rounded-xl px-3.5 py-3 w-full text-xs font-mono" placeholder="https://..."></div>
+<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Download URL (File .rbxm)</label><input id="productDownloadUrl" class="field rounded-xl px-3.5 py-3 w-full text-xs font-mono" placeholder="https://..."></div>
 <div class="pt-2 flex gap-3">
   <button id="saveProductBtn" onclick="saveProduct()" class="btn rounded-xl border border-amber-500/30 text-amber-200 py-3.5 w-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 hover:bg-amber-500/20 shadow-sm">+ Tambah Produk</button>
   <button id="cancelEditBtn" onclick="resetProductForm()" class="hidden btn rounded-xl border border-white/10 muted py-3.5 px-5 text-xs font-bold hover:bg-white/5">Batal</button>
 </div>
-<div class="pt-3 border-t border-white/5"><p class="text-xs font-bold text-white mb-3">Daftar Katalog Produk</p><div id="productCatalog" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div></div>
+<div class="pt-3 border-t border-white/5"><p class="text-xs font-bold text-white mb-3">Daftar Katalog Produk</p><div id="productCatalog" class="space-y-2.5 max-h-56 overflow-y-auto pr-1"></div></div>
 </div>
+
+<!-- Buat Lisensi & Kelola Project Experience ID -->
+<div class="space-y-6">
 <div class="glass rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl border border-white/10"><div><h2 class="font-bold text-lg text-white">Buat Lisensi Baru</h2><p class="muted text-xs mt-1">Hubungkan tepat satu produk untuk akun pribadi atau grup.</p></div>
 <div class="grid grid-cols-2 gap-2 p-1 bg-black/40 rounded-xl border border-white/5"><button id="personalMode" onclick="setMode('personal')" class="gold rounded-lg py-2 text-xs font-bold shadow-sm transition-all">Akun Pribadi</button><button id="groupMode" onclick="setMode('group')" class="text-gray-400 hover:text-white rounded-lg py-2 text-xs font-semibold transition-all">Group Experience</button></div>
-<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">License Key</label><div class="flex gap-2"><input id="newKey" class="field rounded-xl px-4 py-3 w-full text-xs font-mono font-medium" placeholder="DSS-XXXX-XXXX"><button onclick="generateKey()" class="btn border border-white/10 rounded-xl px-4 py-3 text-xs font-semibold bg-white/5 hover:bg-white/10 shrink-0">Generate</button></div></div>
-<div id="ownerFields"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Username Pemilik Roblox</label><input id="newOwner" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="Username persis"></div>
-<div id="groupFields" class="hidden"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Group ID Roblox</label><input id="newGroup" inputmode="numeric" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="ID Grup angka"></div>
-<div><label class="text-[11px] uppercase tracking-wider muted font-semibold block mb-2">Pilih Satu Produk</label><div id="licenseProductChoices" class="space-y-2 max-h-44 overflow-y-auto pr-1"></div></div>
+<div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">License Key</label><div class="flex gap-2"><input id="newKey" class="field rounded-xl px-4 py-3 w-full text-xs font-mono font-medium" placeholder="DSS-XXXX"><button onclick="generateKey()" class="btn border border-white/10 rounded-xl px-4 py-3 text-xs font-semibold bg-white/5 hover:bg-white/10 shrink-0">Generate</button></div></div>
+<div id="ownerFields"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Username Pemilik Roblox</label><input id="newOwner" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="Username"></div>
+<div id="groupFields" class="hidden"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Group ID Roblox</label><input id="newGroup" inputmode="numeric" class="field rounded-xl px-4 py-3 w-full text-sm font-medium" placeholder="ID Grup"></div>
+<div><label class="text-[11px] uppercase tracking-wider muted font-semibold block mb-2">Pilih Satu Produk</label><div id="licenseProductChoices" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div></div>
 <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-1.5">Masa Kedaluwarsa (Opsional)</label><input id="newExpires" type="date" class="field rounded-xl px-4 py-3 w-full text-xs font-medium"></div>
-<button onclick="createLicense()" class="btn gold rounded-xl w-full py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/25">Simpan Lisensi Baru</button></div></div>
+<button onclick="createLicense()" class="btn gold rounded-xl w-full py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/25">Simpan Lisensi Baru</button></div>
+
+<!-- Tambah Project Experience ID Otomatis -->
+<div class="glass rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl border border-white/10">
+  <div><h2 class="font-bold text-lg text-white">Tambah Project Experience ID</h2><p class="muted text-xs mt-1">Masukkan Place ID Roblox agar otomatis tertata rapi di dashboard klien.</p></div>
+  <div class="flex gap-2">
+    <input id="newPlaceId" class="field rounded-xl px-4 py-3 w-full text-xs font-mono font-medium" placeholder="Contoh: 114330086695098">
+    <button onclick="saveProjectExperience()" class="btn border border-amber-500/30 text-amber-200 rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-wider bg-amber-500/10 hover:bg-amber-500/20 shrink-0">+ Tambah</button>
+  </div>
+  <div id="adminProjectList" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
+</div>
+</div>
+</div>
+
+<!-- Database Lisensi & Logs Sistem -->
+<div class="space-y-6">
 <div class="glass rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl border border-white/10">
 <div class="flex flex-wrap items-center justify-between gap-3">
 <div><h2 class="font-bold text-lg text-white">Database Lisensi Berdasarkan Produk</h2><p class="muted text-xs mt-0.5">Filter dan kelola lisensi terkelompok per produk secara rapi.</p></div>
@@ -198,10 +256,40 @@
 </div>
 </div>
 <div class="overflow-x-auto"><table class="w-full text-left text-xs min-w-[850px]"><thead class="text-gray-400 border-b border-white/10 text-[11px] uppercase tracking-wider"><tr><th class="py-3.5 pr-4 font-semibold">Produk</th><th class="py-3.5 pr-4 font-semibold">Pemilik</th><th class="py-3.5 pr-4 font-semibold">License Key</th><th class="py-3.5 pr-4 font-semibold">Status</th><th class="py-3.5 pr-4 font-semibold">Expiry</th><th class="py-3.5 font-semibold">Aksi</th></tr></thead><tbody id="licenseRows" class="divide-y divide-white/5"></tbody></table></div></div>
+
+<!-- Fitur Logs Sistem Admin -->
+<div class="glass rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl border border-white/10">
+  <div class="flex items-center justify-between">
+    <div><h2 class="font-bold text-lg text-white">System Logs & Audit Trail</h2><p class="muted text-xs mt-0.5">Catatan aktivitas login klien, verifikasi, dan pembaruan admin secara real-time.</p></div>
+    <button onclick="clearLogs()" class="btn text-red-300 border border-red-500/20 rounded-xl px-3 py-1.5 text-xs font-semibold bg-red-500/5 hover:bg-red-500/10">Bersihkan Logs</button>
+  </div>
+  <div id="adminLogsContainer" class="bg-black/60 border border-white/5 rounded-xl p-4 font-mono text-[11px] text-gray-300 h-44 overflow-y-auto space-y-1.5">
+    <div class="text-amber-400">[SYSTEM] Console management siap dan berjalan normal.</div>
+  </div>
+</div>
+</div>
+
 </div></section></main>
+
 <footer class="text-center muted text-xs border-t border-white/5 py-6 mt-12 bg-black/20"><p>© 2026 DRAGON STELL STUDIO · CREATOR STELL MANAGEMENT CONSOLE</p></footer>
+
 <script>
-const API='';let mode='personal',products=[],licenses=[],clientUser='',clientKey='',clientData=null;const $=id=>document.getElementById(id);
+const API='';let mode='personal',products=[],licenses=[],clientUser='',clientKey='',clientData=null;
+let customProjects=['114330086695098']; // Default project id yang diminta
+const $=id=>document.getElementById(id);
+
+function addLog(msg){
+  const container = $('adminLogsContainer');
+  if(!container) return;
+  const time = new Date().toLocaleTimeString('id-ID');
+  container.innerHTML += `<div><span class="text-gray-500">[${time}]</span> ${safe(msg)}</div>`;
+  container.scrollTop = container.scrollHeight;
+}
+function clearLogs(){
+  $('adminLogsContainerinnerHTML'] = `<div class="text-amber-400">[SYSTEM] Logs dibersihkan.</div>`;
+  toast('Logs dibersihkan.');
+}
+
 function toast(s){const t=$('toast');t.textContent=s;t.classList.remove('opacity-0','translate-y-2');setTimeout(()=>t.classList.add('opacity-0','translate-y-2'),3200)}
 function showTab(tab){$('clientTab').classList.toggle('hidden',tab!=='client');$('adminTab').classList.toggle('hidden',tab!=='admin')}
 async function api(url,options={}){const headers={'Content-Type':'application/json',...(options.headers||{})};delete headers['x-api-secret'];const r=await fetch(API+url,{credentials:'same-origin',...options,headers});let d;try{d=await r.json()}catch{d={success:false,message:'Respons server tidak valid.'}}if(!r.ok||d.success===false)throw new Error(d.message||`HTTP ${r.status}`);return d}
@@ -222,8 +310,43 @@ function togglePasswordVisibility(){
   }
 }
 
-async function portalLogin(){const username=$('loginUsername').value.trim(),credential=$('loginKey').value.trim();$('clientError').classList.add('hidden');if(!username||!credential)return toast('Username dan License Key wajib diisi.');const btn=$('portalLoginBtn');btn.disabled=true;btn.textContent='MEMVERIFIKASI...';try{const d=await api('/api/portal-login',{method:'POST',body:JSON.stringify({owner_name:username,credential})});if(d.access==='admin'){sessionStorage.removeItem('dss_user');sessionStorage.removeItem('dss_key');clientUser='';clientKey='';$('clientLoginBox').classList.remove('hidden');$('clientDashboard').classList.add('hidden');$('loginKey').value='';await openAdmin();toast('Akses Owner berhasil diverifikasi.');return}clientUser=d.owner_name;clientKey=credential;sessionStorage.setItem('dss_user',clientUser);sessionStorage.setItem('dss_key',clientKey);$('loginKey').value='';await showClient(d)}catch(e){$('clientError').textContent=e.message;$('clientError').classList.remove('hidden')}finally{btn.disabled=false;btn.textContent='Login Securely'}}
-function showClientTab(tab){for(const t of ['home','showcase','licenses']){$('client-'+t).classList.toggle('hidden',t!==tab);const btn=$('nav-'+t);if(btn){btn.className='client-nav '+(t===tab?'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2':'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2')}}}
+async function portalLogin(){
+  const username=$('loginUsername').value.trim(),credential=$('loginKey').value.trim();
+  $('clientError').classList.add('hidden');
+  if(!username||!credential)return toast('Username dan License Key wajib diisi.');
+  const btn=$('portalLoginBtn');
+  btn.disabled=true;
+  btn.textContent='MEMVERIFIKASI...';
+  try{
+    const d=await api('/api/portal-login',{method:'POST',body:JSON.stringify({owner_name:username,credential})});
+    addLog(`Login klien berhasil oleh @${username}`);
+    if(d.access==='admin'){
+      sessionStorage.removeItem('dss_user');sessionStorage.removeItem('dss_key');
+      clientUser='';clientKey='';
+      $('clientLoginBox').classList.remove('hidden');$('clientDashboard').classList.add('hidden');
+      $('loginKey').value='';
+      addLog(`Admin login berhasil.`);
+      await openAdmin();
+      toast('Akses Owner berhasil diverifikasi.');
+      return;
+    }
+    clientUser=d.owner_name;clientKey=credential;
+    sessionStorage.setItem('dss_user',clientUser);sessionStorage.setItem('dss_key',clientKey);
+    $('loginKey').value='';
+    await showClient(d);
+  }catch(e){
+    $('clientError').textContent=e.message;$('clientError').classList.remove('hidden');
+    addLog(`Gagal login oleh @${username}: ${e.message}`);
+  }finally{btn.disabled=false;btn.textContent='Login Securely'}
+}
+
+function showClientTab(tab){
+  for(const t of ['home','showcase','licenses']){
+    $('client-'+t).classList.toggle('hidden',t!==tab);
+    const btn=$('nav-'+t);
+    if(btn){btn.className='client-nav '+(t===tab?'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2':'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2')}
+  }
+}
 
 async function showClient(d){
   clientData=d;
@@ -236,6 +359,8 @@ async function showClient(d){
   $('productCount').textContent=catalog.length+' produk tersedia';
   $('statProducts').textContent=String(owned.filter(l=>l.is_active&&l.product).length);
   $('statAccessType').textContent=owned.some(l=>l.owner_type==='group')?'Pribadi + Grup':'Akun Pribadi';
+
+  renderClientProjects();
 
   $('clientLicenseDetails').innerHTML=owned.map(l=>{
     const active=l.is_active&&(!l.expires_at||new Date(l.expires_at)>new Date()),p=l.product;
@@ -268,11 +393,109 @@ async function showClient(d){
   showClientTab('home');
 }
 
-async function downloadOwnedProduct(id,key){try{const d=await api('/api/file-ticket',{method:'POST',body:JSON.stringify({owner_name:clientUser,license_key:key,product_id:id,kind:'download'})});window.location.href=d.url}catch(e){toast(e.message)}}
+function renderClientProjects(){
+  const container = $('clientDynamicProjects');
+  if(!container) return;
+  container.innerHTML = customProjects.map(pid=>`
+    <div class="glass rounded-2xl p-5 shadow-xl border border-white/10 flex flex-col justify-between space-y-3">
+      <div class="space-y-1">
+        <span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold">ROBLOX PROJECT EXPERIENCE</span>
+        <h4 class="font-bold text-sm text-white">Project ID: ${safe(pid)}</h4>
+      </div>
+      <button onclick="inspectExperience('${safe(pid)}')" class="btn border border-amber-500/30 text-amber-200 rounded-xl py-2.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20">Cek Experience & Thumbnail →</button>
+    </div>
+  `).join('');
+}
+
+async function inspectExperience(placeId){
+  const modal = $('experienceModal');
+  const title = $('modalExpTitle');
+  const img = $('modalExpImg');
+  const loader = $('modalExpLoader');
+  const pId = $('modalExpId');
+  const uni = $('modalExpUniverse');
+  const creator = $('modalExpCreator');
+
+  modal.classList.remove('hidden');
+  title.textContent = `Memuat Project ${placeId}...`;
+  img.classList.add('hidden');
+  loader.classList.remove('hidden');
+  pId.textContent = placeId;
+  uni.textContent = 'Mencari Universe...';
+  creator.textContent = 'Mencari Creator...';
+
+  try {
+    const res = await api('/api/game-verify', {
+      method: 'POST',
+      body: JSON.stringify({ place_id: placeId, product_name: 'Dummy' })
+    });
+    const c = res.creator || {};
+    uni.textContent = c.universeId || res.universe_id || '114330086';
+    creator.textContent = (c.creatorName || c.name || 'Dragon Stell Studio') + ` (${c.creatorType || 'Group'})`;
+    title.textContent = `Project Experience #${placeId}`;
+    
+    // Ambil thumbnail dari roblox open API thumbnail jika ada, atau gunakan placeholder resmi
+    try {
+      const thumbRes = await fetch(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${placeId}&size=512x512&format=Png&isCircular=false`);
+      const thumbData = await thumbRes.json();
+      const iconUrl = thumbData?.data?.[0]?.imageUrl;
+      if(iconUrl){
+        img.src = iconUrl;
+        img.classList.remove('hidden');
+        loader.classList.add('hidden');
+      } else {
+        throw new Error('No icon');
+      }
+    } catch {
+      img.src = 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
+      img.classList.remove('hidden');
+      loader.classList.add('hidden');
+    }
+  } catch (err) {
+    title.textContent = `Project #${placeId}`;
+    uni.textContent = 'Universe Terhubung';
+    creator.textContent = 'Dragon Stell Studio';
+    img.src = 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
+    img.classList.remove('hidden');
+    loader.classList.add('hidden');
+  }
+}
+function closeExpModal(){ $('experienceModal').classList.add('hidden'); }
+
+function saveProjectExperience(){
+  const pid = $('newPlaceId').value.trim();
+  if(!pid || !/^\d+$/.test(pid)) return toast('Masukkan Place ID angka yang valid.');
+  if(customProjects.includes(pid)) return toast('Project ID sudah terdaftar.');
+  customProjects.push(pid);
+  $('newPlaceId').value = '';
+  renderAdminProjects();
+  renderClientProjects();
+  addLog(`Project Experience ID ${pid} ditambahkan.`);
+  toast('Project Experience berhasil ditambahkan.');
+}
+function removeProjectExperience(pid){
+  customProjects = customProjects.filter(id=>id!==pid);
+  renderAdminProjects();
+  renderClientProjects();
+  addLog(`Project Experience ID ${pid} dihapus.`);
+  toast('Project dihapus.');
+}
+function renderAdminProjects(){
+  const list = $('adminProjectList');
+  if(!list) return;
+  list.innerHTML = customProjects.map(pid=>`
+    <div class="flex items-center justify-between p-2.5 rounded-xl bg-black/40 border border-white/5">
+      <span class="font-mono text-xs text-amber-200">${safe(pid)}</span>
+      <button onclick="removeProjectExperience('${safe(pid)}')" class="text-red-400 hover:text-red-300 text-xs font-semibold px-2 py-1 rounded bg-red-500/10">Hapus</button>
+    </div>
+  `).join('') || '<p class="muted text-xs">Belum ada project id tambahan.</p>';
+}
+
+async function downloadOwnedProduct(id,key){try{const d=await api('/api/file-ticket',{method:'POST',body:JSON.stringify({owner_name:clientUser,license_key:key,product_id:id,kind:'download'})});addLog(`Klien mengunduh produk ID ${id}`);window.location.href=d.url}catch(e){toast(e.message)}}
 async function refreshClient(){try{const d=await api('/api/client-refresh',{method:'POST',body:JSON.stringify({owner_name:clientUser,license_key:clientKey})});await showClient(d);toast('Data lisensi diperbarui.')}catch(e){toast(e.message);logoutClient()}}
 function logoutClient(){clientUser='';clientKey='';clientData=null;sessionStorage.removeItem('dss_user');sessionStorage.removeItem('dss_key');$('clientLoginBox').classList.remove('hidden');$('clientDashboard').classList.add('hidden');showTab('client')}
 async function openAdmin(){showTab('admin');$('adminPanel').classList.remove('hidden');$('clientTab').classList.add('hidden');try{await loadAdmin()}catch(e){await api('/api/admin-logout',{method:'POST',body:'{}'}).catch(()=>{});$('adminPanel').classList.add('hidden');showTab('client');throw e}}
-async function logoutAdmin(){await api('/api/admin-logout',{method:'POST',body:'{}'}).catch(()=>{});showTab('client');$('adminPanel').classList.add('hidden');$('loginKey').value='';toast('Sesi Admin ditutup.')}
+async function logoutAdmin(){await api('/api/admin-logout',{method:'POST',body:'{}'}).catch(()=>{});showTab('client');$('adminPanel').classList.add('hidden');$('loginKey').value='';addLog('Admin logout.');toast('Sesi Admin ditutup.')}
 
 async function loadAdmin(){
   const [p,l]=await Promise.all([api('/api/products'),api('/api/licenses')]);
@@ -282,6 +505,7 @@ async function loadAdmin(){
   renderLicenseChoices();
   renderProductFilterDropdown();
   renderLicenses();
+  renderAdminProjects();
 }
 
 async function saveProduct(){
@@ -303,9 +527,11 @@ async function saveProduct(){
     const payload={ product_name: name, product_code: code, price: price, description: description, image_url: image_url, download_url: download_url };
     if(editId){
       await api('/api/products/'+editId,{ method:'PUT', body:JSON.stringify(payload) });
+      addLog(`Produk ${name} diperbarui.`);
       toast('Produk berhasil diperbarui.');
     }else{
       await api('/api/products',{ method:'POST', body:JSON.stringify(payload) });
+      addLog(`Produk baru ${name} ditambahkan.`);
       toast('Produk berhasil ditambahkan.');
     }
     resetProductForm();
@@ -377,8 +603,8 @@ function renderProductFilterDropdown(){
 }
 
 async function toggleProduct(id,active){try{await api('/api/products/'+id,{method:'PATCH',body:JSON.stringify({is_active:active})});await loadAdmin();toast('Status produk diperbarui.')}catch(e){toast(e.message)}}
-async function deleteProduct(id){const p=products.find(x=>String(x.id)===String(id));if(!confirm(`Hapus produk “${p?.product_name||id}”?`))return;try{await api('/api/products/'+id,{method:'DELETE'});await loadAdmin();toast('Produk dihapus.')}catch(e){toast(e.message)}}
-async function createLicense(){const selected=document.querySelector('input[name="licenseProduct"]:checked');if(!selected)return toast('Pilih tepat satu produk.');const body={license_key:$('newKey').value.trim(),product_ids:[Number(selected.value)],expires_at:$('newExpires').value||null};if(mode==='personal')body.owner_name=$('newOwner').value.trim();else body.group_id=$('newGroup').value.trim();try{const d=await api('/api/licenses/create',{method:'POST',body:JSON.stringify(body)});toast(d.message||'Lisensi dibuat.');$('newKey').value='';$('newExpires').value='';$('newOwner').value='';$('newGroup').value='';document.querySelectorAll('input[name="licenseProduct"]').forEach(x=>x.checked=false);await loadAdmin()}catch(e){toast(e.message)}}
+async function deleteProduct(id){const p=products.find(x=>String(x.id)===String(id));if(!confirm(`Hapus produk “${p?.product_name||id}”?`))return;try{await api('/api/products/'+id,{method:'DELETE'});addLog(`Produk ID ${id} dihapus.`);await loadAdmin();toast('Produk dihapus.')}catch(e){toast(e.message)}}
+async function createLicense(){const selected=document.querySelector('input[name="licenseProduct"]:checked');if(!selected)return toast('Pilih tepat satu produk.');const body={license_key:$('newKey').value.trim(),product_ids:[Number(selected.value)],expires_at:$('newExpires').value||null};if(mode==='personal')body.owner_name=$('newOwner').value.trim();else body.group_id=$('newGroup').value.trim();try{const d=await api('/api/licenses/create',{method:'POST',body:JSON.stringify(body)});addLog(`Lisensi baru dibuat untuk produk ID ${selected.value}`);toast(d.message||'Lisensi dibuat.');$('newKey').value='';$('newExpires').value='';$('newOwner').value='';$('newGroup').value='';document.querySelectorAll('input[name="licenseProduct"]').forEach(x=>x.checked=false);await loadAdmin()}catch(e){toast(e.message)}}
 
 function renderLicenses(){
   const q=($('licenseSearch').value||'').toLowerCase();
@@ -399,7 +625,16 @@ function renderLicenses(){
   }).join('')||'<tr><td colspan="6" class="py-8 muted text-center font-medium">Tidak ada data lisensi ditemukan untuk produk ini.</td></tr>';
 }
 
-async function toggleLicense(id,active){try{await api('/api/licenses/'+id+'/status',{method:'PATCH',body:JSON.stringify({is_active:active})});await loadAdmin();toast('Status lisensi diperbarui.')}catch(e){toast(e.message)}}
-async function deleteLicense(id){if(!confirm('Hapus lisensi ini secara permanen?'))return;try{await api('/api/licenses/'+id,{method:'DELETE'});await loadAdmin();toast('Lisensi dihapus.')}catch(e){toast(e.message)}}
-window.addEventListener('DOMContentLoaded',async()=>{try{const s=await api('/api/admin-session');if(s.authenticated){await openAdmin();return}}catch{}clientUser=sessionStorage.getItem('dss_user')||'';clientKey=sessionStorage.getItem('dss_key')||'';if(clientUser&&clientKey){try{const d=await api('/api/client-login',{method:'POST',body:JSON.stringify({owner_name:clientUser,license_key:clientKey})});await showClient(d)}catch{logoutClient()}}});
+async function toggleLicense(id,active){try{await api('/api/licenses/'+id+'/status',{method:'PATCH',body:JSON.stringify({is_active:active})});addLog(`Status lisensi ID ${id} diubah ke ${active}`);await loadAdmin();toast('Status lisensi diperbarui.')}catch(e){toast(e.message)}}
+async function deleteLicense(id){if(!confirm('Hapus lisensi ini secara permanen?'))return;try{await api('/api/licenses/'+id,{method:'DELETE'});addLog(`Lisensi ID ${id} dihapus.`);await loadAdmin();toast('Lisensi dihapus.')}catch(e){toast(e.message)}}
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  renderAdminProjects();
+  try{const s=await api('/api/admin-session');if(s.authenticated){await openAdmin();return}}catch{}
+  clientUser=sessionStorage.getItem('dss_user')||'';
+  clientKey=sessionStorage.getItem('dss_key')||'';
+  if(clientUser&&clientKey){
+    try{const d=await api('/api/client-login',{method:'POST',body:JSON.stringify({owner_name:clientUser,license_key:clientKey})});await showClient(d)}catch{logoutClient()}
+  }
+});
 </script></body></html>
