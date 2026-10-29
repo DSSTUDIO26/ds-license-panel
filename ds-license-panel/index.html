@@ -155,7 +155,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
   <span id="toastText" class="text-white font-semibold">Notifikasi sistem aktif</span>
 </div>
 
-<!-- Header Console Enterprise -->
+<!-- Header Console Enterprise (Badge Online Dirapikan & Tidak Mepet) -->
 <header class="glass sticky top-0 z-40 border-b border-white/10 shadow-2xl">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
     <div class="flex items-center gap-4 min-w-0">
@@ -163,14 +163,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
         <div class="absolute -inset-1 bg-gradient-to-r from-amber-500 to-indigo-600 rounded-2xl blur opacity-40 group-hover:opacity-80 transition duration-500"></div>
         <img class="relative w-11 h-11 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-lg" alt="DSS Logo" src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true">
       </div>
-      <div class="min-w-0">
-        <div class="font-extrabold tracking-wide text-sm sm:text-base truncate text-white flex items-center gap-2">
-          DRAGON STELL STUDIO
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span> ONLINE
+      <div class="min-w-0 flex flex-col justify-center">
+        <div class="font-extrabold tracking-wide text-xs sm:text-base truncate text-white flex items-center gap-3">
+          <span>DRAGON STELL STUDIO</span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5"></span> ONLINE
           </span>
         </div>
-        <div class="text-[9px] tracking-[0.25em] text-amber-400/90 font-bold uppercase">Enterprise Licensing Console</div>
+        <div class="text-[9px] tracking-[0.25em] text-amber-400/90 font-bold uppercase mt-0.5">Enterprise Licensing Console</div>
       </div>
     </div>
     
@@ -285,8 +285,23 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
         </button>
       </nav>
 
-      <!-- Sub-Tab: Home -->
+      <!-- Sub-Tab: Home (Diperkaya Announcement & Quick Actions) -->
       <div id="client-home" class="client-page space-y-6 animate-fade">
+        <div class="glass-card rounded-3xl p-6 sm:p-7 border border-amber-500/30 relative overflow-hidden flex items-center gap-5 shadow-2xl">
+          <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
+            <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+          </div>
+          <div class="space-y-1 relative z-10 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">Informasi Sistem</span>
+              <span class="text-[10px] muted">Hari Ini</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-extrabold text-white truncate">Ekosistem Dragon Stell Studio Berjalan Optimal</h3>
+            <p class="muted text-xs leading-relaxed">Semua layanan verifikasi lisensi dan auto-tracking place ID aktif sepenuhnya tanpa kendala.</p>
+          </div>
+        </div>
+
         <div class="grid sm:grid-cols-3 gap-5">
           <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden group">
             <p class="muted text-xs font-bold uppercase tracking-wider flex items-center gap-2"><svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> Produk Dimiliki</p>
@@ -308,10 +323,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
         <div class="glass-card rounded-3xl p-8 shadow-2xl space-y-5 border border-white/10 relative overflow-hidden">
           <div class="space-y-1.5 relative z-10">
             <span class="text-amber-400 text-[10px] font-extrabold tracking-widest uppercase flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg> Management Portal</span>
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Selamat Datang di Portal Eksklusif Dragon Stell Studio</h2>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Pusat Kontrol Ekosistem Dragon Stell</h2>
           </div>
           <p class="muted text-sm leading-relaxed relative z-10 max-w-3xl">
-            Akun Anda terautentikasi secara aman melalui sistem verifikasi API Roblox. Jelajahi katalog di menu <b class="text-white">Showcase Produk</b> atau tinjau statistik dan performa dari <b class="text-white">Project Experience</b> yang sedang berjalan.
+            Gunakan navigasi di atas untuk meninjau produk yang Anda miliki, mengunduh file update terbaru secara instan, atau memantau performa game Roblox Anda yang terhubung secara otomatis ke sistem kami.
           </p>
           <div class="pt-2 flex flex-wrap gap-3.5 relative z-10">
             <button type="button" onclick="showClientTab('showcase')" class="gold-btn rounded-2xl px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer">
@@ -338,7 +353,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
         <div id="clientProducts" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
 
-      <!-- Sub-Tab: Licenses -->
+      <!-- Sub-Tab: Licenses (Dilengkapi Tombol Auto-Copy Key) -->
       <div id="client-licenses" class="client-page hidden space-y-6 animate-fade">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Lisensi & Unduhan Saya</h2>
@@ -509,6 +524,19 @@ function toast(s) {
   setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3200);
 }
 
+function copyToClipboard(text, btnElement) {
+  navigator.clipboard.writeText(text).then(() => {
+    toast('License key berhasil disalin ke clipboard!');
+    if(btnElement) {
+      const originalHTML = btnElement.innerHTML;
+      btnElement.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Tersalin!`;
+      setTimeout(() => { btnElement.innerHTML = originalHTML; }, 2000);
+    }
+  }).catch(() => {
+    toast('Gagal menyalin key.');
+  });
+}
+
 function showMainTab(tabName) {
   const clientTab = $('clientTab'), adminTab = $('adminTab');
   if (tabName === 'admin') {
@@ -626,7 +654,8 @@ async function showClient(d) {
   if(cLicenses) {
     cLicenses.innerHTML = owned.map(l => {
       const active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date()), p = l.product;
-      return `<article class="product-card p-6 shadow-xl"><div class="flex items-start justify-between gap-2"><div><span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">${l.owner_type==='group'?'LISENSI KOMUNITAS':'LISENSI PRIBADI'}</span><h3 class="font-bold text-base mt-2.5 text-white">${safe(p?.product_name||'Produk tidak terhubung')}</h3><p class="muted text-xs mt-0.5">${safe(p?.product_code||'-')}</p></div><span class="text-[9px] font-extrabold rounded-full px-3 py-1 uppercase tracking-wider ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'AKTIF':'EXPIRED'}</span></div><div class="mt-5 space-y-2 text-xs"><div class="flex justify-between"><span class="muted">Pemilik:</span> <span class="font-medium text-white">${safe(l.owner_display_name||d.owner_name)}</span></div>${l.group_id?`<div class="flex justify-between"><span class="muted">Group ID:</span> <span class="font-mono text-white">${safe(l.group_id)}</span></div>`:''}<div class="flex flex-col gap-1.5 pt-1"><span class="muted">Key:</span><code class="break-all text-[11px] bg-black/50 p-2.5 rounded-xl border border-white/5 font-mono text-amber-200/90">${safe(l.license_key)}</code></div><div class="flex justify-between pt-1"><span class="muted">Kedaluwarsa:</span> <span class="font-medium text-white">${safe(fmtDate(l.expires_at))}</span></div></div><div class="mt-6">${active&&p?.download_url&&p?.product_active?`<button type="button" class="gold-btn rounded-xl w-full py-3.5 text-xs font-extrabold tracking-wide uppercase shadow-md cursor-pointer flex items-center justify-center gap-2" onclick="downloadOwnedProduct(${p.id},decodeURIComponent('${encodeURIComponent(String(l.license_key)).replace(/'/g,'%27')}'))"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download Produk (.rbxm)</button>`:'<div class="text-center py-2.5 text-xs muted bg-white/5 rounded-xl border border-white/5 font-medium">Download tidak tersedia</div>'}</div></article>`
+      const safeKey = safe(l.license_key);
+      return `<article class="product-card p-6 shadow-xl"><div class="flex items-start justify-between gap-2"><div><span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">${l.owner_type==='group'?'LISENSI KOMUNITAS':'LISENSI PRIBADI'}</span><h3 class="font-bold text-base mt-2.5 text-white">${safe(p?.product_name||'Produk tidak terhubung')}</h3><p class="muted text-xs mt-0.5">${safe(p?.product_code||'-')}</p></div><span class="text-[9px] font-extrabold rounded-full px-3 py-1 uppercase tracking-wider ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'AKTIF':'EXPIRED'}</span></div><div class="mt-5 space-y-2 text-xs"><div class="flex justify-between"><span class="muted">Pemilik:</span> <span class="font-medium text-white">${safe(l.owner_display_name||d.owner_name)}</span></div>${l.group_id?`<div class="flex justify-between"><span class="muted">Group ID:</span> <span class="font-mono text-white">${safe(l.group_id)}</span></div>`:''}<div class="flex flex-col gap-1.5 pt-1"><div class="flex justify-between items-center"><span class="muted">Key:</span><button type="button" onclick="copyToClipboard('${safeKey}', this)" class="text-[10px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg> Salin Key</button></div><code class="break-all text-[11px] bg-black/50 p-2.5 rounded-xl border border-white/5 font-mono text-amber-200/90">${safeKey}</code></div><div class="flex justify-between pt-1"><span class="muted">Kedaluwarsa:</span> <span class="font-medium text-white">${safe(fmtDate(l.expires_at))}</span></div></div><div class="mt-6">${active&&p?.download_url&&p?.product_active?`<button type="button" class="gold-btn rounded-xl w-full py-3.5 text-xs font-extrabold tracking-wide uppercase shadow-md cursor-pointer flex items-center justify-center gap-2" onclick="downloadOwnedProduct(${p.id},decodeURIComponent('${encodeURIComponent(String(l.license_key)).replace(/'/g,'%27')}'))"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download Produk (.rbxm)</button>`:'<div class="text-center py-2.5 text-xs muted bg-white/5 rounded-xl border border-white/5 font-medium">Download tidak tersedia</div>'}</div></article>`
     }).join('') || '<div class="glass-card rounded-2xl p-8 muted text-xs sm:col-span-2 lg:col-span-3 text-center">Belum ada lisensi terdaftar untuk akun atau grup ini.</div>';
   }
 
@@ -704,7 +733,6 @@ async function renderClientProjects() {
     projectInfos.push({ pid, ...info });
   }
 
-  // Pengurutan otomatis berdasarkan jumlah kunjungan terbanyak ke tersedikit
   projectInfos.sort((a, b) => b.rawVisits - a.rawVisits);
 
   let html = '';
