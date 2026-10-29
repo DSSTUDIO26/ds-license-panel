@@ -1,4 +1,4 @@
-// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Update Product URL Support
+// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Product Price Support
 'use strict';
 const express = require('express');
 const { Pool } = require('pg');
@@ -151,7 +151,7 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS products(
       id BIGSERIAL PRIMARY KEY, product_code VARCHAR(80) UNIQUE NOT NULL,
       product_name VARCHAR(120) NOT NULL UNIQUE, description TEXT,
-      image_url TEXT, download_url TEXT,
+      price VARCHAR(64), image_url TEXT, download_url TEXT,
       is_active BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -166,6 +166,7 @@ async function initDB() {
         (owner_user_id IS NULL AND group_id IS NOT NULL)
       )
     );
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS price VARCHAR(64);
     ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;
     ALTER TABLE products ADD COLUMN IF NOT EXISTS download_url TEXT;
     CREATE TABLE IF NOT EXISTS license_products(
@@ -179,7 +180,7 @@ async function initDB() {
 
 async function listLicenseProducts(id) {
   const { rows } = await pool.query(`
-    SELECT p.id,p.product_code,p.product_name,p.description,p.image_url,p.download_url,
+    SELECT p.id,p.product_code,p.product_name,p.description,p.price,p.image_url,p.download_url,
       p.is_active product_active
     FROM license_products lp JOIN products p ON p.id=lp.product_id WHERE lp.license_id=$1 ORDER BY p.product_name
   `, [id]);
@@ -208,7 +209,7 @@ async function listOwnedPortalLicenses(user) {
       owner_avatar_url: group?.groupIconUrl || user.avatarUrl,
       group_id: license.group_id || null,
       product: product ? { id: product.id, product_name: product.product_name,
-        product_code: product.product_code, description: product.description,
+        product_code: product.product_code, description: product.description, price: product.price,
         image_url: product.image_url, download_url: product.download_url,
         product_active: !!product.product_active } : null
     });
@@ -252,7 +253,7 @@ async function clientLoginHandler(req, res) {
     const v = await findValidPortalLicense(username, key);
     if (v.error) return res.status(v.status).json({ success: false, message: v.error });
     const [catalog, ownedLicenses] = await Promise.all([
-      pool.query(`SELECT id,product_code,product_name,description,image_url,download_url,is_active
+      pool.query(`SELECT id,product_code,product_name,description,price,image_url,download_url,is_active
         FROM products WHERE is_active=TRUE ORDER BY created_at DESC, product_name ASC`),
       listOwnedPortalLicenses(v.user)
     ]);
@@ -263,7 +264,7 @@ async function clientLoginHandler(req, res) {
       owner_user_id: v.user.userId, owner_type: v.group ? 'group' : 'user',
       license: { id: v.license.id, license_key: v.license.license_key, expires_at: v.license.expires_at, is_active: v.license.is_active, group_id: v.license.group_id || null },
       data: catalog.rows.map(p => ({ id: p.id, product: p.product_name, product_code: p.product_code,
-        description: p.description, image_url: p.image_url, download_url: p.download_url })),
+        description: p.description, price: p.price, image_url: p.image_url, download_url: p.download_url })),
       owned_licenses: ownedLicenses
     });
   } catch (e) {
@@ -342,7 +343,7 @@ app.post('/api/game-verify', async (req, res) => {
 app.get('/api/products', verifyAdmin, async (_req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT id,product_code,product_name,description,image_url,download_url,is_active,created_at,updated_at
+      SELECT id,product_code,product_name,description,price,image_url,download_url,is_active,created_at,updated_at
       FROM products ORDER BY product_name
     `);
     res.json({ success: true, products: rows });
@@ -351,14 +352,15 @@ app.get('/api/products', verifyAdmin, async (_req, res) => {
 
 app.post('/api/products', verifyAdmin, async (req, res) => {
   const name = cleanText(req.body?.product_name, 120), description = cleanText(req.body?.description, 1000);
+  const price = cleanText(req.body?.price, 64);
   const image = validHttpUrl(req.body?.image_url), download = validHttpUrl(req.body?.download_url);
   if (!name) return res.status(400).json({ success: false, message: 'Nama produk wajib diisi.' });
   const code = cleanText(req.body?.product_code, 80).toUpperCase() || name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70);
   if (!code) return res.status(400).json({ success: false, message: 'Kode produk tidak valid.' });
   try {
     const { rows } = await pool.query(
-      'INSERT INTO products(product_code,product_name,description,image_url,download_url) VALUES($1,$2,$3,$4,$5) RETURNING *',
-      [code, name, description || null, image, download]
+      'INSERT INTO products(product_code,product_name,description,price,image_url,download_url) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',
+      [code, name, description || null, price || null, image, download]
     );
     res.status(201).json({ success: true, product: rows[0] });
   } catch (e) {
@@ -367,17 +369,17 @@ app.post('/api/products', verifyAdmin, async (req, res) => {
   }
 });
 
-// Endpoint untuk Edit / Update Produk yang sudah ada
 app.put('/api/products/:id', verifyAdmin, async (req, res) => {
   const id = cleanText(req.params.id, 20);
   const name = cleanText(req.body?.product_name, 120), description = cleanText(req.body?.description, 1000);
+  const price = cleanText(req.body?.price, 64);
   const image = validHttpUrl(req.body?.image_url), download = validHttpUrl(req.body?.download_url);
   if (!/^\d+$/.test(id) || !name) return res.status(400).json({ success: false, message: 'ID atau nama produk tidak valid.' });
   const code = cleanText(req.body?.product_code, 80).toUpperCase() || name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70);
   try {
     const { rows } = await pool.query(
-      'UPDATE products SET product_code=$1, product_name=$2, description=$3, image_url=$4, download_url=$5, updated_at=NOW() WHERE id=$6 RETURNING *',
-      [code, name, description || null, image, download, id]
+      'UPDATE products SET product_code=$1, product_name=$2, description=$3, price=$4, image_url=$5, download_url=$6, updated_at=NOW() WHERE id=$7 RETURNING *',
+      [code, name, description || null, price || null, image, download, id]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' });
     res.json({ success: true, product: rows[0] });
