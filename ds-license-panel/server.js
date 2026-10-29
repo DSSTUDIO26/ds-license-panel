@@ -9,8 +9,7 @@ const { put, get, del } = require('@vercel/blob');
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
-// Dinaikkan limit JSON-nya hingga 60MB agar muat menampung file .rbxm / arsip besar secara langsung
-app.use(express.json({ limit: '60mb' }));
+app.use(express.json({ limit: '60mb' })); // Dinaikkan agar muat file langsung
 
 const PORT = Number(process.env.PORT || 3000);
 const API_SECRET = process.env.API_SECRET || '';
@@ -356,7 +355,7 @@ app.post('/api/admin-logout', (req, res) => {
   res.json({ success: true, message: 'Sesi Admin ditutup.' });
 });
 
-// Endpoint Verifikasi Game (Dengan toleransi BTRIM/LOWER & Studio Bypass)
+// Endpoint Verifikasi Game
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24), productName = cleanText(req.body?.product_name, 120);
   if (!placeId || !productName) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id dan product_name wajib.' });
@@ -411,6 +410,7 @@ app.get('/api/products', verifyAdmin, async (_req, res) => {
     res.json({ success: true, products: rows });
   } catch (e) { console.error(e.message); res.status(500).json({ success: false, message: 'Gagal membaca katalog.' }); }
 });
+
 app.post('/api/products', verifyAdmin, async (req, res) => {
   const name = cleanText(req.body?.product_name, 120), description = cleanText(req.body?.description, 1000);
   const image = validHttpUrl(req.body?.image_url), download = validHttpUrl(req.body?.download_url);
@@ -429,6 +429,7 @@ app.post('/api/products', verifyAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: 'Gagal membuat produk.' });
   }
 });
+
 app.patch('/api/products/:id', verifyAdmin, async (req, res) => {
   const id = cleanText(req.params.id, 20), active = req.body?.is_active;
   if (!/^\d+$/.test(id) || typeof active !== 'boolean') return res.status(400).json({ success: false, message: 'ID atau status tidak valid.' });
@@ -438,6 +439,7 @@ app.patch('/api/products/:id', verifyAdmin, async (req, res) => {
     res.json({ success: true, product: rows[0] });
   } catch { res.status(500).json({ success: false, message: 'Gagal memperbarui produk.' }); }
 });
+
 app.delete('/api/products/:id', verifyAdmin, async (req, res) => {
   const id = cleanText(req.params.id, 20);
   if (!/^\d+$/.test(id)) return res.status(400).json({ success: false, message: 'ID tidak valid.' });
@@ -456,7 +458,7 @@ app.delete('/api/products/:id', verifyAdmin, async (req, res) => {
   finally { c.release(); }
 });
 
-// DIRECT UPLOAD (Mendukung .rbxm, .rbxmx, .zip tanpa chunk timeout)
+// DIRECT UPLOAD (Langsung terima file .rbxm dan gambar secara stabil, tanpa chunk/error)
 app.post('/api/uploads/product-file', verifyAdmin, async (req, res) => {
   const productId = cleanText(String(req.body?.product_id ?? ''), 20);
   const kind = ['image', 'download'].includes(req.body?.kind) ? req.body.kind : '';
@@ -505,11 +507,6 @@ app.post('/api/uploads/product-file', verifyAdmin, async (req, res) => {
   }
 });
 
-// Endpoint kompatibilitas opsional untuk sesi upload lama
-app.post('/api/uploads/start', verifyAdmin, (req, res) => {
-  res.json({ success: true, direct_upload: true });
-});
-
 app.get('/api/licenses', verifyAdmin, async (_req, res) => {
   try {
     const { rows } = await pool.query(`
@@ -535,6 +532,7 @@ app.get('/api/licenses', verifyAdmin, async (_req, res) => {
     res.json({ success: true, licenses: enhanced });
   } catch (e) { console.error(e.message); res.status(500).json({ success: false, message: 'Gagal membaca lisensi.' }); }
 });
+
 app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
   const key = cleanText(req.body?.license_key, 255), ownerInput = cleanText(req.body?.owner_name, 64);
   const groupId = cleanText(String(req.body?.group_id ?? ''), 32) || null;
@@ -573,6 +571,7 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
     console.error(e.message); res.status(500).json({ success: false, message: 'Gagal membuat lisensi.' });
   } finally { c.release(); }
 });
+
 app.patch('/api/licenses/:id/status', verifyAdmin, async (req, res) => {
   const id = cleanText(req.params.id, 20), active = req.body?.is_active;
   if (!/^\d+$/.test(id) || typeof active !== 'boolean') return res.status(400).json({ success: false, message: 'ID/status tidak valid.' });
@@ -582,6 +581,7 @@ app.patch('/api/licenses/:id/status', verifyAdmin, async (req, res) => {
     res.json({ success: true, license: rows[0] });
   } catch { res.status(500).json({ success: false, message: 'Gagal mengubah status.' }); }
 });
+
 app.delete('/api/licenses/:id', verifyAdmin, async (req, res) => {
   const id = cleanText(req.params.id, 20);
   if (!/^\d+$/.test(id)) return res.status(400).json({ success: false, message: 'ID tidak valid.' });
@@ -638,6 +638,7 @@ app.post('/api/file-ticket', async (req, res) => {
     res.json({ success: true, url: `/api/private-file/${token}` });
   } catch (e) { console.error('file-ticket:', e.message); res.status(500).json({ success: false, message: 'Gagal membuat akses file.' }); }
 });
+
 app.get('/api/private-file/:token', async (req, res) => {
   const token = cleanText(req.params.token, 64);
   if (!/^[a-f0-9]{64}$/.test(token)) return res.status(404).send('File tidak ditemukan.');
