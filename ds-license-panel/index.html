@@ -72,27 +72,93 @@
 <div class="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] muted"><span>Proteksi Sistem Aktif</span><span class="text-amber-400 font-medium">Encrypted Session</span></div>
 </div>
 <div id="clientDashboard" class="hidden space-y-6 animate-fade">
-<div class="glass rounded-2xl p-4 sm:p-6 flex flex-wrap gap-4 items-center justify-between shadow-xl">
-<div class="flex items-center gap-4 min-w-0"><img id="clientAvatar" class="w-14 h-14 rounded-2xl bg-black border-2 border-amber-400/30 object-cover shadow-md" alt="Avatar"><div class="min-w-0"><p class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Akun Terverifikasi</p><b id="clientName" class="text-base sm:text-lg block truncate mt-0.5 text-white"></b><p id="clientExpiry" class="muted text-xs mt-0.5"></p></div></div>
-<div class="flex gap-2"><button onclick="refreshClient()" class="btn border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white/5 hover:bg-white/10">Refresh</button><button onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/5 hover:bg-red-500/10">Keluar</button></div>
+<!-- Profil Header yang Profesional -->
+<div class="glass rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center justify-between shadow-2xl relative overflow-hidden border border-amber-500/20">
+<div class="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-center gap-5 min-w-0 relative z-10">
+<div class="relative">
+  <img id="clientAvatar" class="w-20 h-20 rounded-2xl bg-black border-2 border-amber-400/50 object-cover shadow-xl" alt="Avatar">
+  <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-[#090a0e] flex items-center justify-center text-[10px] text-white font-bold" title="Terverifikasi">✓</span>
 </div>
-<nav class="glass rounded-2xl p-1.5 flex gap-2 overflow-x-auto shadow-sm">
-<button id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-5 py-2.5 text-xs font-bold whitespace-nowrap shadow-sm transition-all">Beranda</button>
-<button id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-5 py-2.5 text-xs font-semibold whitespace-nowrap transition-all">Showcase Produk</button>
-<button id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-5 py-2.5 text-xs font-semibold whitespace-nowrap transition-all">Lisensi Saya</button>
+<div class="min-w-0 space-y-1">
+  <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">Roblox Verified Account</div>
+  <b id="clientName" class="text-xl sm:text-2xl font-extrabold block truncate text-white"></b>
+  <p id="clientExpiry" class="muted text-xs font-medium"></p>
+</div>
+</div>
+<div class="flex items-center gap-3 relative z-10">
+  <button onclick="refreshClient()" class="btn border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white/5 hover:bg-white/10 flex items-center gap-2">🔄 Refresh Data</button>
+  <button onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20">Keluar</button>
+</div>
+</div>
+
+<!-- Navigasi Tab Profesional -->
+<nav class="glass rounded-2xl p-2 flex gap-2 overflow-x-auto shadow-lg border border-white/10">
+<button id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2">🏠 Beranda Utama</button>
+<button id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2">📦 Showcase Produk</button>
+<button id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2">🔑 Lisensi & Unduhan Saya</button>
 </nav>
-<div id="client-home" class="client-page space-y-5 animate-fade">
-<div class="grid sm:grid-cols-3 gap-4">
-<div class="glass rounded-2xl p-5 shadow-lg"><p class="muted text-xs font-medium">Produk Dimiliki</p><p id="statProducts" class="text-3xl font-extrabold text-amber-300 mt-2">0</p></div>
-<div class="glass rounded-2xl p-5 shadow-lg"><p class="muted text-xs font-medium">Status Akun</p><p class="text-lg font-bold text-emerald-400 mt-2 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>Aktif & Aman</p></div>
-<div class="glass rounded-2xl p-5 shadow-lg"><p class="muted text-xs font-medium">Tipe Akses</p><p id="statAccessType" class="text-lg font-bold text-white mt-2">Lisensi Resmi</p></div>
+
+<!-- Tab Beranda -->
+<div id="client-home" class="client-page space-y-6 animate-fade">
+<div class="grid sm:grid-cols-3 gap-5">
+<div class="glass rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden">
+  <div class="absolute -right-4 -bottom-4 text-amber-500/10 text-6xl font-extrabold pointer-events-none">01</div>
+  <p class="muted text-xs font-bold uppercase tracking-wider">Produk Dimiliki</p>
+  <p id="statProducts" class="text-4xl font-extrabold text-amber-300 mt-3">0</p>
+  <p class="text-[11px] muted mt-1">Lisensi aktif terhubung</p>
 </div>
-<div class="glass rounded-2xl p-6 sm:p-8 shadow-xl space-y-3"><h2 class="font-bold text-lg text-white">Selamat Datang di Creator Stell Console</h2><p class="muted text-xs sm:text-sm leading-relaxed">Kelola dan jelajahi seluruh produk eksklusif dari Dragon Stell Studio. Gunakan menu Showcase untuk melihat katalog lengkap atau menu Lisensi Saya untuk mengunduh produk terikat.</p><button onclick="showClientTab('showcase')" class="btn gold rounded-xl px-5 py-2.5 text-xs font-bold inline-flex items-center gap-2 mt-2 shadow-md">Jelajahi Showcase Produk →</button></div>
+<div class="glass rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden">
+  <div class="absolute -right-4 -bottom-4 text-emerald-500/10 text-6xl font-extrabold pointer-events-none">02</div>
+  <p class="muted text-xs font-bold uppercase tracking-wider">Status Akun</p>
+  <p class="text-xl font-extrabold text-emerald-400 mt-3 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>Terverifikasi Aman</p>
+  <p class="text-[11px] muted mt-1">Sistem enkripsi aktif</p>
 </div>
-<div id="client-showcase" class="client-page hidden space-y-5 animate-fade"><div class="flex items-end justify-between gap-3"><div><h2 class="text-xl sm:text-2xl font-extrabold text-white">Showcase Produk</h2><p class="muted text-xs sm:text-sm mt-1">Katalog produk profesional berkualitas tinggi dari Dragon Stell Studio.</p></div><span id="productCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 shrink-0"></span></div><div id="clientProducts" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
-<div id="client-licenses" class="client-page hidden space-y-5 animate-fade"><h2 class="text-xl sm:text-2xl font-extrabold text-white">Lisensi Saya</h2><p class="muted text-xs sm:text-sm">Daftar hak akses dan file unduhan resmi yang terikat pada akun atau grup Anda.</p><div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div></div>
+<div class="glass rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden">
+  <div class="absolute -right-4 -bottom-4 text-blue-500/10 text-6xl font-extrabold pointer-events-none">03</div>
+  <p class="muted text-xs font-bold uppercase tracking-wider">Tipe Akses</p>
+  <p id="statAccessType" class="text-lg font-extrabold text-white mt-3">Lisensi Resmi</p>
+  <p class="text-[11px] muted mt-1">Akses penuh ekosistem</p>
+</div>
+</div>
+
+<div class="glass rounded-3xl p-8 shadow-2xl space-y-4 border border-white/10 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+<div class="space-y-1 relative z-10">
+  <span class="text-amber-400 text-[10px] font-extrabold tracking-widest uppercase">Creator Stell Dashboard</span>
+  <h2 class="text-2xl font-extrabold text-white">Selamat Datang di Portal Eksklusif Dragon Stell Studio</h2>
+</div>
+<p class="muted text-sm leading-relaxed relative z-10">
+  Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengunduh file aset berformat <code>.rbxm</code> resmi pada menu <b>Lisensi & Unduhan Saya</b>.
+</p>
+<div class="pt-2 flex flex-wrap gap-3 relative z-10">
+  <button onclick="showClientTab('showcase')" class="btn gold rounded-xl px-6 py-3 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/20">Jelajahi Showcase Produk →</button>
+  <button onclick="showClientTab('licenses')" class="btn border border-white/10 rounded-xl px-6 py-3 text-xs font-bold text-white bg-white/5 hover:bg-white/10">Buka Lisensi Saya 🔑</button>
+</div>
+</div>
+</div>
+
+<!-- Tab Showcase -->
+<div id="client-showcase" class="client-page hidden space-y-5 animate-fade">
+<div class="flex items-end justify-between gap-3">
+  <div><h2 class="text-xl sm:text-2xl font-extrabold text-white">Showcase Produk</h2><p class="muted text-xs sm:text-sm mt-1">Katalog produk profesional berkualitas tinggi dari Dragon Stell Studio.</p></div>
+  <span id="productCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 shrink-0"></span>
+</div>
+<div id="clientProducts" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</div>
+
+<!-- Tab Lisensi -->
+<div id="client-licenses" class="client-page hidden space-y-5 animate-fade">
+<div>
+  <h2 class="text-xl sm:text-2xl font-extrabold text-white">Lisensi & Unduhan Saya</h2>
+  <p class="muted text-xs sm:text-sm mt-1">Daftar hak akses dan file unduhan resmi yang terikat pada akun atau grup Anda.</p>
+</div>
+<div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+</div>
 </div>
 </section>
+
+<!-- Bagian Admin (Tetap Utuh) -->
 <section id="adminTab" class="hidden space-y-6 animate-fade">
 <div class="text-center py-3"><p class="text-amber-400 text-xs uppercase tracking-[0.3em] font-bold mb-2">Management Console</p><h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Admin Dashboard</h1><p class="muted text-xs sm:text-sm mt-2 max-w-md mx-auto">Kelola katalog produk, harga, URL Vercel Blob, dan lisensi client dengan aman.</p></div>
 <div id="adminPanel" class="hidden space-y-6">
@@ -157,7 +223,7 @@ function togglePasswordVisibility(){
 }
 
 async function portalLogin(){const username=$('loginUsername').value.trim(),credential=$('loginKey').value.trim();$('clientError').classList.add('hidden');if(!username||!credential)return toast('Username dan License Key wajib diisi.');const btn=$('portalLoginBtn');btn.disabled=true;btn.textContent='MEMVERIFIKASI...';try{const d=await api('/api/portal-login',{method:'POST',body:JSON.stringify({owner_name:username,credential})});if(d.access==='admin'){sessionStorage.removeItem('dss_user');sessionStorage.removeItem('dss_key');clientUser='';clientKey='';$('clientLoginBox').classList.remove('hidden');$('clientDashboard').classList.add('hidden');$('loginKey').value='';await openAdmin();toast('Akses Owner berhasil diverifikasi.');return}clientUser=d.owner_name;clientKey=credential;sessionStorage.setItem('dss_user',clientUser);sessionStorage.setItem('dss_key',clientKey);$('loginKey').value='';await showClient(d)}catch(e){$('clientError').textContent=e.message;$('clientError').classList.remove('hidden')}finally{btn.disabled=false;btn.textContent='Login Securely'}}
-function showClientTab(tab){for(const t of ['home','showcase','licenses']){$('client-'+t).classList.toggle('hidden',t!==tab);$('nav-'+t).className='client-nav '+(t===tab?'gold rounded-xl px-5 py-2.5 text-xs font-bold whitespace-nowrap shadow-sm transition-all':'text-gray-400 hover:text-white rounded-xl px-5 py-2.5 text-xs font-semibold whitespace-nowrap transition-all')}}
+function showClientTab(tab){for(const t of ['home','showcase','licenses']){$('client-'+t).classList.toggle('hidden',t!==tab);const btn=$('nav-'+t);if(btn){btn.className='client-nav '+(t===tab?'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2':'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2')}}}
 
 async function showClient(d){
   clientData=d;
@@ -165,7 +231,7 @@ async function showClient(d){
   $('clientDashboard').classList.remove('hidden');
   $('clientName').textContent=d.owner_display_name||d.owner_name||clientUser;
   $('clientAvatar').src=d.avatar_url||'';
-  $('clientExpiry').textContent='Roblox Verified · '+(d.owner_type==='group'?'Komunitas Grup':'Akun Pribadi');
+  $('clientExpiry').textContent='Roblox Verified Account · '+(d.owner_type==='group'?'Komunitas Grup':'Akun Pribadi');
   const catalog=d.data||[],owned=d.owned_licenses||[];
   $('productCount').textContent=catalog.length+' produk tersedia';
   $('statProducts').textContent=String(owned.filter(l=>l.is_active&&l.product).length);
