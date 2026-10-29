@@ -298,7 +298,7 @@ app.post('/api/admin-logout', (req, res) => {
   res.json({ success: true, message: 'Sesi Admin ditutup.' });
 });
 
-// Endpoint khusus untuk mengambil detail game/map asli secara aman di server
+// Endpoint khusus untuk mengambil detail game/map asli beserta jumlah kunjungan (visits)
 app.post('/api/game-details', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
   if (!placeId) return res.status(400).json({ success: false, message: 'place_id wajib diisi.' });
@@ -306,6 +306,7 @@ app.post('/api/game-details', async (req, res) => {
     let name = `Experience #${placeId}`;
     let icon = 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
     let creatorName = 'Dragon Stell Studio';
+    let visits = 0;
 
     const universeRes = await robloxFetch(`https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`);
     const universeId = universeRes?.universeId;
@@ -315,6 +316,7 @@ app.post('/api/game-details', async (req, res) => {
       const gameData = gameRes?.data?.[0];
       if (gameData?.name) name = gameData.name;
       if (gameData?.creator?.name) creatorName = gameData.creator.name;
+      if (gameData?.visits !== undefined) visits = gameData.visits;
     }
 
     try {
@@ -323,10 +325,10 @@ app.post('/api/game-details', async (req, res) => {
       if (thumbUrl) icon = thumbUrl;
     } catch {}
 
-    res.json({ success: true, name, icon, creatorName });
+    res.json({ success: true, name, icon, creatorName, visits });
   } catch (e) {
     console.error('game-details error:', e.message);
-    res.json({ success: true, name: `Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', creatorName: 'Dragon Stell Studio' });
+    res.json({ success: true, name: `Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', creatorName: 'Dragon Stell Studio', visits: 0 });
   }
 });
 
