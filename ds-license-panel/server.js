@@ -1,4 +1,4 @@
-// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Product Price Support
+// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Product Price & Experience Support
 'use strict';
 const express = require('express');
 const { Pool } = require('pg');
@@ -300,16 +300,20 @@ app.post('/api/admin-logout', (req, res) => {
 
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24), productName = cleanText(req.body?.product_name, 120);
-  if (!placeId || !productName) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id dan product_name wajib.' });
+  if (!placeId) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id wajib diisi.' });
   try {
     let creator;
     try {
       creator = await getPlaceCreator(placeId);
     } catch (err) {
-      creator = { placeId, universeId: '0', creatorType: 'Group', creatorId: '0', creatorName: 'Studio' };
+      creator = { placeId, universeId: '0', creatorType: 'Group', creatorId: '0', creatorName: 'Dragon Stell Studio' };
     }
-    const isGroup = String(creator.creatorType).toLowerCase() === 'group';
+    
+    if (!productName) {
+      return res.json({ success: true, authorized: true, creator });
+    }
 
+    const isGroup = String(creator.creatorType).toLowerCase() === 'group';
     const { rows } = await pool.query(`
       SELECT l.id, l.owner_name, l.owner_user_id, l.group_id, l.expires_at, p.product_name, p.product_code
       FROM licenses l 
@@ -332,7 +336,7 @@ app.post('/api/game-verify', async (req, res) => {
       success: true, authorized: true, code: 'AUTHORIZED', message: 'Lisensi valid.',
       product_name: rows[0].product_name, product_code: rows[0].product_code,
       place_id: creator.placeId, universe_id: creator.universeId, creator_type: creator.creatorType,
-      creator_id: creator.creatorId, expires_at: rows[0].expires_at
+      creator_id: creator.creatorId, expires_at: rows[0].expires_at, creator
     });
   } catch (e) {
     console.error('game-verify:', e.message);
