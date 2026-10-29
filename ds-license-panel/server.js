@@ -1,4 +1,4 @@
-// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Product Price & Experience Support
+// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Product Price & Auto-Experience Support
 'use strict';
 const express = require('express');
 const { Pool } = require('pg');
@@ -174,6 +174,12 @@ async function initDB() {
       product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
       PRIMARY KEY(license_id, product_id)
     );
+    CREATE TABLE IF NOT EXISTS project_experiences (
+      place_id VARCHAR(32) PRIMARY KEY,
+      product_name VARCHAR(120),
+      owner_id VARCHAR(32),
+      last_ping TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
   console.log('DSS schema ready.');
 }
@@ -331,16 +337,21 @@ app.post('/api/game-details', async (req, res) => {
   }
 });
 
+// Endpoint untuk verifikasi game dari Roblox script sekaligus auto-save project experience
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
-  if (!placeId) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id wajib diisi.' });
+  const productName = cleanText(req.body?.product_name, 120);
+
+  if (!placeId) return res.status(400).json({ success: false, message: 'place_id wajib diisi.' });
+
   try {
     let creator;
     try {
       creator = await getPlaceCreator(placeId);
-    } catch (err) {
-      return res.json({ success: true, product_name: null });
+    } catch {
+      return res.json({ success: true, authorized: false, product_name: null });
     }
+
     const isGroup = String(creator.creatorType).toLowerCase() === 'group';
     const { rows } = await pool.query(`
       SELECT p.product_name FROM licenses l 
@@ -355,10 +366,42 @@ app.post('/api/game-verify', async (req, res) => {
       LIMIT 1
     `, [isGroup, creator.creatorId]);
 
-    if (!rows.length) return res.json({ success: true, product_name: null });
-    res.json({ success: true, product_name: rows[0].product_name });
+    if (!rows.length) {
+      return res.json({ success: true, authorized: false, product_name: null });
+    }
+
+    // OTOMATIS MENYIMPAN PLACE ID KE DATABASE PROJECT EXPERIENCES
+    await pool.query(`
+      INSERT INTO project_experiences (place_id, product_name, owner_id, last_ping)
+      VALUES ($1, $2, $3, NOW())
+      ON CONFLICT (place_id) DO UPDATE 
+      SET last_ping = NOW(), product_name = EXCLUDED.product_name;
+    `, [placeId, rows[0].product_name, creator.creatorId]);
+
+    res.json({ success: true, authorized: true, product_name: rows[0].product_name });
   } catch (e) {
-    res.json({ success: true, product_name: null });
+    res.status(500).json({ success: false, authorized: false, product_name: null });
+  }
+});
+
+// Endpoint untuk mengambil daftar project experience yang otomatis terdaftar
+app.get('/api/auto-projects', async (_req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT place_id FROM project_experiences ORDER BY last_ping DESC');
+    res.json({ success: true, projects: rows.map(r => r.place_id) });
+  } catch {
+    res.status(500).json({ success: false, projects: [] });
+  }
+});
+
+// Endpoint untuk menghapus project experience otomatis
+app.delete('/api/auto-projects/:pid', verifyAdmin, async (req, res) => {
+  const pid = cleanText(req.params.pid, 24);
+  try {
+    await pool.query('DELETE FROM project_experiences WHERE place_id=$1', [pid]);
+    res.json({ success: true, message: 'Project experience dihapus.' });
+  } catch {
+    res.status(500).json({ success: false, message: 'Gagal menghapus project.' });
   }
 });
 
