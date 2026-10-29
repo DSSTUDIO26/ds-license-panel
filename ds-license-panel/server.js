@@ -10,8 +10,8 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-// Limit dinaikkan ke 50 MB untuk memuat data Base64 file tanpa terputus
-app.use(express.json({ limit: '50mb' }));
+// Limit JSON dinaikkan untuk keamanan request awal
+app.use(express.json({ limit: '10mb' }));
 
 const PORT = Number(process.env.PORT || 3000);
 const API_SECRET = process.env.API_SECRET || '';
@@ -19,7 +19,8 @@ const OWNER_ROBLOX_USER_ID = String(process.env.OWNER_ROBLOX_USER_ID || '9262435
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const COOKIE = 'dss_admin_session';
 const SESSION_MS = 8 * 60 * 60 * 1000;
-const MAX_FILE_SIZE = 40 * 1024 * 1024;
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const CHUNK_SIZE = 2 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 if (API_SECRET.length < 32) {
@@ -192,6 +193,11 @@ async function initDB() {
       product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
       PRIMARY KEY(license_id, product_id)
     );
+    CREATE TABLE IF NOT EXISTS dss_upload_sessions(
+      id VARCHAR(64) PRIMARY KEY, kind VARCHAR(16) NOT NULL, filename TEXT NOT NULL,
+      content_type TEXT NOT NULL, total_size BIGINT NOT NULL, chunk_count INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
     CREATE TABLE IF NOT EXISTS dss_file_tickets(
       token_hash VARCHAR(64) PRIMARY KEY, product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
       kind VARCHAR(16) NOT NULL, owner_user_id VARCHAR(32), license_id BIGINT NOT NULL REFERENCES licenses(id) ON DELETE CASCADE,
@@ -233,7 +239,7 @@ async function initDB() {
     CREATE UNIQUE INDEX IF NOT EXISTS uq_license_products_one_product ON license_products(license_id);
   `);
   await pool.query(`UPDATE licenses SET is_active=FALSE WHERE (owner_user_id IS NULL AND group_id IS NULL) OR (owner_user_id IS NOT NULL AND group_id IS NOT NULL)`);
-  await pool.query(`DELETE FROM dss_file_tickets WHERE expires_at < NOW()`);
+  await pool.query(`DELETE FROM dss_upload_sessions WHERE created_at < NOW() - INTERVAL '1 day'; DELETE FROM dss_file_tickets WHERE expires_at < NOW()`);
   console.log('DSS schema ready.');
 }
 async function listLicenseProducts(id) {
@@ -458,53 +464,73 @@ app.delete('/api/products/:id', verifyAdmin, async (req, res) => {
   finally { c.release(); }
 });
 
-// HANDLER UPLOAD SINGLE-PASS (Mendukung .rbxm, gambar, dll secara instan)
-app.post('/api/uploads/product-file', verifyAdmin, async (req, res) => {
-  const productId = cleanText(String(req.body?.product_id ?? ''), 20);
+// ROUTE CHUNK UPLOAD YANG SESUAI DENGAN INDEX.HTML ANDA
+app.post('/api/uploads/start', verifyAdmin, async (req, res) => {
   const kind = ['image', 'download'].includes(req.body?.kind) ? req.body.kind : '';
-  const filename = safeFilename(req.body?.filename);
-  const contentType = cleanText(req.body?.content_type, 120) || 'application/octet-stream';
-  const base64Data = req.body?.file_data;
-
-  if (!/^\d+$/.test(productId) || !kind || !base64Data) {
-    return res.status(400).json({ success: false, message: 'Data upload produk tidak lengkap.' });
-  }
-
+  const filename = safeFilename(req.body?.filename), type = cleanText(req.body?.content_type, 120), size = Number(req.body?.size);
+  if (!kind || !Number.isSafeInteger(size) || size < 1 || size > MAX_FILE_SIZE) return res.status(400).json({ success: false, message: 'Jenis/ukuran file tidak valid. Maksimal 50 MB.' });
+  
+  const id = crypto.randomBytes(24).toString('hex'), count = Math.ceil(size / CHUNK_SIZE);
   try {
-    const base64Clean = base64Data.replace(/^data:[^;]+;base64,/, '');
-    const fileBuffer = Buffer.from(base64Clean, 'base64');
+    await pool.query('INSERT INTO dss_upload_sessions(id,kind,filename,content_type,total_size,chunk_count) VALUES($1,$2,$3,$4,$5,$6)', [id, kind, filename, type || 'application/octet-stream', size, count]);
+    res.json({ success: true, upload_id: id, chunk_size: CHUNK_SIZE, chunk_count: count });
+  } catch { res.status(500).json({ success: false, message: 'Gagal memulai upload.' }); }
+});
 
-    if (fileBuffer.length > MAX_FILE_SIZE) {
-      return res.status(400).json({ success: false, message: 'Ukuran file melebihi batas maksimal 40 MB.' });
+// Ditingkatkan limit raw parser-nya agar chunk biner 2MB tidak ditolak Vercel
+app.put('/api/uploads/:id/chunks/:index', verifyAdmin, express.raw({ type: 'application/octet-stream', limit: '5mb' }), async (req, res) => {
+  const id = cleanText(req.params.id, 64), idx = Number(req.params.index);
+  if (!/^[a-f0-9]{48}$/.test(id) || !Number.isInteger(idx) || idx < 0) return res.status(400).json({ success: false, message: 'Upload/chunk tidak valid.' });
+  try {
+    const { rows } = await pool.query('SELECT * FROM dss_upload_sessions WHERE id=$1', [id]), s = rows[0];
+    if (!s || new Date(s.created_at).getTime() < Date.now() - 86400000) return res.status(404).json({ success: false, message: 'Sesi upload tidak ditemukan/kedaluwarsa.' });
+    if (idx >= s.chunk_count || !Buffer.isBuffer(req.body) || req.body.length < 1 || req.body.length > CHUNK_SIZE) return res.status(400).json({ success: false, message: 'Chunk tidak valid.' });
+    await put(`dss-temp/${id}/${idx}`, req.body, { access: 'private', addRandomSuffix: false, allowOverwrite: true, contentType: 'application/octet-stream' });
+    res.json({ success: true, index: idx });
+  } catch (e) { console.error('Upload chunk:', e.message); res.status(500).json({ success: false, message: 'Upload bagian file gagal.' }); }
+});
+
+async function streamToBuffer(stream) {
+  const parts = [];
+  for await (const chunk of stream) parts.push(Buffer.from(chunk));
+  return Buffer.concat(parts);
+}
+
+app.post('/api/uploads/:id/finish', verifyAdmin, async (req, res) => {
+  const id = cleanText(req.params.id, 64), productId = cleanText(String(req.body?.product_id ?? ''), 20);
+  if (!/^[a-f0-9]{48}$/.test(id) || !/^\d+$/.test(productId)) return res.status(400).json({ success: false, message: 'Sesi/produk tidak valid.' });
+  try {
+    const { rows } = await pool.query('SELECT * FROM dss_upload_sessions WHERE id=$1', [id]), s = rows[0];
+    if (!s) return res.status(404).json({ success: false, message: 'Sesi upload tidak ditemukan.' });
+    const chunks = [];
+    for (let i = 0; i < s.chunk_count; i++) {
+      const b = await get(`dss-temp/${id}/${i}`, { access: 'private' });
+      if (!b) return res.status(400).json({ success: false, message: `Bagian file ${i + 1} belum terunggah.` });
+      chunks.push(await streamToBuffer(b.stream));
     }
+    const file = Buffer.concat(chunks);
+    if (file.length !== Number(s.total_size)) return res.status(400).json({ success: false, message: 'Ukuran file tidak cocok. Ulangi upload.' });
+    const blobPath = `dss-products/${productId}/${s.kind}-${crypto.randomBytes(16).toString('hex')}-${s.filename}`;
+    const blob = await put(blobPath, file, { access: 'private', addRandomSuffix: false, contentType: s.content_type });
+    const col = s.kind === 'image' ? 'image' : 'download';
+    const updated = await pool.query(`UPDATE products SET ${col}_path=$1,${col}_filename=$2,${col}_content_type=$3,${col}_url=NULL,updated_at=NOW() WHERE id=$4 RETURNING id`, [blob.pathname || blob.url, s.filename, s.content_type, productId]);
+    if (!updated.rows.length) { await del(blob.pathname || blob.url, { access: 'private' }).catch(() => {}); return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' }); }
+    await pool.query('DELETE FROM dss_upload_sessions WHERE id=$1', [id]);
+    for (let i = 0; i < s.chunk_count; i++) await del(`dss-temp/${id}/${i}`, { access: 'private' }).catch(() => {});
+    res.json({ success: true, message: col === 'image' ? 'Gambar berhasil diunggah.' : 'File berhasil diunggah.', filename: s.filename });
+  } catch (e) { console.error('Upload finish:', e.message); res.status(500).json({ success: false, message: 'Gagal menyelesaikan upload.' }); }
+});
 
-    if (kind === 'image' && !IMAGE_TYPES.includes(contentType)) {
-      return res.status(400).json({ success: false, message: 'Format gambar harus JPEG, PNG, WebP, atau GIF.' });
+app.delete('/api/uploads/:id', verifyAdmin, async (req, res) => {
+  const id = cleanText(req.params.id, 64);
+  try {
+    const { rows } = await pool.query('SELECT chunk_count FROM dss_upload_sessions WHERE id=$1', [id]);
+    if (rows[0]) {
+      await pool.query('DELETE FROM dss_upload_sessions WHERE id=$1', [id]);
+      for (let i = 0; i < rows[0].chunk_count; i++) await del(`dss-temp/${id}/${i}`, { access: 'private' }).catch(() => {});
     }
-
-    const blobPath = `dss-products/${productId}/${kind}-${crypto.randomBytes(16).toString('hex')}-${filename}`;
-    const blob = await put(blobPath, fileBuffer, {
-      access: 'private',
-      addRandomSuffix: false,
-      contentType: contentType
-    });
-
-    const col = kind === 'image' ? 'image' : 'download';
-    const updated = await pool.query(
-      `UPDATE products SET ${col}_path=$1, ${col}_filename=$2, ${col}_content_type=$3, ${col}_url=NULL, updated_at=NOW() WHERE id=$4 RETURNING id`,
-      [blob.pathname || blob.url, filename, contentType, productId]
-    );
-
-    if (!updated.rows.length) {
-      await del(blob.pathname || blob.url, { access: 'private' }).catch(() => {});
-      return res.status(404).json({ success: false, message: 'Produk tidak ditemukan di database.' });
-    }
-
-    res.json({ success: true, message: kind === 'image' ? 'Gambar berhasil diunggah.' : 'File berhasil diunggah.', filename });
-  } catch (e) {
-    console.error('Direct Upload Error:', e.message);
-    res.status(500).json({ success: false, message: 'Gagal mengunggah file ke penyimpanan.' });
-  }
+    res.json({ success: true });
+  } catch { res.status(500).json({ success: false, message: 'Gagal membatalkan upload.' }); }
 });
 
 app.get('/api/licenses', verifyAdmin, async (_req, res) => {
@@ -591,12 +617,6 @@ app.delete('/api/licenses/:id', verifyAdmin, async (req, res) => {
     res.json({ success: true, message: 'Lisensi dihapus.' });
   } catch { res.status(500).json({ success: false, message: 'Gagal menghapus lisensi.' }); }
 });
-
-async function streamToBuffer(stream) {
-  const parts = [];
-  for await (const chunk of stream) parts.push(Buffer.from(chunk));
-  return Buffer.concat(parts);
-}
 
 app.get('/api/showcase/:id/image', async (req, res) => {
   const id = cleanText(req.params.id, 20);
