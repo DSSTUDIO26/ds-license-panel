@@ -126,10 +126,12 @@ async function getRobloxGroupInfo(groupId) {
   if (!/^\d{1,32}$/.test(id)) return { groupId: id, groupName: null, groupIconUrl: null };
   const cached = groupCache.get(id);
   if (cached && cached.until > Date.now()) return cached.value;
-  const value = { groupId: id, groupName: null, groupIconUrl: null };
+  const value = { groupId: id, groupName: null, groupIconUrl: null, ownerUserId: null, ownerUsername: null };
   try {
     const g = await robloxFetch(`https://groups.roblox.com/v1/groups/${encodeURIComponent(id)}`);
     value.groupName = g?.name || null;
+    value.ownerUserId = g?.owner?.userId != null ? String(g.owner.userId) : null;
+    value.ownerUsername = g?.owner?.username || null;
   } catch (e) { console.warn('Group lookup:', id, e.message); }
   try {
     const t = await robloxFetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${encodeURIComponent(id)}&size=150x150&format=Png&isCircular=false`);
@@ -260,31 +262,50 @@ async function listLicenseProducts(id) {
   return rows;
 }
 
-// Portal login only accepts a personal license belonging to the authenticated Roblox user.
-// Group licenses are verified against the actual Roblox experience creator in /api/game-verify.
-async function findValidPersonalLicense(username, key) {
+// Portal login accepts either a personal license owned by this Roblox account,
+// or a group license when the authenticated account is the actual owner of that group.
+// Merely knowing a Group ID is never sufficient to prove ownership.
+async function findValidPortalLicense(username, key) {
   const user = await getRobloxUserInfo(username);
   if (!user) return { error: 'Username Roblox tidak ditemukan.', status: 404 };
   const { rows } = await pool.query(`
     SELECT l.* FROM licenses l
     WHERE l.license_key=$1 AND l.is_active=TRUE
-      AND l.group_id IS NULL AND l.owner_user_id=$2
       AND (l.expires_at IS NULL OR l.expires_at>NOW())
+      AND (l.owner_user_id=$2 OR l.group_id IS NOT NULL)
+    ORDER BY CASE WHEN l.owner_user_id=$2 THEN 0 ELSE 1 END
     LIMIT 1
   `, [key, user.userId]);
-  if (!rows.length) return { error: 'Key salah, tidak aktif, kedaluwarsa, atau bukan milik akun ini.', status: 401 };
-  return { user, license: rows[0] };
+  if (!rows.length) return { error: 'Key salah, tidak aktif, atau kedaluwarsa.', status: 401 };
+  const license = rows[0];
+  if (license.group_id) {
+    let group;
+    try { group = await getRobloxGroupInfo(license.group_id); }
+    catch { return { error: 'Tidak dapat memverifikasi pemilik grup Roblox. Coba lagi.', status: 502 }; }
+    if (!group?.ownerUserId) return { error: 'Pemilik grup tidak dapat diverifikasi dari Roblox. Coba lagi nanti.', status: 502 };
+    if (String(group.ownerUserId) !== String(user.userId)) {
+      return { error: 'Lisensi ini milik komunitas Roblox. Login dengan username akun pemilik komunitas tersebut.', status: 403 };
+    }
+    return { user, license, group };
+  }
+  if (String(license.owner_user_id) !== String(user.userId)) {
+    return { error: 'Lisensi ini bukan milik akun Roblox tersebut.', status: 401 };
+  }
+  return { user, license, group: null };
 }
 async function clientLoginHandler(req, res) {
   const username = cleanText(req.body?.owner_name, 64), key = cleanText(req.body?.license_key, 255);
   if (!username || !key) return res.status(400).json({ success: false, message: 'Username Roblox dan License Key wajib diisi.' });
   try {
-    const v = await findValidPersonalLicense(username, key);
+    const v = await findValidPortalLicense(username, key);
     if (v.error) return res.status(v.status).json({ success: false, message: v.error });
     const products = await listLicenseProducts(v.license.id);
+    const displayName = v.group?.groupName || v.user.exactUsername;
     res.json({
-      success: true, avatar_url: v.user.avatarUrl, owner_name: v.user.exactUsername, owner_user_id: v.user.userId,
-      license: { id: v.license.id, license_key: v.license.license_key, expires_at: v.license.expires_at, is_active: v.license.is_active, group_id: null },
+      success: true, avatar_url: v.group?.groupIconUrl || v.user.avatarUrl,
+      owner_name: v.user.exactUsername, owner_display_name: displayName,
+      owner_user_id: v.user.userId, owner_type: v.group ? 'group' : 'user',
+      license: { id: v.license.id, license_key: v.license.license_key, expires_at: v.license.expires_at, is_active: v.license.is_active, group_id: v.license.group_id || null },
       data: products.filter(p => p.product_active).map(p => ({
         id: p.id, product: p.product_name, product_code: p.product_code, description: p.description,
         image_url: p.image_url, download_url: p.download_url, has_image: !!(p.image_path || p.image_url),
@@ -556,7 +577,7 @@ app.post('/api/file-ticket', async (req, res) => {
   const productId = cleanText(String(req.body?.product_id ?? ''), 20), kind = req.body?.kind === 'image' ? 'image' : 'download';
   if (!username || !key || !/^\d+$/.test(productId)) return res.status(400).json({ success: false, message: 'Permintaan file tidak valid.' });
   try {
-    const v = await findValidPersonalLicense(username, key);
+    const v = await findValidPortalLicense(username, key);
     if (v.error) return res.status(v.status).json({ success: false, message: v.error });
     const { rows } = await pool.query(`
       SELECT p.* FROM license_products lp JOIN products p ON p.id=lp.product_id
