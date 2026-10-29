@@ -117,11 +117,12 @@
 </div>
 </div>
 
-<!-- Navigasi Tab -->
+<!-- Navigasi Tab (Ditambahkan tombol Project Experience di samping Lisensi & Unduhan) -->
 <nav class="glass rounded-2xl p-2 flex gap-2 overflow-x-auto shadow-lg border border-white/10">
 <button type="button" id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2 cursor-pointer">🏠 Beranda Utama</button>
 <button type="button" id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer">📦 Showcase Produk</button>
 <button type="button" id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer">🔑 Lisensi & Unduhan</button>
+<button type="button" id="nav-projects" onclick="showClientTab('projects')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer">🎮 Project Experience</button>
 </nav>
 
 <!-- Tab Beranda -->
@@ -147,19 +148,6 @@
 </div>
 </div>
 
-<!-- Tombol Project 114330086695098 -->
-<div class="glass rounded-2xl p-6 shadow-xl border border-amber-500/20 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-amber-500/10 via-transparent to-transparent">
-  <div class="space-y-1">
-    <span class="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest">Featured Project Inspection</span>
-    <h3 class="text-lg font-bold text-white">Project 114330086695098</h3>
-    <p class="muted text-xs">Cek detail informasi, thumbnail, dan judul experience utama secara real-time.</p>
-  </div>
-  <button type="button" onclick="inspectExperience('114330086695098')" class="btn gold rounded-xl px-5 py-3 text-xs font-extrabold uppercase tracking-wider shadow-md cursor-pointer">🔍 Cek Project Experience</button>
-</div>
-
-<!-- Container Dinamis Project Admin yang Ditambahkan -->
-<div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-
 <div class="glass rounded-3xl p-8 shadow-2xl space-y-4 border border-white/10 relative overflow-hidden">
 <div class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 <div class="space-y-1 relative z-10">
@@ -167,11 +155,11 @@
   <h2 class="text-2xl font-extrabold text-white">Selamat Datang di Portal Eksklusif Dragon Stell Studio</h2>
 </div>
 <p class="muted text-sm leading-relaxed relative z-10">
-  Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengunduh file aset resmi.
+  Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengelola Project Experience Anda.
 </p>
 <div class="pt-2 flex flex-wrap gap-3 relative z-10">
   <button type="button" onclick="showClientTab('showcase')" class="btn gold rounded-xl px-6 py-3 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/20 cursor-pointer">Jelajahi Showcase Produk →</button>
-  <a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn border border-indigo-500/30 text-indigo-300 rounded-xl px-6 py-3 text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20">Join Discord Server 💬</a>
+  <button type="button" onclick="showClientTab('projects')" class="btn border border-white/10 rounded-xl px-6 py-3 text-xs font-bold text-white bg-white/5 hover:bg-white/10 cursor-pointer">Buka Project Experience 🎮</button>
 </div>
 </div>
 </div>
@@ -193,6 +181,16 @@
 </div>
 <div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
 </div>
+
+<!-- Tab Project Experience (Tampilan rapi berupa grid kartu dengan gambar & judul asli dari Roblox) -->
+<div id="client-projects" class="client-page hidden space-y-5 animate-fade">
+<div>
+  <h2 class="text-xl sm:text-2xl font-extrabold text-white">Project Experience Terdaftar</h2>
+  <p class="muted text-xs sm:text-sm mt-1">Daftar experience Roblox terverifikasi yang terhubung secara otomatis dengan judul dan thumbnail aslinya.</p>
+</div>
+<div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</div>
+
 </div>
 </section>
 
@@ -276,6 +274,7 @@
 <script>
 const API='';let mode='personal',products=[],licenses=[],clientUser='',clientKey='',clientData=null;
 let customProjects=['114330086695098']; 
+const expCache = new Map();
 const $=id=>document.getElementById(id);
 
 function addLog(msg){
@@ -293,10 +292,13 @@ function clearLogs(){
 
 function toast(s){const t=$('toast');if(!t)return;t.textContent=s;t.classList.remove('opacity-0','translate-y-2');setTimeout(()=>t.classList.add('opacity-0','translate-y-2'),3200)}
 function showTab(tab){
-  const clientTab = $('clientTab');
-  const adminTab = $('adminTab');
-  if(clientTab) clientTab.classList.toggle('hidden',tab!=='client');
-  if(adminTab) adminTab.classList.toggle('hidden',tab!=='admin');
+  for(const t of ['home','showcase','licenses','projects']){
+    const page=$('client-'+t), btn=$('nav-'+t);
+    if(page) page.classList.toggle('hidden',t!==tab);
+    if(btn){
+      btn.className='client-nav '+(t===tab?'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2 cursor-pointer':'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer');
+    }
+  }
 }
 async function api(url,options={}){const headers={'Content-Type':'application/json',...(options.headers||{})};delete headers['x-api-secret'];const r=await fetch(API+url,{credentials:'same-origin',...options,headers});let d;try{d=await r.json()}catch{d={success:false,message:'Respons server tidak valid.'}}if(!r.ok||d.success===false)throw new Error(d.message||`HTTP ${r.status}`);return d}
 function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -361,16 +363,6 @@ async function portalLogin(){
   }
 }
 
-function showClientTab(tab){
-  for(const t of ['home','showcase','licenses']){
-    const page=$('client-'+t), btn=$('nav-'+t);
-    if(page) page.classList.toggle('hidden',t!==tab);
-    if(btn){
-      btn.className='client-nav '+(t===tab?'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2 cursor-pointer':'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer');
-    }
-  }
-}
-
 async function showClient(d){
   clientData=d;
   const loginBox=$('clientLoginBox'), dash=$('clientDashboard'), cName=$('clientName'), cAvatar=$('clientAvatar'), cExpiry=$('clientExpiry'), pCount=$('productCount'), statProd=$('statProducts'), statAccess=$('statAccessType'), cLicenses=$('clientLicenseDetails'), cProducts=$('clientProducts');
@@ -386,7 +378,7 @@ async function showClient(d){
   if(statProd) statProd.textContent=String(owned.filter(l=>l.is_active&&l.product).length);
   if(statAccess) statAccess.textContent=owned.some(l=>l.owner_type==='group')?'Pribadi + Grup':'Akun Pribadi';
 
-  renderClientProjects();
+  await renderClientProjects();
 
   if(cLicenses){
     cLicenses.innerHTML=owned.map(l=>{
@@ -423,18 +415,65 @@ async function showClient(d){
   showClientTab('home');
 }
 
-function renderClientProjects(){
+async function fetchExperienceDetails(placeId){
+  if(expCache.has(placeId)) return expCache.get(placeId);
+  const data = { name: `Project Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', universeId: '-', creator: 'Dragon Stell Studio' };
+  try {
+    const res = await api('/api/game-verify', { method: 'POST', body: JSON.stringify({ place_id: placeId, product_name: 'Dummy' }) });
+    const c = res.creator || {};
+    data.universeId = c.universeId || res.universe_id || '-';
+    data.creator = c.creatorName || c.name || 'Dragon Stell Studio';
+    
+    try {
+      const gameRes = await fetch(`https://games.roblox.com/v1/games?universeIds=${data.universeId}`);
+      const gameJson = await gameRes.json();
+      if(gameJson?.data?.[0]?.name) {
+        data.name = gameJson.data[0].name;
+      }
+    } catch {}
+
+    try {
+      const thumbRes = await fetch(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${placeId}&size=512x512&format=Png&isCircular=false`);
+      const thumbData = await thumbRes.json();
+      const iconUrl = thumbData?.data?.[0]?.imageUrl;
+      if(iconUrl) data.icon = iconUrl;
+    } catch {}
+  } catch {}
+  expCache.set(placeId, data);
+  return data;
+}
+
+async function renderClientProjects(){
   const container = $('clientDynamicProjects');
   if(!container) return;
-  container.innerHTML = customProjects.map(pid=>`
-    <div class="glass rounded-2xl p-5 shadow-xl border border-white/10 flex flex-col justify-between space-y-3">
-      <div class="space-y-1">
-        <span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold">ROBLOX PROJECT EXPERIENCE</span>
-        <h4 class="font-bold text-sm text-white">Project ID: ${safe(pid)}</h4>
-      </div>
-      <button type="button" onclick="inspectExperience('${safe(pid)}')" class="btn border border-amber-500/30 text-amber-200 rounded-xl py-2.5 text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer">Cek Experience & Thumbnail →</button>
-    </div>
-  `).join('');
+  
+  container.innerHTML = `<div class="col-span-full text-center py-6 text-xs text-amber-300 animate-pulse">Memuat data experience dari Roblox API...</div>`;
+
+  let html = '';
+  for(const pid of customProjects){
+    const info = await fetchExperienceDetails(pid);
+    html += `
+      <article class="product-card shadow-xl">
+        <div>
+          <div class="product-cover">
+            <img src="${safe(info.icon)}" alt="${safe(info.name)}" loading="lazy" onerror="this.src='https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true'">
+          </div>
+          <div class="p-5 space-y-2.5">
+            <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">PLACE ID: ${safe(pid)}</span>
+            <h3 class="font-bold text-base sm:text-lg leading-snug text-white">${safe(info.name)}</h3>
+            <div class="text-xs muted space-y-1 pt-1 border-t border-white/5">
+              <div class="flex justify-between"><span>Universe ID:</span> <span class="font-mono text-white">${safe(info.universeId)}</span></div>
+              <div class="flex justify-between"><span>Creator:</span> <span class="font-medium text-white">${safe(info.creator)}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="p-5 pt-0">
+          <button type="button" onclick="inspectExperience('${safe(pid)}')" class="btn gold rounded-xl w-full py-2.5 text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer">🔍 Inspeksi Detail</button>
+        </div>
+      </article>
+    `;
+  }
+  container.innerHTML = html || '<div class="glass rounded-2xl p-6 muted text-xs text-center col-span-full">Belum ada Project Experience terdaftar.</div>';
 }
 
 async function inspectExperience(placeId){
@@ -451,46 +490,17 @@ async function inspectExperience(placeId){
   if(img) img.classList.add('hidden');
   if(loader) loader.classList.remove('hidden');
   if(pId) pId.textContent = placeId;
-  if(uni) uni.textContent = 'Mencari Universe...';
-  if(creator) creator.textContent = 'Mencari Creator...';
+  if(uni) uni.textContent = 'Mencari...';
+  if(creator) creator.textContent = 'Mencari...';
 
-  try {
-    const res = await api('/api/game-verify', {
-      method: 'POST',
-      body: JSON.stringify({ place_id: placeId, product_name: 'Dummy' })
-    });
-    const c = res.creator || {};
-    if(uni) uni.textContent = c.universeId || res.universe_id || '114330086';
-    if(creator) creator.textContent = (c.creatorName || c.name || 'Dragon Stell Studio') + ` (${c.creatorType || 'Group'})`;
-    if(title) title.textContent = `Project Experience #${placeId}`;
-    
-    try {
-      const thumbRes = await fetch(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${placeId}&size=512x512&format=Png&isCircular=false`);
-      const thumbData = await thumbRes.json();
-      const iconUrl = thumbData?.data?.[0]?.imageUrl;
-      if(iconUrl && img && loader){
-        img.src = iconUrl;
-        img.classList.remove('hidden');
-        loader.classList.add('hidden');
-      } else {
-        throw new Error('No icon');
-      }
-    } catch {
-      if(img && loader){
-        img.src = 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
-        img.classList.remove('hidden');
-        loader.classList.add('hidden');
-      }
-    }
-  } catch (err) {
-    if(title) title.textContent = `Project #${placeId}`;
-    if(uni) uni.textContent = 'Universe Terhubung';
-    if(creator) creator.textContent = 'Dragon Stell Studio';
-    if(img && loader){
-      img.src = 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
-      img.classList.remove('hidden');
-      loader.classList.add('hidden');
-    }
+  const info = await fetchExperienceDetails(placeId);
+  if(title) title.textContent = info.name;
+  if(uni) uni.textContent = info.universeId;
+  if(creator) creator.textContent = info.creator;
+  if(img && loader){
+    img.src = info.icon;
+    img.classList.remove('hidden');
+    loader.classList.add('hidden');
   }
 }
 function closeExpModal(){ 
