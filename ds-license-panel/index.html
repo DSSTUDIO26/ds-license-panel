@@ -278,7 +278,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
       <div id="client-projects" class="client-page hidden space-y-6 animate-fade">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Project Experience Terdaftar</h2>
-          <p class="muted text-xs sm:text-sm mt-1">Daftar experience Roblox terverifikasi lengkap dengan statistik pengunjung, produk terdeteksi, dan tautan langsung.</p>
+          <p class="muted text-xs sm:text-sm mt-1">Daftar experience Roblox terverifikasi otomatis lengkap dengan statistik pengunjung, produk terdeteksi, dan tautan langsung.</p>
         </div>
         <div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
@@ -351,11 +351,11 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
             <button type="button" onclick="createLicense()" class="btn gold rounded-2xl w-full py-4 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/30 cursor-pointer">Simpan Lisensi Baru</button>
           </div>
 
-          <!-- Tambah Project Experience ID -->
+          <!-- Tambah Project Experience ID (Pengelolaan Manual / Tambahan) -->
           <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
             <div>
               <h2 class="font-bold text-lg text-white">Tambah Project Experience ID</h2>
-              <p class="muted text-xs mt-1">Masukkan Place ID Roblox agar otomatis tertata rapi di dashboard klien.</p>
+              <p class="muted text-xs mt-1">Tempat otomatis terdaftar saat script Roblox di-run. Anda juga bisa memasukkan Place ID secara manual di sini.</p>
             </div>
             <div class="flex gap-2.5">
               <input id="newPlaceId" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-mono font-medium text-white" placeholder="Contoh: 114330086695098">
@@ -408,7 +408,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
 <script>
 const API = '';
 let mode = 'personal', products = [], licenses = [], clientUser = '', clientKey = '', clientData = null;
-let customProjects = ['114330086695098']; 
+let customProjects = []; 
 const expCache = new Map();
 const $ = id => document.getElementById(id);
 
@@ -596,7 +596,6 @@ async function fetchExperienceDetails(placeId) {
     }
   } catch {}
 
-  // Deteksi otomatis produk yang dipakai di experience ini berdasarkan database/lisensi aktif
   try {
     const vRes = await api('/api/game-verify', { method: 'POST', body: JSON.stringify({ place_id: placeId }) });
     if(vRes.success && vRes.product_name) {
@@ -613,13 +612,23 @@ async function renderClientProjects() {
   if(!container) return;
   container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-amber-300 animate-pulse">Memuat dan mengurutkan data experience dari Roblox API...</div>`;
 
+  let autoProjects = [];
+  try {
+    const res = await api('/api/auto-projects');
+    if(res.success && Array.isArray(res.projects)) {
+      autoProjects = res.projects;
+    }
+  } catch {}
+
+  const allProjects = [...new Set([...autoProjects, ...customProjects])];
+
   let projectInfos = [];
-  for(const pid of customProjects) {
+  for(const pid of allProjects) {
     const info = await fetchExperienceDetails(pid);
     projectInfos.push({ pid, ...info });
   }
 
-  // Urutkan berdasarkan kunjungan terbanyak ke tersedikit
+  // Mengurutkan experience dari kunjungan terbanyak ke tersedikit
   projectInfos.sort((a, b) => b.rawVisits - a.rawVisits);
 
   let html = '';
@@ -665,18 +674,28 @@ function saveProjectExperience() {
   toast('Project Experience berhasil ditambahkan.');
 }
 
-function removeProjectExperience(pid) {
+async function removeProjectExperience(pid) {
   customProjects = customProjects.filter(id => id !== pid);
+  try {
+    await api('/api/auto-projects/' + pid, { method: 'DELETE' });
+  } catch {}
   renderAdminProjects();
   renderClientProjects();
   addLog(`Project Experience ID ${pid} dihapus.`);
   toast('Project dihapus.');
 }
 
-function renderAdminProjects() {
+async function renderAdminProjects() {
   const list = $('adminProjectList');
   if(!list) return;
-  list.innerHTML = customProjects.map(pid => `
+  let autoProjects = [];
+  try {
+    const res = await api('/api/auto-projects');
+    if(res.success && Array.isArray(res.projects)) autoProjects = res.projects;
+  } catch {}
+  const allProjects = [...new Set([...autoProjects, ...customProjects])];
+
+  list.innerHTML = allProjects.map(pid => `
     <div class="flex items-center justify-between p-3 rounded-2xl bg-black/50 border border-white/5">
       <span class="font-mono text-xs text-amber-200">Place ID: ${safe(pid)}</span>
       <button type="button" onclick="removeProjectExperience('${safe(pid)}')" class="btn text-red-400 hover:text-red-300 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
@@ -736,7 +755,7 @@ async function loadAdmin() {
   renderLicenseChoices();
   renderProductFilterDropdown();
   renderLicenses();
-  renderAdminProjects();
+  await renderAdminProjects();
 }
 
 async function saveProduct() {
@@ -896,7 +915,6 @@ async function deleteLicense(id) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  renderAdminProjects();
   try {
     const s = await api('/api/admin-session');
     if(s.authenticated) { await openAdmin(); return; }
