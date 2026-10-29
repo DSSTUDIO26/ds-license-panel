@@ -1,8 +1,8 @@
 {
-  "name": "dss-studio-license",
-  "version": "1.1.0",
+  "name": "dss-studio-license-pro",
+  "version": "2.0.0",
   "private": true,
-  "description": "DRAGON STELL STUDIO license panel using PostgreSQL and private Vercel Blob",
+  "description": "DRAGON STELL STUDIO license portal with PostgreSQL and private Vercel Blob storage",
   "main": "server.js",
   "engines": { "node": ">=20" },
   "scripts": { "start": "node server.js" },
