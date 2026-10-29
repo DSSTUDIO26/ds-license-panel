@@ -208,25 +208,20 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_dss_tickets_expiry ON dss_file_tickets(expires_at);
   `);
 
-  // Migrate legacy product fields into catalog. Existing data is retained.
-  const legacy = await pool.query(`
-    SELECT DISTINCT COALESCE(NULLIF(BTRIM(product_name),''),'DSS STUDIO LICENSE') product_name,
-      MAX(image_url) image_url, MAX(download_url) download_url
-    FROM licenses GROUP BY COALESCE(NULLIF(BTRIM(product_name),''),'DSS STUDIO LICENSE')
-  `);
-  for (const row of legacy.rows) {
-    let code = row.product_name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70);
-    if (!code) code = `PRODUCT_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-    await pool.query(
-      `INSERT INTO products(product_code,product_name,image_url,download_url) VALUES($1,$2,$3,$4) ON CONFLICT(product_name) DO NOTHING`,
-      [code, row.product_name.slice(0, 120), row.image_url, row.download_url]
-    );
-  }
+  // Do not auto-create catalog products from legacy license rows on startup.
+  // Product creation is an explicit admin action; only connect legacy licenses
+  // to a catalog product if that product already exists.
   await pool.query(`
     INSERT INTO license_products(license_id,product_id)
     SELECT l.id,p.id FROM licenses l
-    JOIN products p ON p.product_name=COALESCE(NULLIF(BTRIM(l.product_name),''),'DSS STUDIO LICENSE')
+    JOIN products p ON p.product_name=NULLIF(BTRIM(l.product_name),'')
     ON CONFLICT DO NOTHING
+  `);
+  // Remove only unused legacy placeholder entries; never delete a product tied to a license.
+  await pool.query(`
+    DELETE FROM products p
+    WHERE LOWER(BTRIM(p.product_name)) IN ('general product','dss studio license')
+      AND NOT EXISTS (SELECT 1 FROM license_products lp WHERE lp.product_id=p.id)
   `);
 
   // Normalize legacy owner records where possible.
@@ -260,6 +255,36 @@ async function listLicenseProducts(id) {
     FROM license_products lp JOIN products p ON p.id=lp.product_id WHERE lp.license_id=$1 ORDER BY p.product_name
   `, [id]);
   return rows;
+}
+async function listOwnedPortalLicenses(user) {
+  const { rows } = await pool.query(`
+    SELECT l.* FROM licenses l
+    WHERE l.owner_user_id=$1 OR l.group_id IS NOT NULL
+    ORDER BY l.created_at DESC
+  `, [user.userId]);
+  const owned = [];
+  for (const license of rows) {
+    let group = null;
+    if (license.group_id) {
+      try { group = await getRobloxGroupInfo(license.group_id); } catch {}
+      if (!group?.ownerUserId || String(group.ownerUserId) !== String(user.userId)) continue;
+    } else if (String(license.owner_user_id) !== String(user.userId)) continue;
+    const productRows = await listLicenseProducts(license.id);
+    const product = productRows[0];
+    owned.push({
+      id: license.id, license_key: license.license_key, is_active: license.is_active,
+      expires_at: license.expires_at, owner_type: group ? 'group' : 'user',
+      owner_display_name: group?.groupName || user.exactUsername,
+      owner_avatar_url: group?.groupIconUrl || user.avatarUrl,
+      group_id: license.group_id || null,
+      product: product ? { id: product.id, product_name: product.product_name,
+        product_code: product.product_code, description: product.description,
+        has_image: !!(product.image_path || product.image_url),
+        has_download: !!(product.download_path || product.download_url),
+        product_active: !!product.product_active } : null
+    });
+  }
+  return owned;
 }
 
 // Portal login accepts either a personal license owned by this Roblox account,
@@ -299,18 +324,22 @@ async function clientLoginHandler(req, res) {
   try {
     const v = await findValidPortalLicense(username, key);
     if (v.error) return res.status(v.status).json({ success: false, message: v.error });
-    const products = await listLicenseProducts(v.license.id);
+    const [catalog, ownedLicenses] = await Promise.all([
+      pool.query(`SELECT id,product_code,product_name,description,image_url,is_active,
+        (image_path IS NOT NULL OR image_url IS NOT NULL) has_image,
+        (download_path IS NOT NULL OR download_url IS NOT NULL) has_download
+        FROM products WHERE is_active=TRUE ORDER BY created_at DESC, product_name ASC`),
+      listOwnedPortalLicenses(v.user)
+    ]);
     const displayName = v.group?.groupName || v.user.exactUsername;
     res.json({
       success: true, avatar_url: v.group?.groupIconUrl || v.user.avatarUrl,
       owner_name: v.user.exactUsername, owner_display_name: displayName,
       owner_user_id: v.user.userId, owner_type: v.group ? 'group' : 'user',
       license: { id: v.license.id, license_key: v.license.license_key, expires_at: v.license.expires_at, is_active: v.license.is_active, group_id: v.license.group_id || null },
-      data: products.filter(p => p.product_active).map(p => ({
-        id: p.id, product: p.product_name, product_code: p.product_code, description: p.description,
-        image_url: p.image_url, download_url: p.download_url, has_image: !!(p.image_path || p.image_url),
-        has_download: !!(p.download_path || p.download_url), expires_at: v.license.expires_at, is_active: v.license.is_active
-      }))
+      data: catalog.rows.map(p => ({ id: p.id, product: p.product_name, product_code: p.product_code,
+        description: p.description, image_url: p.image_url, has_image: !!p.has_image, has_download: !!p.has_download })),
+      owned_licenses: ownedLicenses
     });
   } catch (e) {
     console.error('Client login:', e.message);
@@ -570,6 +599,25 @@ app.delete('/api/licenses/:id', verifyAdmin, async (req, res) => {
     if (!r.rowCount) return res.status(404).json({ success: false, message: 'Lisensi tidak ditemukan.' });
     res.json({ success: true, message: 'Lisensi dihapus.' });
   } catch { res.status(500).json({ success: false, message: 'Gagal menghapus lisensi.' }); }
+});
+
+// Public catalog cover images are promotional assets; product downloads remain license-gated.
+app.get('/api/showcase/:id/image', async (req, res) => {
+  const id = cleanText(req.params.id, 20);
+  if (!/^\d+$/.test(id)) return res.status(404).end();
+  try {
+    const { rows } = await pool.query('SELECT image_path,image_url,image_filename,image_content_type,is_active FROM products WHERE id=$1', [id]);
+    const p = rows[0];
+    if (!p || !p.is_active) return res.status(404).end();
+    if (p.image_url) return res.redirect(302, p.image_url);
+    if (!p.image_path) return res.status(404).end();
+    const blob = await get(p.image_path, { access: 'private' });
+    if (!blob) return res.status(404).end();
+    res.set('Content-Type', p.image_content_type || blob.blob?.contentType || 'application/octet-stream');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+    return res.status(200).send(Buffer.from(await streamToBuffer(blob.stream)));
+  } catch (e) { console.error('Showcase image:', e.message); return res.status(404).end(); }
 });
 
 app.post('/api/file-ticket', async (req, res) => {
