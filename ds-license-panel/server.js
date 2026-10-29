@@ -1,4 +1,3 @@
-Berikut adalah kode lengkap file server.js yang sudah diperbaiki berdasarkan beberapa catatan bug dan peningkatan edge-case di atas (seperti pengamanan pembacaan properti Vercel Blob, optimalisasi pembersihan chunk paralel dengan Promise.allSettled, dan perbaikan pada fungsi pembacaan stream):
 // DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / private Vercel Blob
 'use strict';
 const express = require('express');
@@ -209,18 +208,23 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_dss_tickets_expiry ON dss_file_tickets(expires_at);
   `);
 
+  // Do not auto-create catalog products from legacy license rows on startup.
+  // Product creation is an explicit admin action; only connect legacy licenses
+  // to a catalog product if that product already exists.
   await pool.query(`
     INSERT INTO license_products(license_id,product_id)
     SELECT l.id,p.id FROM licenses l
     JOIN products p ON p.product_name=NULLIF(BTRIM(l.product_name),'')
     ON CONFLICT DO NOTHING
   `);
+  // Remove only unused legacy placeholder entries; never delete a product tied to a license.
   await pool.query(`
     DELETE FROM products p
     WHERE LOWER(BTRIM(p.product_name)) IN ('general product','dss studio license')
       AND NOT EXISTS (SELECT 1 FROM license_products lp WHERE lp.product_id=p.id)
   `);
 
+  // Normalize legacy owner records where possible.
   const old = await pool.query(`SELECT id,owner_name FROM licenses WHERE group_id IS NULL AND owner_user_id IS NULL LIMIT 500`);
   for (const row of old.rows) {
     try {
@@ -229,6 +233,7 @@ async function initDB() {
     } catch (e) { console.warn('Owner migration deferred:', row.id, e.message); }
   }
 
+  // Single-product enforcement: preserve the lowest product ID for legacy multi-product licenses.
   await pool.query(`
     DELETE FROM license_products lp USING (
       SELECT license_id, MIN(product_id) keep_product_id
@@ -237,6 +242,7 @@ async function initDB() {
     WHERE lp.license_id=x.license_id AND lp.product_id<>x.keep_product_id;
     CREATE UNIQUE INDEX IF NOT EXISTS uq_license_products_one_product ON license_products(license_id);
   `);
+  // Fix any legacy rows with missing/ambiguous owner identity instead of allowing them to authorize.
   await pool.query(`UPDATE licenses SET is_active=FALSE WHERE (owner_user_id IS NULL AND group_id IS NULL) OR (owner_user_id IS NOT NULL AND group_id IS NOT NULL)`);
   await pool.query(`DELETE FROM dss_upload_sessions WHERE created_at < NOW() - INTERVAL '1 day'; DELETE FROM dss_file_tickets WHERE expires_at < NOW()`);
   console.log('DSS schema ready.');
@@ -281,6 +287,9 @@ async function listOwnedPortalLicenses(user) {
   return owned;
 }
 
+// Portal login accepts either a personal license owned by this Roblox account,
+// or a group license when the authenticated account is the actual owner of that group.
+// Merely knowing a Group ID is never sufficient to prove ownership.
 async function findValidPortalLicense(username, key) {
   const user = await getRobloxUserInfo(username);
   if (!user) return { error: 'Username Roblox tidak ditemukan.', status: 404 };
@@ -469,16 +478,11 @@ app.put('/api/uploads/:id/chunks/:index', verifyAdmin, express.raw({ type: 'appl
     res.json({ success: true, index: idx });
   } catch (e) { console.error('Upload chunk:', e.message); res.status(500).json({ success: false, message: 'Upload bagian file gagal.' }); }
 });
-
-// Perbaikan: Penanganan Stream lebih aman
 async function streamToBuffer(stream) {
   const parts = [];
-  for await (const chunk of stream) {
-    parts.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
+  for await (const chunk of stream) parts.push(Buffer.from(chunk));
   return Buffer.concat(parts);
 }
-
 app.post('/api/uploads/:id/finish', verifyAdmin, async (req, res) => {
   const id = cleanText(req.params.id, 64), productId = cleanText(String(req.body?.product_id ?? ''), 20);
   if (!/^[a-f0-9]{48}$/.test(id) || !/^\d+$/.test(productId)) return res.status(400).json({ success: false, message: 'Sesi/produk tidak valid.' });
@@ -499,26 +503,17 @@ app.post('/api/uploads/:id/finish', verifyAdmin, async (req, res) => {
     const updated = await pool.query(`UPDATE products SET ${col}_path=$1,${col}_filename=$2,${col}_content_type=$3,${col}_url=NULL,updated_at=NOW() WHERE id=$4 RETURNING id`, [blob.pathname || blob.url, s.filename, s.content_type, productId]);
     if (!updated.rows.length) { await del(blob.pathname || blob.url, { access: 'private' }).catch(() => {}); return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' }); }
     await pool.query('DELETE FROM dss_upload_sessions WHERE id=$1', [id]);
-    
-    // Perbaikan: Hapus chunk temporer secara paralel agar lebih efisien
-    await Promise.allSettled(
-      Array.from({ length: s.chunk_count }, (_, i) => del(`dss-temp/${id}/${i}`, { access: 'private' }))
-    );
-
+    for (let i = 0; i < s.chunk_count; i++) await del(`dss-temp/${id}/${i}`, { access: 'private' }).catch(() => {});
     res.json({ success: true, message: col === 'image' ? 'Gambar berhasil diunggah.' : 'File berhasil diunggah.', filename: s.filename });
   } catch (e) { console.error('Upload finish:', e.message); res.status(500).json({ success: false, message: 'Gagal menyelesaikan upload.' }); }
 });
-
 app.delete('/api/uploads/:id', verifyAdmin, async (req, res) => {
   const id = cleanText(req.params.id, 64);
   try {
     const { rows } = await pool.query('SELECT chunk_count FROM dss_upload_sessions WHERE id=$1', [id]);
     if (rows[0]) {
       await pool.query('DELETE FROM dss_upload_sessions WHERE id=$1', [id]);
-      // Perbaikan: Penghapusan chunk paralel
-      await Promise.allSettled(
-        Array.from({ length: rows[0].chunk_count }, (_, i) => del(`dss-temp/${id}/${i}`, { access: 'private' }))
-      );
+      for (let i = 0; i < rows[0].chunk_count; i++) await del(`dss-temp/${id}/${i}`, { access: 'private' }).catch(() => {});
     }
     res.json({ success: true });
   } catch { res.status(500).json({ success: false, message: 'Gagal membatalkan upload.' }); }
@@ -606,6 +601,7 @@ app.delete('/api/licenses/:id', verifyAdmin, async (req, res) => {
   } catch { res.status(500).json({ success: false, message: 'Gagal menghapus lisensi.' }); }
 });
 
+// Public catalog cover images are promotional assets; product downloads remain license-gated.
 app.get('/api/showcase/:id/image', async (req, res) => {
   const id = cleanText(req.params.id, 20);
   if (!/^\d+$/.test(id)) return res.status(404).end();
@@ -617,10 +613,7 @@ app.get('/api/showcase/:id/image', async (req, res) => {
     if (!p.image_path) return res.status(404).end();
     const blob = await get(p.image_path, { access: 'private' });
     if (!blob) return res.status(404).end();
-    
-    // Perbaikan: Akses properti aman menggunakan optional chaining
-    const contentType = p.image_content_type || blob?.contentType || blob?.blob?.contentType || 'application/octet-stream';
-    res.set('Content-Type', contentType);
+    res.set('Content-Type', p.image_content_type || blob.blob?.contentType || 'application/octet-stream');
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     return res.status(200).send(Buffer.from(await streamToBuffer(blob.stream)));
@@ -649,7 +642,6 @@ app.post('/api/file-ticket', async (req, res) => {
     res.json({ success: true, url: `/api/private-file/${token}` });
   } catch (e) { console.error('file-ticket:', e.message); res.status(500).json({ success: false, message: 'Gagal membuat akses file.' }); }
 });
-
 app.get('/api/private-file/:token', async (req, res) => {
   const token = cleanText(req.params.token, 64);
   if (!/^[a-f0-9]{64}$/.test(token)) return res.status(404).send('File tidak ditemukan.');
@@ -672,20 +664,12 @@ app.get('/api/private-file/:token', async (req, res) => {
     if (!pathname) return res.status(404).send('File tidak ditemukan.');
     const blob = await get(pathname, { access: 'private' });
     if (!blob) return res.status(404).send('File tidak ditemukan.');
-    
     const filename = safeFilename(t.kind === 'image' ? (t.image_filename || 'product-image') : (t.download_filename || 'product-download'));
-    
-    // Perbaikan: Akses properti contentType dan size secara aman menggunakan optional chaining
-    const fallbackContentType = t.kind === 'image' ? t.image_content_type : t.download_content_type;
-    const resolvedContentType = fallbackContentType || blob?.contentType || blob?.blob?.contentType || 'application/octet-stream';
-    const resolvedSize = blob?.size || blob?.blob?.size;
-
-    res.set('Content-Type', resolvedContentType);
+    res.set('Content-Type', t.kind === 'image' ? (t.image_content_type || blob.blob.contentType || 'application/octet-stream') : (t.download_content_type || blob.blob.contentType || 'application/octet-stream'));
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('Cache-Control', 'private, no-store, max-age=0');
     res.set('Content-Disposition', t.kind === 'download' ? `attachment; filename="${filename.replace(/"/g, '')}"` : 'inline');
-    if (resolvedSize) res.set('Content-Length', String(resolvedSize));
-    
+    if (blob.blob?.size) res.set('Content-Length', String(blob.blob.size));
     return res.status(200).send(Buffer.from(await streamToBuffer(blob.stream)));
   } catch (e) { await c.query('ROLLBACK').catch(() => {}); console.error('private-file:', e.message); res.status(500).send('Gagal mengambil file.'); }
   finally { c.release(); }
