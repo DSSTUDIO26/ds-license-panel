@@ -117,7 +117,7 @@
 </div>
 </div>
 
-<!-- Navigasi Tab (Ditambahkan tombol Project Experience di samping Lisensi & Unduhan) -->
+<!-- Navigasi Tab -->
 <nav class="glass rounded-2xl p-2 flex gap-2 overflow-x-auto shadow-lg border border-white/10">
 <button type="button" id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2 cursor-pointer">🏠 Beranda Utama</button>
 <button type="button" id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer">📦 Showcase Produk</button>
@@ -182,7 +182,7 @@
 <div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
 </div>
 
-<!-- Tab Project Experience (Tampilan rapi berupa grid kartu dengan gambar & judul asli dari Roblox) -->
+<!-- Tab Project Experience -->
 <div id="client-projects" class="client-page hidden space-y-5 animate-fade">
 <div>
   <h2 class="text-xl sm:text-2xl font-extrabold text-white">Project Experience Terdaftar</h2>
@@ -291,7 +291,20 @@ function clearLogs(){
 }
 
 function toast(s){const t=$('toast');if(!t)return;t.textContent=s;t.classList.remove('opacity-0','translate-y-2');setTimeout(()=>t.classList.add('opacity-0','translate-y-2'),3200)}
+
 function showTab(tab){
+  const clientTab = $('clientTab');
+  const adminTab = $('adminTab');
+  
+  if(tab === 'admin'){
+    if(clientTab) clientTab.classList.add('hidden');
+    if(adminTab) adminTab.classList.remove('hidden');
+    return;
+  }
+  
+  if(clientTab) clientTab.classList.remove('hidden');
+  if(adminTab) adminTab.classList.add('hidden');
+
   for(const t of ['home','showcase','licenses','projects']){
     const page=$('client-'+t), btn=$('nav-'+t);
     if(page) page.classList.toggle('hidden',t!==tab);
@@ -300,6 +313,7 @@ function showTab(tab){
     }
   }
 }
+
 async function api(url,options={}){const headers={'Content-Type':'application/json',...(options.headers||{})};delete headers['x-api-secret'];const r=await fetch(API+url,{credentials:'same-origin',...options,headers});let d;try{d=await r.json()}catch{d={success:false,message:'Respons server tidak valid.'}}if(!r.ok||d.success===false)throw new Error(d.message||`HTTP ${r.status}`);return d}
 function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function fmtDate(s){if(!s)return'Selamanya';const d=new Date(s);return Number.isNaN(d.getTime())?'-':d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}
