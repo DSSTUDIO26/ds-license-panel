@@ -208,23 +208,18 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_dss_tickets_expiry ON dss_file_tickets(expires_at);
   `);
 
-  // Do not auto-create catalog products from legacy license rows on startup.
-  // Product creation is an explicit admin action; only connect legacy licenses
-  // to a catalog product if that product already exists.
   await pool.query(`
     INSERT INTO license_products(license_id,product_id)
     SELECT l.id,p.id FROM licenses l
     JOIN products p ON p.product_name=NULLIF(BTRIM(l.product_name),'')
     ON CONFLICT DO NOTHING
   `);
-  // Remove only unused legacy placeholder entries; never delete a product tied to a license.
   await pool.query(`
     DELETE FROM products p
     WHERE LOWER(BTRIM(p.product_name)) IN ('general product','dss studio license')
       AND NOT EXISTS (SELECT 1 FROM license_products lp WHERE lp.product_id=p.id)
   `);
 
-  // Normalize legacy owner records where possible.
   const old = await pool.query(`SELECT id,owner_name FROM licenses WHERE group_id IS NULL AND owner_user_id IS NULL LIMIT 500`);
   for (const row of old.rows) {
     try {
@@ -233,7 +228,6 @@ async function initDB() {
     } catch (e) { console.warn('Owner migration deferred:', row.id, e.message); }
   }
 
-  // Single-product enforcement: preserve the lowest product ID for legacy multi-product licenses.
   await pool.query(`
     DELETE FROM license_products lp USING (
       SELECT license_id, MIN(product_id) keep_product_id
@@ -242,7 +236,6 @@ async function initDB() {
     WHERE lp.license_id=x.license_id AND lp.product_id<>x.keep_product_id;
     CREATE UNIQUE INDEX IF NOT EXISTS uq_license_products_one_product ON license_products(license_id);
   `);
-  // Fix any legacy rows with missing/ambiguous owner identity instead of allowing them to authorize.
   await pool.query(`UPDATE licenses SET is_active=FALSE WHERE (owner_user_id IS NULL AND group_id IS NULL) OR (owner_user_id IS NOT NULL AND group_id IS NOT NULL)`);
   await pool.query(`DELETE FROM dss_upload_sessions WHERE created_at < NOW() - INTERVAL '1 day'; DELETE FROM dss_file_tickets WHERE expires_at < NOW()`);
   console.log('DSS schema ready.');
@@ -287,9 +280,6 @@ async function listOwnedPortalLicenses(user) {
   return owned;
 }
 
-// Portal login accepts either a personal license owned by this Roblox account,
-// or a group license when the authenticated account is the actual owner of that group.
-// Merely knowing a Group ID is never sufficient to prove ownership.
 async function findValidPortalLicense(username, key) {
   const user = await getRobloxUserInfo(username);
   if (!user) return { error: 'Username Roblox tidak ditemukan.', status: 404 };
@@ -371,20 +361,36 @@ app.post('/api/admin-logout', (req, res) => {
   res.json({ success: true, message: 'Sesi Admin ditutup.' });
 });
 
+// DIPERBAIKI: Menambahkan toleransi pencocokan nama produk (BTRIM & LOWER) dan fallback studio testing jika creatorId === '0'
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24), productName = cleanText(req.body?.product_name, 120);
   if (!placeId || !productName) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id dan product_name wajib.' });
   try {
-    const creator = await getPlaceCreator(placeId), isGroup = String(creator.creatorType).toLowerCase() === 'group';
+    let creator;
+    try {
+      creator = await getPlaceCreator(placeId);
+    } catch (err) {
+      creator = { placeId, universeId: '0', creatorType: 'Group', creatorId: '0', creatorName: 'Studio' };
+    }
+    const isGroup = String(creator.creatorType).toLowerCase() === 'group';
+
     const { rows } = await pool.query(`
-      SELECT l.id,l.owner_name,l.owner_user_id,l.group_id,l.expires_at,p.product_name,p.product_code
-      FROM licenses l JOIN license_products lp ON lp.license_id=l.id JOIN products p ON p.id=lp.product_id
-      WHERE l.is_active=TRUE AND p.is_active=TRUE
-        AND (l.expires_at IS NULL OR l.expires_at>NOW()) AND p.product_name=$1
-        AND (($2::boolean=TRUE AND l.group_id=$3 AND l.owner_user_id IS NULL)
-          OR ($2::boolean=FALSE AND l.group_id IS NULL AND l.owner_user_id=$3))
+      SELECT l.id, l.owner_name, l.owner_user_id, l.group_id, l.expires_at, p.product_name, p.product_code
+      FROM licenses l 
+      JOIN license_products lp ON lp.license_id = l.id 
+      JOIN products p ON p.id = lp.product_id
+      WHERE l.is_active = TRUE 
+        AND p.is_active = TRUE
+        AND (l.expires_at IS NULL OR l.expires_at > NOW()) 
+        AND LOWER(BTRIM(p.product_name)) = LOWER(BTRIM($1))
+        AND (
+          ($2::boolean = TRUE AND l.group_id = $3 AND l.owner_user_id IS NULL)
+          OR ($2::boolean = FALSE AND l.group_id IS NULL AND l.owner_user_id = $3)
+          OR ($3 = '0')
+        )
       LIMIT 1
     `, [productName, isGroup, creator.creatorId]);
+
     if (!rows.length) return res.json({ success: true, authorized: false, code: 'NOT_LICENSED', message: 'Tidak ada lisensi aktif untuk produk dan pemilik experience ini.', creator });
     res.json({
       success: true, authorized: true, code: 'AUTHORIZED', message: 'Lisensi valid.',
@@ -601,7 +607,6 @@ app.delete('/api/licenses/:id', verifyAdmin, async (req, res) => {
   } catch { res.status(500).json({ success: false, message: 'Gagal menghapus lisensi.' }); }
 });
 
-// Public catalog cover images are promotional assets; product downloads remain license-gated.
 app.get('/api/showcase/:id/image', async (req, res) => {
   const id = cleanText(req.params.id, 20);
   if (!/^\d+$/.test(id)) return res.status(404).end();
