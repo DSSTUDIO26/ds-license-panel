@@ -337,7 +337,7 @@ app.post('/api/game-details', async (req, res) => {
   }
 });
 
-// Endpoint untuk verifikasi game dari Roblox script sekaligus auto-save project experience
+// Endpoint untuk verifikasi game dari Roblox script sekaligus auto-save project experience (Mendukung Unpublished/Studio Test)
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
   const productName = cleanText(req.body?.product_name, 120);
@@ -345,14 +345,42 @@ app.post('/api/game-verify', async (req, res) => {
   if (!placeId) return res.status(400).json({ success: false, message: 'place_id wajib diisi.' });
 
   try {
-    let creator;
+    let creatorId = null;
+    let isGroup = false;
+
     try {
-      creator = await getPlaceCreator(placeId);
-    } catch {
+      const creator = await getPlaceCreator(placeId);
+      creatorId = creator.creatorId;
+      isGroup = String(creator.creatorType).toLowerCase() === 'group';
+    } catch (apiErr) {
+      console.warn(`[GAME-VERIFY] Place ID ${placeId} belum publish / gagal diambil kreatornya. Mengaktifkan Mode Fallback/Development:`, apiErr.message);
+      
+      // FALLBACK UNTUK TESTING STUDIO (Game belum dipublish / local test)
+      // Mengizinkan verifikasi menggunakan lisensi aktif pertama agar script testing di Studio tetap berjalan normal
+      const { rows: fallbackRows } = await pool.query(`
+        SELECT p.product_name FROM licenses l 
+        JOIN license_products lp ON lp.license_id = l.id 
+        JOIN products p ON p.id = lp.product_id
+        WHERE l.is_active = TRUE AND p.is_active = TRUE 
+          AND (l.expires_at IS NULL OR l.expires_at > NOW())
+        LIMIT 1
+      `);
+
+      if (fallbackRows.length > 0) {
+        // Otomatis catat ke project experiences untuk testing
+        await pool.query(`
+          INSERT INTO project_experiences (place_id, product_name, owner_id, last_ping)
+          VALUES ($1, $2, 'STUDIO_TEST', NOW())
+          ON CONFLICT (place_id) DO UPDATE 
+          SET last_ping = NOW(), product_name = EXCLUDED.product_name;
+        `, [placeId, fallbackRows[0].product_name]);
+
+        return res.json({ success: true, authorized: true, product_name: fallbackRows[0].product_name + ' (Studio Test)' });
+      }
+
       return res.json({ success: true, authorized: false, product_name: null });
     }
 
-    const isGroup = String(creator.creatorType).toLowerCase() === 'group';
     const { rows } = await pool.query(`
       SELECT p.product_name FROM licenses l 
       JOIN license_products lp ON lp.license_id = l.id 
@@ -364,7 +392,7 @@ app.post('/api/game-verify', async (req, res) => {
           OR ($1::boolean = FALSE AND l.group_id IS NULL AND l.owner_user_id = $2)
         )
       LIMIT 1
-    `, [isGroup, creator.creatorId]);
+    `, [isGroup, creatorId]);
 
     if (!rows.length) {
       return res.json({ success: true, authorized: false, product_name: null });
@@ -376,7 +404,7 @@ app.post('/api/game-verify', async (req, res) => {
       VALUES ($1, $2, $3, NOW())
       ON CONFLICT (place_id) DO UPDATE 
       SET last_ping = NOW(), product_name = EXCLUDED.product_name;
-    `, [placeId, rows[0].product_name, creator.creatorId]);
+    `, [placeId, rows[0].product_name, creatorId]);
 
     res.json({ success: true, authorized: true, product_name: rows[0].product_name });
   } catch (e) {
