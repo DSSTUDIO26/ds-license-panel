@@ -337,47 +337,32 @@ app.post('/api/game-details', async (req, res) => {
   }
 });
 
-// Endpoint untuk verifikasi game dari Roblox script sekaligus auto-save project experience (Mendukung Group/User Fleksibel & Studio Test)
+// Endpoint Verifikasi Game Terbaru (Mendukung Game Private via Direct Payload dari Roblox Studio)
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
-  const productName = cleanText(req.body?.product_name, 120);
+  const directCreatorId = cleanText(String(req.body?.creator_id ?? ''), 32);
 
   if (!placeId) return res.status(400).json({ success: false, message: 'place_id wajib diisi.' });
 
   try {
-    let creatorId = null;
+    let creatorId = directCreatorId || null;
 
-    try {
-      const creator = await getPlaceCreator(placeId);
-      creatorId = creator.creatorId;
-    } catch (apiErr) {
-      console.warn(`[GAME-VERIFY] Place ID ${placeId} belum publish / gagal diambil kreatornya. Mengaktifkan Mode Fallback/Development:`, apiErr.message);
-      
-      // FALLBACK UNTUK TESTING STUDIO (Game belum dipublish / local test)
-      const { rows: fallbackRows } = await pool.query(`
-        SELECT p.product_name FROM licenses l 
-        JOIN license_products lp ON lp.license_id = l.id 
-        JOIN products p ON p.id = lp.product_id
-        WHERE l.is_active = TRUE AND p.is_active = TRUE 
-          AND (l.expires_at IS NULL OR l.expires_at > NOW())
-        LIMIT 1
-      `);
-
-      if (fallbackRows.length > 0) {
-        await pool.query(`
-          INSERT INTO project_experiences (place_id, product_name, owner_id, last_ping)
-          VALUES ($1, $2, 'STUDIO_TEST', NOW())
-          ON CONFLICT (place_id) DO UPDATE 
-          SET last_ping = NOW(), product_name = EXCLUDED.product_name;
-        `, [placeId, fallbackRows[0].product_name]);
-
-        return res.json({ success: true, authorized: true, product_name: fallbackRows[0].product_name + ' (Studio Test)' });
+    // Jika Studio tidak mengirimkan creator_id (atau game publik), coba ambil via API Publik Roblox
+    if (!creatorId) {
+      try {
+        const creator = await getPlaceCreator(placeId);
+        creatorId = creator.creatorId;
+      } catch (apiErr) {
+        console.warn(`[GAME-VERIFY] Place ID ${placeId} adalah Private Game atau belum terdaftar di Public API Roblox.`);
       }
-
-      return res.json({ success: true, authorized: false, product_name: null });
     }
 
-    // QUERY FLEKSIBEL: Mencocokkan group_id atau owner_user_id dengan creatorId game secara akurat
+    // Jika creatorId tidak ditemukan baik dari payload maupun API
+    if (!creatorId) {
+      return res.json({ success: true, authorized: false, product_name: null, message: "Pemilik game tidak dapat diverifikasi." });
+    }
+
+    // QUERY UTAMA: Pencocokan Group ID atau Owner User ID dengan lisensi aktif
     const { rows } = await pool.query(`
       SELECT p.product_name FROM licenses l 
       JOIN license_products lp ON lp.license_id = l.id 
@@ -396,7 +381,7 @@ app.post('/api/game-verify', async (req, res) => {
       return res.json({ success: true, authorized: false, product_name: null });
     }
 
-    // OTOMATIS MENYIMPAN PLACE ID KE DATABASE PROJECT EXPERIENCES
+    // OTOMATIS CATAT / UPDATE KE PROJECT EXPERIENCES
     await pool.query(`
       INSERT INTO project_experiences (place_id, product_name, owner_id, last_ping)
       VALUES ($1, $2, $3, NOW())
