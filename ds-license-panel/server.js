@@ -337,7 +337,7 @@ app.post('/api/game-details', async (req, res) => {
   }
 });
 
-// Endpoint untuk verifikasi game dari Roblox script sekaligus auto-save project experience (Mendukung Unpublished/Studio Test)
+// Endpoint untuk verifikasi game dari Roblox script sekaligus auto-save project experience (Mendukung Group/User Fleksibel & Studio Test)
 app.post('/api/game-verify', async (req, res) => {
   const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
   const productName = cleanText(req.body?.product_name, 120);
@@ -346,17 +346,14 @@ app.post('/api/game-verify', async (req, res) => {
 
   try {
     let creatorId = null;
-    let isGroup = false;
 
     try {
       const creator = await getPlaceCreator(placeId);
       creatorId = creator.creatorId;
-      isGroup = String(creator.creatorType).toLowerCase() === 'group';
     } catch (apiErr) {
       console.warn(`[GAME-VERIFY] Place ID ${placeId} belum publish / gagal diambil kreatornya. Mengaktifkan Mode Fallback/Development:`, apiErr.message);
       
       // FALLBACK UNTUK TESTING STUDIO (Game belum dipublish / local test)
-      // Mengizinkan verifikasi menggunakan lisensi aktif pertama agar script testing di Studio tetap berjalan normal
       const { rows: fallbackRows } = await pool.query(`
         SELECT p.product_name FROM licenses l 
         JOIN license_products lp ON lp.license_id = l.id 
@@ -367,7 +364,6 @@ app.post('/api/game-verify', async (req, res) => {
       `);
 
       if (fallbackRows.length > 0) {
-        // Otomatis catat ke project experiences untuk testing
         await pool.query(`
           INSERT INTO project_experiences (place_id, product_name, owner_id, last_ping)
           VALUES ($1, $2, 'STUDIO_TEST', NOW())
@@ -381,6 +377,7 @@ app.post('/api/game-verify', async (req, res) => {
       return res.json({ success: true, authorized: false, product_name: null });
     }
 
+    // QUERY FLEKSIBEL: Mencocokkan group_id atau owner_user_id dengan creatorId game secara akurat
     const { rows } = await pool.query(`
       SELECT p.product_name FROM licenses l 
       JOIN license_products lp ON lp.license_id = l.id 
@@ -388,11 +385,12 @@ app.post('/api/game-verify', async (req, res) => {
       WHERE l.is_active = TRUE AND p.is_active = TRUE
         AND (l.expires_at IS NULL OR l.expires_at > NOW()) 
         AND (
-          ($1::boolean = TRUE AND l.group_id = $2 AND l.owner_user_id IS NULL)
-          OR ($1::boolean = FALSE AND l.group_id IS NULL AND l.owner_user_id = $2)
+          (l.group_id IS NOT NULL AND l.group_id::text = $1::text)
+          OR 
+          (l.owner_user_id IS NOT NULL AND l.owner_user_id::text = $1::text)
         )
       LIMIT 1
-    `, [isGroup, creatorId]);
+    `, [String(creatorId)]);
 
     if (!rows.length) {
       return res.json({ success: true, authorized: false, product_name: null });
@@ -408,6 +406,7 @@ app.post('/api/game-verify', async (req, res) => {
 
     res.json({ success: true, authorized: true, product_name: rows[0].product_name });
   } catch (e) {
+    console.error('game-verify error:', e.message);
     res.status(500).json({ success: false, authorized: false, product_name: null });
   }
 });
