@@ -436,7 +436,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
               </div>
             </div>
             <div id="ownerFields"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Username Pemilik Roblox</label><input id="newOwner" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Username"></div>
-            <div id="groupFields" class="hidden"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Group ID Roblox</label><input id="newGroup" inputmode="numeric" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ID Grup"></div>
+            <div id="groupFields" class="hidden"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Group ID Roblox</label><input id="newGroup" inputmode="numeric" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ID Grup"><p id="groupLookupStatus" class="muted text-[11px] mt-2">Nama komunitas akan dibaca otomatis dari Roblox.</p></div>
             <div><label class="text-[11px] uppercase tracking-wider muted font-semibold block mb-2.5">Pilih Satu Produk</label><div id="licenseProductChoices" class="space-y-2.5 max-h-40 overflow-y-auto pr-1"></div></div>
             <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Masa Kedaluwarsa (Opsional)</label><input id="newExpires" type="date" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-medium text-white"></div>
             <button type="button" onclick="createLicense()" class="gold-btn rounded-2xl w-full py-4 text-xs font-extrabold uppercase tracking-wider shadow-lg cursor-pointer">Simpan Lisensi Baru</button>
@@ -1012,8 +1012,21 @@ function renderLicenses() {
 }
 
 async function toggleLicense(id, active) {
-  try { await api('/api/licenses/' + id + '/status', { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); addLog(`Status lisensi ID ${id} diubah ke ${active}`); await loadAdmin(); toast('Status lisensi diperbarui.'); }
-  catch(e) { toast(e.message); }
+  const nextStatus = active === true;
+  try {
+    const result = await api('/api/licenses/' + encodeURIComponent(String(id)) + '/status', {
+      method: 'PATCH',
+      body: JSON.stringify({ is_active: nextStatus })
+    });
+    if (!result || result.success !== true || result.license?.is_active !== nextStatus) {
+      throw new Error('Server tidak mengonfirmasi perubahan status lisensi.');
+    }
+    addLog(`Lisensi ID ${id} berhasil ${nextStatus ? 'diaktifkan' : 'dinonaktifkan'}.`);
+    await loadAdmin();
+    toast(nextStatus ? 'Lisensi berhasil diaktifkan.' : 'Lisensi berhasil dinonaktifkan.');
+  } catch(e) {
+    toast('Gagal mengubah status: ' + e.message);
+  }
 }
 
 async function deleteLicense(id) {
@@ -1022,7 +1035,38 @@ async function deleteLicense(id) {
   catch(e) { toast(e.message); }
 }
 
+let groupLookupTimer = null;
+let lastGroupLookupId = '';
+async function lookupGroupName() {
+  const field = $('newGroup');
+  const status = $('groupLookupStatus');
+  if (!field || !status) return;
+  const id = field.value.trim();
+  if (!/^\d{1,20}$/.test(id)) {
+    lastGroupLookupId = '';
+    status.textContent = id ? 'Group ID harus berupa angka.' : 'Nama komunitas akan dibaca otomatis dari Roblox.';
+    status.className = 'muted text-[11px] mt-2';
+    return;
+  }
+  if (id === lastGroupLookupId) return;
+  status.textContent = 'Membaca nama komunitas dari Roblox...';
+  status.className = 'text-amber-300 text-[11px] mt-2';
+  try {
+    const data = await api('/api/roblox-group/' + encodeURIComponent(id));
+    if (field.value.trim() !== id) return;
+    lastGroupLookupId = id;
+    status.textContent = 'Komunitas ditemukan: ' + (data.group?.groupName || 'Tanpa nama');
+    status.className = 'text-emerald-300 text-[11px] mt-2';
+  } catch (e) {
+    if (field.value.trim() !== id) return;
+    status.textContent = e.message;
+    status.className = 'text-red-300 text-[11px] mt-2';
+  }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
+  const groupField = $('newGroup');
+  if (groupField) groupField.addEventListener('input', () => { clearTimeout(groupLookupTimer); groupLookupTimer = setTimeout(lookupGroupName, 450); });
   try {
     const s = await api('/api/admin-session');
     if(s.authenticated) { await openAdmin(); return; }
