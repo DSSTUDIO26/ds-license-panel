@@ -1,17 +1,13 @@
 {
-  "name": "dss-studio-license-pro",
-  "version": "2.0.0",
+  "name": "dss-studio-license",
+  "version": "5.2.0",
   "private": true,
-  "description": "DRAGON STELL STUDIO license portal with PostgreSQL and private Vercel Blob storage",
+  "description": "DSS STUDIO LICENSE API - Dragon Stell Studio",
   "main": "server.js",
-  "engines": {
-    "node": "24.x"
-  },
-  "scripts": {
-    "start": "node server.js"
-  },
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js" },
   "dependencies": {
-    "@vercel/blob": "^0.27.1",
+    "@vercel/blob": "^2.0.0",
     "express": "^4.21.2",
     "pg": "^8.13.1"
   }
