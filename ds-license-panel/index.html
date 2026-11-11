@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,98 +7,65 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-:root { color-scheme: dark; }
+:root{color-scheme:dark}
 * { box-sizing: border-box; }
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background: #020305;
-  color: #f1f1f5;
+  background: #040507;
+  color: #f4f4f5;
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(185, 155, 81, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 85% 25%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 50% 90%, rgba(185, 155, 81, 0.06) 0%, transparent 60%);
+    radial-gradient(circle at 15% 10%, rgba(185, 155, 81, 0.08) 0, transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.06) 0, transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(185, 155, 81, 0.04) 0, transparent 50%);
   background-attachment: fixed;
-  overflow-x: hidden;
 }
-
-/* Glass Dark Theme & Lighting */
 .glass {
-  background: rgba(11, 13, 19, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(12, 13, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
 }
 .glass-card {
-  background: linear-gradient(145deg, rgba(16, 19, 28, 0.92), rgba(7, 9, 14, 0.97));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  background: linear-gradient(145deg, rgba(18, 20, 28, 0.9), rgba(10, 11, 15, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
 }
-.glass-card:hover {
-  border-color: rgba(185, 155, 81, 0.35);
-  box-shadow: 0 25px 50px rgba(185, 155, 81, 0.1);
-  transform: translateY(-3px);
-}
-
 .field {
-  background: #050609;
-  border: 1px solid #1a1d28;
+  background: #08090d;
+  border: 1px solid #22232b;
   outline: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
 }
-.field:focus {
-  border-color: #b99b51;
-  box-shadow: 0 0 20px rgba(185, 155, 81, 0.18);
-  background: #090b10;
-}
-
-.gold-btn {
+.field:focus { border-color: #b99b51; box-shadow: 0 0 15px rgba(185, 155, 81, 0.15); }
+.gold {
   background: linear-gradient(135deg, #b99b51 0%, #e8d59a 50%, #9a7b32 100%);
-  color: #0b0904;
-  font-weight: 800;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #121008;
+  font-weight: 700;
 }
-.gold-btn:hover {
-  filter: brightness(1.12);
-  box-shadow: 0 10px 25px rgba(185, 155, 81, 0.3);
-  transform: translateY(-2px);
-}
-
-.muted { color: #8e8e9a; }
-.btn { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-.btn:hover { transform: translateY(-2px); }
+.muted { color: #9898a0; }
+.btn { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn:hover { filter: brightness(1.12); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(185, 155, 81, 0.2); }
 button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+#toast { transition: opacity 0.3s ease, transform 0.3s ease; }
 
-#toast { transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
-
-/* Animations */
 @keyframes shimmerGradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 .animated-title {
-  background: linear-gradient(270deg, #ffffff, #e8d59a, #a1a1aa, #ffffff);
+  background: linear-gradient(270deg, #ffffff, #b99b51, #a1a1aa, #ffffff);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: shimmerGradient 8s ease infinite;
 }
 
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.05); }
-}
-.glow-ambient { animation: pulseGlow 7s ease-in-out infinite; }
-
 @keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.98) translateY(10px); }
+  from { opacity: 0; transform: scale(0.98) translateY(8px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-.animate-fade { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-fade { animation: fadeInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-/* Product Cards */
 .product-card {
   display: flex;
   flex-direction: column;
@@ -106,19 +73,19 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
   min-width: 0;
   overflow: hidden;
   border-radius: 24px;
-  background: linear-gradient(160deg, rgba(14, 17, 26, 0.95), rgba(5, 7, 11, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  background: linear-gradient(160deg, rgba(16, 18, 26, 0.9), rgba(8, 9, 13, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .product-card:hover {
   border-color: rgba(185, 155, 81, 0.45);
   transform: translateY(-6px);
-  box-shadow: 0 25px 45px -10px rgba(185, 155, 81, 0.2);
+  box-shadow: 0 20px 45px -12px rgba(185, 155, 81, 0.2);
 }
 .product-cover {
   width: 100%;
   height: 200px;
-  background: #030406;
+  background: #06070a;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   position: relative;
@@ -127,61 +94,67 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .product-card:hover .product-cover img { transform: scale(1.07); }
-
+.product-cover .fallback-text {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #71717a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.product-card h3, .product-card p { overflow-wrap: anywhere; }
 .checkrow {
-  background: #050609;
-  border: 1px solid #1a1d28;
-  transition: all 0.25s ease;
+  background: #08090d;
+  border: 1px solid #22232b;
+  transition: all 0.2s ease;
 }
 .checkrow:has(input:checked) {
   border-color: #b99b51;
   background: rgba(185, 155, 81, 0.08);
 }
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #020305; }
-::-webkit-scrollbar-thumb { background: #1a1d28; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #b99b51; }
 </style>
 </head>
 <body class="min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
 
 <!-- Toast Notification -->
-<div id="toast" class="fixed z-50 bottom-6 right-6 opacity-0 translate-y-4 pointer-events-none glass rounded-2xl px-5 py-4 text-xs shadow-2xl max-w-[90vw] border border-amber-500/30 font-medium flex items-center gap-3.5">
-  <div class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></div>
-  <span id="toastText" class="text-white font-semibold">Notifikasi sistem aktif</span>
+<div id="toast" class="fixed z-50 bottom-6 right-6 opacity-0 translate-y-2 pointer-events-none glass rounded-2xl px-5 py-3.5 text-xs shadow-2xl max-w-[90vw] border border-amber-500/30 font-medium flex items-center gap-3">
+  <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+  <span id="toastText">Notifikasi</span>
 </div>
 
-<!-- Header Console Enterprise -->
-<header class="glass sticky top-0 z-40 border-b border-white/10 shadow-2xl">
+<!-- Header -->
+<header class="glass sticky top-0 z-40 border-x-0 border-t-0 shadow-xl">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-4 min-w-0">
-      <div class="relative group">
-        <div class="absolute -inset-1 bg-gradient-to-r from-amber-500 to-indigo-600 rounded-2xl blur opacity-40 group-hover:opacity-80 transition duration-500"></div>
-        <img class="relative w-11 h-11 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-lg" alt="DSS Logo" src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true">
+    <div class="flex items-center gap-3.5 min-w-0">
+      <div class="relative">
+        <div class="absolute -inset-1 bg-gradient-to-r from-amber-500 to-indigo-500 rounded-2xl blur opacity-30"></div>
+        <img class="relative w-11 h-11 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" alt="DSS" src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true">
       </div>
-      <div class="min-w-0 flex flex-col justify-center">
-        <div class="font-extrabold tracking-wide text-xs sm:text-base truncate text-white flex items-center gap-3">
-          <span>DRAGON STELL STUDIO</span>
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5"></span> ONLINE
-          </span>
+      <div class="min-w-0">
+        <div class="font-extrabold tracking-wide text-sm sm:text-base truncate text-white flex items-center gap-2">
+          DRAGON STELL STUDIO
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="System Online"></span>
         </div>
-        <div class="text-[9px] tracking-[0.25em] text-amber-400/90 font-bold uppercase mt-0.5">Enterprise Licensing Console</div>
+        <div class="text-[9px] tracking-[0.3em] text-amber-400/90 font-bold uppercase">Secure License & Management Console</div>
       </div>
     </div>
     
     <div class="shrink-0 flex items-center gap-3">
-      <a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold tracking-wide uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 shadow-md">
-        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-        <span class="hidden sm:inline">Support Discord</span>
+      <a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold tracking-wide uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 shadow-sm">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <span class="hidden sm:inline">Contact Me</span>
       </a>
-      <div class="h-6 w-[1px] bg-white/10 hidden sm:block"></div>
-      <span class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-md">
-        <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+      <div class="h-5 w-[1px] bg-white/10 hidden sm:block"></div>
+      <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-inner">
+        <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
         CREATOR STELL
       </span>
     </div>
@@ -190,183 +163,122 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
 
 <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
 
-  <!-- Client Portal View -->
   <section id="clientTab" class="max-w-5xl mx-auto space-y-8 animate-fade">
     <div id="welcome" class="text-center py-6 sm:py-10 space-y-4 relative">
-      <div class="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none glow-ambient"><div class="w-[600px] h-[300px] bg-gradient-to-r from-amber-500 to-indigo-600 rounded-full blur-[140px]"></div></div>
-      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-extrabold tracking-[0.25em] uppercase bg-amber-500/10 text-amber-400 border border-amber-500/25 shadow-inner">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        Secure License Gateway
-      </span>
+      <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"><div class="w-[500px] h-[300px] bg-gradient-to-r from-amber-500 to-indigo-600 rounded-full blur-[120px]"></div></div>
+      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-extrabold tracking-[0.25em] uppercase bg-amber-500/10 text-amber-400 border border-amber-500/25 mb-1 shadow-sm">Secure Authentication Portal</span>
       <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight animated-title">WELCOME TO DRAGON STELL STUDIO</h1>
-      <p class="muted text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">Portal resmi otentikasi lisensi terenkripsi, manajemen akses produk, dan unduhan file ekosistem Roblox.</p>
+      <p class="muted text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">Sistem manajemen lisensi terenkripsi profesional untuk autentikasi produk dan unduhan resmi ekosistem Dragon Stell.</p>
     </div>
 
-    <!-- Login Box Klien -->
+    <!-- Kotak Login Klien -->
     <div id="clientLoginBox" class="glass-card rounded-3xl p-7 sm:p-10 max-w-lg mx-auto space-y-6 shadow-2xl border border-white/10 relative overflow-hidden">
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-amber-300 to-indigo-500"></div>
+      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-600 via-amber-400 to-indigo-500"></div>
       <div class="space-y-1.5">
-        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-2 shadow-inner">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-        </div>
-        <h2 class="text-xl font-extrabold text-white tracking-tight">Otentikasi Klien</h2>
-        <p class="muted text-xs leading-relaxed">Masukan kredensial Roblox dan License Key terdaftar untuk mengakses produk Anda.</p>
+        <h2 class="text-xl font-extrabold text-white">Masuk ke Portal Klien</h2>
+        <p class="muted text-xs">Verifikasi kepemilikan produk menggunakan kredensial Roblox Anda.</p>
       </div>
       <div class="space-y-4 pt-1">
         <div>
-          <label class="block text-[11px] uppercase tracking-wider muted font-bold mb-2 flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-            Username Roblox
-          </label>
+          <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Username Roblox</label>
           <div class="relative"><span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500 font-semibold">@</span><input id="loginUsername" class="field w-full rounded-2xl pl-9 pr-4 py-3.5 text-sm font-medium text-white" placeholder="UsernameRoblox" autocomplete="username"></div>
         </div>
         <div>
-          <label class="block text-[11px] uppercase tracking-wider muted font-bold mb-2 flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-            License Key
-          </label>
+          <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">License Key</label>
           <div class="relative">
             <input id="loginKey" type="password" class="field w-full rounded-2xl pl-4 pr-11 py-3.5 text-sm font-medium text-white" placeholder="DSS-XXXX-XXXX-XXXX" autocomplete="current-password">
             <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-white transition-colors cursor-pointer" title="Tampilkan/Sembunyikan Key"><svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
           </div>
         </div>
       </div>
-      <button type="button" id="portalLoginBtn" onclick="portalLogin()" class="gold-btn rounded-2xl w-full py-4 text-xs font-extrabold uppercase tracking-wider shadow-xl flex items-center justify-center gap-2 cursor-pointer">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-        Verifikasi & Masuk
-      </button>
+      <button type="button" id="portalLoginBtn" onclick="portalLogin()" class="btn gold rounded-2xl w-full py-4 font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-amber-900/30 cursor-pointer">Login Securely</button>
       <p id="clientError" class="hidden text-xs text-red-400 text-center font-medium bg-red-500/10 py-3 rounded-2xl border border-red-500/20"></p>
     </div>
 
     <!-- Dashboard Klien -->
     <div id="clientDashboard" class="hidden space-y-6 animate-fade">
-      <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center justify-between shadow-2xl relative overflow-hidden border border-amber-500/20">
+      <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center justify-between shadow-2xl relative overflow-hidden border border-amber-500/25">
         <div class="flex items-center gap-5 min-w-0 relative z-10">
-          <div class="relative group">
-            <div class="absolute -inset-1 bg-gradient-to-r from-amber-400 to-indigo-500 rounded-2xl blur opacity-50 group-hover:opacity-100 transition duration-300"></div>
-            <img id="clientAvatar" class="relative w-20 h-20 rounded-2xl bg-black border-2 border-amber-400/50 object-cover shadow-2xl" alt="Avatar">
-            <span class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-2 border-[#090a0e] flex items-center justify-center text-[10px] text-white font-extrabold shadow-md" title="Terverifikasi">✓</span>
+          <div class="relative">
+            <img id="clientAvatar" class="w-20 h-20 rounded-2xl bg-black border-2 border-amber-400/50 object-cover shadow-2xl" alt="Avatar">
           </div>
           <div class="min-w-0 space-y-1.5">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30">Roblox Verified Account</div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30">Roblox Verified Account</div>
             <b id="clientName" class="text-xl sm:text-2xl font-extrabold block truncate text-white tracking-tight"></b>
             <p id="clientExpiry" class="muted text-xs font-medium"></p>
           </div>
         </div>
         <div class="flex items-center gap-3 relative z-10 flex-wrap">
-          <button type="button" onclick="refreshClient()" class="btn border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold bg-white/5 hover:bg-white/10 flex items-center gap-2 cursor-pointer text-gray-200">
-            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Refresh Data
-          </button>
-          <button type="button" onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-bold bg-red-500/10 hover:bg-red-500/20 flex items-center gap-2 cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-            Keluar
-          </button>
+          <button type="button" onclick="refreshClient()" class="btn border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white/5 hover:bg-white/10 flex items-center gap-2 cursor-pointer shadow-sm">🔄 Refresh Data</button>
+          <button type="button" onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 flex items-center gap-1.5 cursor-pointer">Keluar</button>
         </div>
       </div>
 
-      <!-- Tab Navigation -->
-      <nav class="glass rounded-2xl p-2 flex gap-2 overflow-x-auto shadow-xl border border-white/10">
-        <button type="button" id="nav-home" onclick="showClientTab('home')" class="client-nav gold-btn rounded-xl px-6 py-3 text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-          Beranda Utama
-        </button>
-        <button type="button" id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-          Showcase Produk
-        </button>
-        <button type="button" id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-          Lisensi & Unduhan
-        </button>
-        <button type="button" id="nav-projects" onclick="showClientTab('projects')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Project Experience
-        </button>
+      <!-- Navigasi Tab Klien -->
+      <nav class="glass rounded-2xl p-2.5 flex gap-2 overflow-x-auto shadow-xl border border-white/10">
+        <button type="button" id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2.5 cursor-pointer">🏠 Beranda Utama</button>
+        <button type="button" id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">📦 Showcase Produk</button>
+        <button type="button" id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">🔑 Lisensi & Unduhan</button>
+        <button type="button" id="nav-projects" onclick="showClientTab('projects')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">🎮 Project Experience</button>
       </nav>
 
-      <!-- Sub-Tab: Home -->
+      <!-- Sub-Tab Beranda -->
       <div id="client-home" class="client-page space-y-6 animate-fade">
-        <div class="glass-card rounded-3xl p-6 sm:p-7 border border-amber-500/30 relative overflow-hidden flex items-center gap-5 shadow-2xl">
-          <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
-          <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
-            <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-          </div>
-          <div class="space-y-1 relative z-10 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">Informasi Sistem</span>
-              <span class="text-[10px] muted">Hari Ini</span>
-            </div>
-            <h3 class="text-sm sm:text-base font-extrabold text-white truncate">Ekosistem Dragon Stell Studio Berjalan Optimal</h3>
-            <p class="muted text-xs leading-relaxed">Semua layanan verifikasi lisensi dan auto-tracking place ID aktif sepenuhnya tanpa kendala.</p>
-          </div>
-        </div>
-
         <div class="grid sm:grid-cols-3 gap-5">
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden group">
-            <p class="muted text-xs font-bold uppercase tracking-wider flex items-center gap-2"><svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> Produk Dimiliki</p>
-            <p id="statProducts" class="text-4xl font-extrabold text-amber-300 mt-3 tracking-tight">0</p>
-            <p class="text-[11px] muted mt-1">Lisensi terikat aktif</p>
+          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
+            <p class="muted text-xs font-bold uppercase tracking-wider">Produk Dimiliki</p>
+            <p id="statProducts" class="text-4xl font-extrabold text-amber-300 mt-3">0</p>
           </div>
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden group">
-            <p class="muted text-xs font-bold uppercase tracking-wider flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Status Akses</p>
-            <p class="text-xl font-extrabold text-emerald-400 mt-3 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>Terverifikasi Sah</p>
-            <p class="text-[11px] muted mt-1">Enkripsi SHA-256 aktif</p>
+          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
+            <p class="muted text-xs font-bold uppercase tracking-wider">Status Akun</p>
+            <p class="text-xl font-extrabold text-emerald-400 mt-3 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>Terverifikasi Aman</p>
           </div>
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5 relative overflow-hidden group">
-            <p class="muted text-xs font-bold uppercase tracking-wider flex items-center gap-2"><svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Tipe Lisensi</p>
-            <p id="statAccessType" class="text-lg font-extrabold text-white mt-3 tracking-tight">Akun Lisensi</p>
-            <p class="text-[11px] muted mt-1">Akses penuh ekosistem</p>
+          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
+            <p class="muted text-xs font-bold uppercase tracking-wider">Tipe Akses</p>
+            <p id="statAccessType" class="text-lg font-extrabold text-white mt-3">Lisensi Resmi</p>
           </div>
         </div>
 
         <div class="glass-card rounded-3xl p-8 shadow-2xl space-y-5 border border-white/10 relative overflow-hidden">
           <div class="space-y-1.5 relative z-10">
-            <span class="text-amber-400 text-[10px] font-extrabold tracking-widest uppercase flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg> Management Portal</span>
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Pusat Kontrol Ekosistem Dragon Stell</h2>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Selamat Datang di Portal Eksklusif Dragon Stell Studio</h2>
           </div>
           <p class="muted text-sm leading-relaxed relative z-10 max-w-3xl">
-            Gunakan navigasi di atas untuk meninjau produk yang Anda miliki, mengunduh file update terbaru secara instan, atau memantau performa game Roblox Anda yang terhubung secara otomatis ke sistem kami.
+            Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengeksplorasi Project Experience resmi Anda.
           </p>
-          <div class="pt-2 flex flex-wrap gap-3.5 relative z-10">
-            <button type="button" onclick="showClientTab('showcase')" class="gold-btn rounded-2xl px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg flex items-center gap-2 cursor-pointer">
-              Jelajahi Showcase Produk
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            </button>
-            <button type="button" onclick="showClientTab('projects')" class="btn border border-white/10 rounded-2xl px-6 py-3.5 text-xs font-bold text-white bg-white/5 hover:bg-white/10 flex items-center gap-2 cursor-pointer">
-              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-              Buka Project Experience
-            </button>
+          <div class="pt-3 flex flex-wrap gap-3.5 relative z-10">
+            <button type="button" onclick="showClientTab('showcase')" class="btn gold rounded-2xl px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg">Jelajahi Showcase Produk</button>
+            <button type="button" onclick="showClientTab('projects')" class="btn border border-white/10 rounded-2xl px-6 py-3.5 text-xs font-bold text-white bg-white/5 hover:bg-white/10">Buka Project Experience</button>
           </div>
         </div>
       </div>
 
-      <!-- Sub-Tab: Showcase -->
+      <!-- Sub-Tab Showcase -->
       <div id="client-showcase" class="client-page hidden space-y-6 animate-fade">
         <div class="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Showcase Produk</h2>
-            <p class="muted text-xs sm:text-sm mt-1">Katalog produk Roblox berkualitas tinggi dan resmi dari Dragon Stell Studio.</p>
+            <p class="muted text-xs sm:text-sm mt-1">Katalog produk profesional berkualitas tinggi dari Dragon Stell Studio.</p>
           </div>
-          <span id="productCount" class="text-xs font-extrabold text-amber-400 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/25 shrink-0 shadow-sm"></span>
+          <span id="productCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/25 shrink-0"></span>
         </div>
         <div id="clientProducts" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
 
-      <!-- Sub-Tab: Licenses -->
+      <!-- Sub-Tab Lisensi & Unduhan -->
       <div id="client-licenses" class="client-page hidden space-y-6 animate-fade">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Lisensi & Unduhan Saya</h2>
-          <p class="muted text-xs sm:text-sm mt-1">Daftar hak akses produk terikat dan tautan unduhan resmi (.rbxm).</p>
+          <p class="muted text-xs sm:text-sm mt-1">Daftar hak akses dan file unduhan resmi yang terikat pada akun atau grup Anda.</p>
         </div>
         <div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
 
-      <!-- Sub-Tab: Projects -->
+      <!-- Sub-Tab Project Experience -->
       <div id="client-projects" class="client-page hidden space-y-6 animate-fade">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Project Experience Terdaftar</h2>
-          <p class="muted text-xs sm:text-sm mt-1">Status dan statistik kunjungan Place ID Roblox yang terverifikasi terpasang script produk secara otomatis.</p>
+          <p class="muted text-xs sm:text-sm mt-1">Daftar experience Roblox terverifikasi lengkap dengan statistik pengunjung, produk terdeteksi, dan tautan langsung.</p>
         </div>
         <div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
@@ -374,24 +286,21 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
     </div>
   </section>
 
-  <!-- Admin View -->
+  <!-- Bagian Admin Management Console -->
   <section id="adminTab" class="hidden space-y-8 animate-fade">
     <div class="text-center py-3">
-      <p class="text-amber-400 text-xs uppercase tracking-[0.3em] font-extrabold mb-2 flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Management Console</p>
+      <p class="text-amber-400 text-xs uppercase tracking-[0.3em] font-bold mb-2">Management Console</p>
       <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">Admin Dashboard</h1>
-      <p class="muted text-xs sm:text-sm mt-2 max-w-lg mx-auto">Kelola katalog produk, harga, URL Vercel Blob, Place ID, dan Audit Logs sistem dengan aman.</p>
+      <p class="muted text-xs sm:text-sm mt-2 max-w-lg mx-auto">Kelola katalog produk, harga, URL Vercel Blob, Project Experience ID, dan Logs sistem dengan aman.</p>
     </div>
 
     <div id="adminPanel" class="space-y-8">
       <div class="glass-card rounded-2xl p-6 flex items-center justify-between gap-4 shadow-xl border border-amber-500/25">
-        <div class="flex items-center gap-3.5">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold shadow-inner">👑</div>
-          <div>
-            <p class="text-xs uppercase tracking-wider text-amber-400 font-extrabold">Owner Session Active</p>
-            <p class="muted text-xs mt-0.5">Hak akses terverifikasi via Roblox Administrator ID</p>
-          </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-amber-400 font-extrabold">Owner Session Active</p>
+          <p class="muted text-xs mt-0.5">Hak akses penuh terverifikasi melalui Roblox Administrator ID</p>
         </div>
-        <button type="button" onclick="logoutAdmin()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 cursor-pointer flex items-center gap-1.5">Keluar Admin</button>
+        <button type="button" onclick="logoutAdmin()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 cursor-pointer">Keluar Admin</button>
       </div>
 
       <div class="grid lg:grid-cols-2 gap-8">
@@ -399,7 +308,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
         <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
           <div>
             <h2 id="formTitle" class="font-bold text-lg text-white">Tambah Produk Baru</h2>
-            <p class="muted text-xs mt-1">Masukkan detail produk, harga, dan URL Vercel Blob.</p>
+            <p class="muted text-xs mt-1">Masukkan detail produk, harga, dan URL file Vercel Blob.</p>
           </div>
           <input type="hidden" id="editProductId">
           <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Nama Produk</label><input id="productName" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Contoh: Roleplay System"></div>
@@ -422,10 +331,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
           <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
             <div>
               <h2 class="font-bold text-lg text-white">Buat Lisensi Baru</h2>
-              <p class="muted text-xs mt-1">Hubungkan satu atau beberapa produk untuk akun pribadi atau grup.</p>
+              <p class="muted text-xs mt-1">Hubungkan tepat satu produk untuk akun pribadi atau grup.</p>
             </div>
             <div class="grid grid-cols-2 gap-2 p-1 bg-black/40 rounded-2xl border border-white/5">
-              <button type="button" id="personalMode" onclick="setMode('personal')" class="gold-btn rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer">Akun Pribadi</button>
+              <button type="button" id="personalMode" onclick="setMode('personal')" class="gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer">Akun Pribadi</button>
               <button type="button" id="groupMode" onclick="setMode('group')" class="text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer">Group Experience</button>
             </div>
             <div>
@@ -436,21 +345,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
               </div>
             </div>
             <div id="ownerFields"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Username Pemilik Roblox</label><input id="newOwner" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Username"></div>
-            <div id="groupFields" class="hidden">
-              <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Group ID Roblox</label>
-              <input id="newGroup" inputmode="numeric" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ID Grup" oninput="lookupGroupName()">
-              <p id="groupLookupStatus" class="muted text-[11px] mt-2">Nama komunitas akan dibaca otomatis dari Roblox.</p>
-            </div>
-            <div><label class="text-[11px] uppercase tracking-wider muted font-semibold block mb-2.5">Pilih Produk (Bisa Banyak / Multi-Produk)</label><div id="licenseProductChoices" class="space-y-2.5 max-h-40 overflow-y-auto pr-1"></div></div>
+            <div id="groupFields" class="hidden"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Group ID Roblox</label><input id="newGroup" inputmode="numeric" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ID Grup"></div>
+            <div><label class="text-[11px] uppercase tracking-wider muted font-semibold block mb-2.5">Pilih Satu Produk</label><div id="licenseProductChoices" class="space-y-2.5 max-h-40 overflow-y-auto pr-1"></div></div>
             <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Masa Kedaluwarsa (Opsional)</label><input id="newExpires" type="date" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-medium text-white"></div>
-            <button type="button" onclick="createLicense()" class="gold-btn rounded-2xl w-full py-4 text-xs font-extrabold uppercase tracking-wider shadow-lg cursor-pointer">Simpan Lisensi Baru</button>
+            <button type="button" onclick="createLicense()" class="btn gold rounded-2xl w-full py-4 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/30 cursor-pointer">Simpan Lisensi Baru</button>
           </div>
 
           <!-- Tambah Project Experience ID -->
           <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
             <div>
-              <h2 class="font-bold text-lg text-white">Tambah Place ID Roblox</h2>
-              <p class="muted text-xs mt-1">Daftar otomatis dari ping Roblox Script atau masukkan Place ID secara manual.</p>
+              <h2 class="font-bold text-lg text-white">Tambah Project Experience ID</h2>
+              <p class="muted text-xs mt-1">Masukkan Place ID Roblox agar otomatis tertata rapi di dashboard klien.</p>
             </div>
             <div class="flex gap-2.5">
               <input id="newPlaceId" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-mono font-medium text-white" placeholder="Contoh: 114330086695098">
@@ -461,13 +366,13 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
         </div>
       </div>
 
-      <!-- Logs Sistem -->
+      <!-- Database Lisensi & Logs Sistem -->
       <div class="space-y-8">
         <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 class="font-bold text-lg text-white">Database Lisensi Berdasarkan Produk</h2>
-              <p class="muted text-xs mt-0.5">Filter dan kelola lisensi terkelompok per produk.</p>
+              <p class="muted text-xs mt-0.5">Filter dan kelola lisensi terkelompok per produk secara rapi.</p>
             </div>
             <div class="flex flex-wrap gap-3 w-full sm:w-auto">
               <select id="productFilterSelect" onchange="renderLicenses()" class="field rounded-2xl px-4 py-2.5 text-xs font-medium text-amber-300 bg-black/70 border-amber-500/30 min-w-[200px]"><option value="all">Semua Produk (All)</option></select>
@@ -481,7 +386,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
           <div class="flex items-center justify-between">
             <div>
               <h2 class="font-bold text-lg text-white">System Logs & Audit Trail</h2>
-              <p class="muted text-xs mt-0.5">Catatan aktivitas verifikasi dan sistem secara real-time.</p>
+              <p class="muted text-xs mt-0.5">Catatan aktivitas login klien, verifikasi, dan pembaruan admin secara real-time.</p>
             </div>
             <button type="button" onclick="clearLogs()" class="btn text-red-300 border border-red-500/20 rounded-xl px-3.5 py-2 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 cursor-pointer">Bersihkan Logs</button>
           </div>
@@ -496,14 +401,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important;
 
 </main>
 
-<footer class="text-center muted text-xs border-t border-white/5 py-8 mt-16 bg-black/40">
+<footer class="text-center muted text-xs border-t border-white/5 py-8 mt-16 bg-black/30">
   <p>© 2026 DRAGON STELL STUDIO · CREATOR STELL MANAGEMENT CONSOLE</p>
 </footer>
 
 <script>
 const API = '';
 let mode = 'personal', products = [], licenses = [], clientUser = '', clientKey = '', clientData = null;
-let customProjects = []; 
+let customProjects = ['114330086695098']; 
 const expCache = new Map();
 const $ = id => document.getElementById(id);
 
@@ -524,21 +429,8 @@ function toast(s) {
   const t = $('toast'), txt = $('toastText');
   if(!t || !txt) return;
   txt.textContent = s;
-  t.classList.remove('opacity-0', 'translate-y-4');
-  setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3200);
-}
-
-function copyToClipboard(text, btnElement) {
-  navigator.clipboard.writeText(text).then(() => {
-    toast('License key berhasil disalin ke clipboard!');
-    if(btnElement) {
-      const originalHTML = btnElement.innerHTML;
-      btnElement.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Tersalin!`;
-      setTimeout(() => { btnElement.innerHTML = originalHTML; }, 2000);
-    }
-  }).catch(() => {
-    toast('Gagal menyalin key.');
-  });
+  t.classList.remove('opacity-0', 'translate-y-2');
+  setTimeout(() => t.classList.add('opacity-0', 'translate-y-2'), 3200);
 }
 
 function showMainTab(tabName) {
@@ -558,7 +450,7 @@ function showClientTab(tab) {
     const page = $('client-' + t), btn = $('nav-' + t);
     if(page) page.classList.toggle('hidden', t !== tab);
     if(btn) {
-      btn.className = 'client-nav ' + (t === tab ? 'gold-btn rounded-xl px-6 py-3 text-xs font-extrabold whitespace-nowrap shadow-sm transition-all flex items-center gap-2.5 cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer');
+      btn.className = 'client-nav ' + (t === tab ? 'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2.5 cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer');
     }
   }
 }
@@ -581,8 +473,8 @@ function setMode(m) {
   const ownerFields = $('ownerFields'), groupFields = $('groupFields'), personalMode = $('personalMode'), groupMode = $('groupMode');
   if(ownerFields) ownerFields.classList.toggle('hidden', m !== 'personal');
   if(groupFields) groupFields.classList.toggle('hidden', m !== 'group');
-  if(personalMode) personalMode.className = m === 'personal' ? 'gold-btn rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
-  if(groupMode) groupMode.className = m === 'group' ? 'gold-btn rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
+  if(personalMode) personalMode.className = m === 'personal' ? 'gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
+  if(groupMode) groupMode.className = m === 'group' ? 'gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
 }
 
 function generateKey() {
@@ -634,7 +526,7 @@ async function portalLogin() {
     if(clientErr) { clientErr.textContent = e.message; clientErr.classList.remove('hidden'); }
     addLog(`Gagal login oleh @${username}: ${e.message}`);
   } finally {
-    if(btn) { btn.disabled = false; btn.textContent = 'Verifikasi & Masuk'; }
+    if(btn) { btn.disabled = false; btn.textContent = 'Login Securely'; }
   }
 }
 
@@ -658,8 +550,7 @@ async function showClient(d) {
   if(cLicenses) {
     cLicenses.innerHTML = owned.map(l => {
       const active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date()), p = l.product;
-      const safeKey = safe(l.license_key);
-      return `<article class="product-card p-6 shadow-xl"><div class="flex items-start justify-between gap-2"><div><span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">${l.owner_type==='group'?'LISENSI KOMUNITAS':'LISENSI PRIBADI'}</span><h3 class="font-bold text-base mt-2.5 text-white">${safe(p?.product_name||'Produk tidak terhubung')}</h3><p class="muted text-xs mt-0.5">${safe(p?.product_code||'-')}</p></div><span class="text-[9px] font-extrabold rounded-full px-3 py-1 uppercase tracking-wider ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'AKTIF':'EXPIRED'}</span></div><div class="mt-5 space-y-2 text-xs"><div class="flex justify-between"><span class="muted">Pemilik:</span> <span class="font-medium text-white">${safe(l.owner_display_name||d.owner_name)}</span></div>${l.group_id?`<div class="flex justify-between"><span class="muted">Group ID:</span> <span class="font-mono text-white">${safe(l.group_id)}</span></div>`:''}<div class="flex flex-col gap-1.5 pt-1"><div class="flex justify-between items-center"><span class="muted">Key:</span><button type="button" onclick="copyToClipboard('${safeKey}', this)" class="text-[10px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg> Salin Key</button></div><code class="break-all text-[11px] bg-black/50 p-2.5 rounded-xl border border-white/5 font-mono text-amber-200/90">${safeKey}</code></div><div class="flex justify-between pt-1"><span class="muted">Kedaluwarsa:</span> <span class="font-medium text-white">${safe(fmtDate(l.expires_at))}</span></div></div><div class="mt-6">${active&&p?.download_url&&p?.product_active?`<button type="button" class="gold-btn rounded-xl w-full py-3.5 text-xs font-extrabold tracking-wide uppercase shadow-md cursor-pointer flex items-center justify-center gap-2" onclick="downloadOwnedProduct(${p.id},decodeURIComponent('${encodeURIComponent(String(l.license_key)).replace(/'/g,'%27')}'))"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download Produk (.rbxm)</button>`:'<div class="text-center py-2.5 text-xs muted bg-white/5 rounded-xl border border-white/5 font-medium">Download tidak tersedia</div>'}</div></article>`
+      return `<article class="product-card p-6 shadow-xl"><div class="flex items-start justify-between gap-2"><div><span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">${l.owner_type==='group'?'LISENSI KOMUNITAS':'LISENSI PRIBADI'}</span><h3 class="font-bold text-base mt-2.5 text-white">${safe(p?.product_name||'Produk tidak terhubung')}</h3><p class="muted text-xs mt-0.5">${safe(p?.product_code||'-')}</p></div><span class="text-[9px] font-extrabold rounded-full px-3 py-1 uppercase tracking-wider ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'AKTIF':'EXPIRED'}</span></div><div class="mt-5 space-y-2 text-xs"><div class="flex justify-between"><span class="muted">Pemilik:</span> <span class="font-medium text-white">${safe(l.owner_display_name||d.owner_name)}</span></div>${l.group_id?`<div class="flex justify-between"><span class="muted">Group ID:</span> <span class="font-mono text-white">${safe(l.group_id)}</span></div>`:''}<div class="flex flex-col gap-1.5 pt-1"><span class="muted">Key:</span><code class="break-all text-[11px] bg-black/50 p-2.5 rounded-xl border border-white/5 font-mono text-amber-200/90">${safe(l.license_key)}</code></div><div class="flex justify-between pt-1"><span class="muted">Kedaluwarsa:</span> <span class="font-medium text-white">${safe(fmtDate(l.expires_at))}</span></div></div><div class="mt-6">${active&&p?.download_url&&p?.product_active?`<button type="button" class="btn gold rounded-xl w-full py-3.5 text-xs font-bold tracking-wide uppercase shadow-md cursor-pointer flex items-center justify-center gap-2" onclick="downloadOwnedProduct(${p.id},decodeURIComponent('${encodeURIComponent(String(l.license_key)).replace(/'/g,'%27')}'))">Download Produk (.rbxm)</button>`:'<div class="text-center py-2.5 text-xs muted bg-white/5 rounded-xl border border-white/5 font-medium">Download tidak tersedia</div>'}</div></article>`
     }).join('') || '<div class="glass-card rounded-2xl p-8 muted text-xs sm:col-span-2 lg:col-span-3 text-center">Belum ada lisensi terdaftar untuk akun atau grup ini.</div>';
   }
 
@@ -682,7 +573,7 @@ async function showClient(d) {
         </div>
         <div class="p-6 pt-0">
           <div class="pt-4 border-t border-white/5">
-            ${license ? '<div class="text-emerald-400 text-xs font-bold flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> LISENSI DIMILIKI</div>' : `<a href="https://discord.gg/XkuKuv23bH" target="_blank" class="gold-btn rounded-xl w-full py-3 text-xs font-extrabold uppercase tracking-wider text-center block cursor-pointer flex items-center justify-center gap-2"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg> Beli Produk (Buy)</a>`}
+            ${license ? '<div class="text-emerald-400 text-xs font-bold flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> LISENSI DIMILIKI</div>' : `<a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn gold rounded-xl w-full py-3 text-xs font-bold uppercase tracking-wider text-center block cursor-pointer">Beli Produk (Buy)</a>`}
           </div>
         </div>
       </article>`;
@@ -705,6 +596,7 @@ async function fetchExperienceDetails(placeId) {
     }
   } catch {}
 
+  // Deteksi otomatis produk yang dipakai di experience ini berdasarkan database/lisensi aktif
   try {
     const vRes = await api('/api/game-verify', { method: 'POST', body: JSON.stringify({ place_id: placeId }) });
     if(vRes.success && vRes.product_name) {
@@ -719,24 +611,15 @@ async function fetchExperienceDetails(placeId) {
 async function renderClientProjects() {
   const container = $('clientDynamicProjects');
   if(!container) return;
-  container.innerHTML = `<div class="col-span-full text-center py-12 text-xs text-amber-300 animate-pulse flex items-center justify-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memuat dan mengurutkan data experience dari Roblox API...</div>`;
-
-  let autoProjects = [];
-  try {
-    const res = await api('/api/auto-projects');
-    if(res.success && Array.isArray(res.projects)) {
-      autoProjects = res.projects;
-    }
-  } catch {}
-
-  const allProjects = [...new Set([...autoProjects, ...customProjects])];
+  container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-amber-300 animate-pulse">Memuat dan mengurutkan data experience dari Roblox API...</div>`;
 
   let projectInfos = [];
-  for(const pid of allProjects) {
+  for(const pid of customProjects) {
     const info = await fetchExperienceDetails(pid);
     projectInfos.push({ pid, ...info });
   }
 
+  // Urutkan berdasarkan kunjungan terbanyak ke tersedikit
   projectInfos.sort((a, b) => b.rawVisits - a.rawVisits);
 
   let html = '';
@@ -747,9 +630,8 @@ async function renderClientProjects() {
         <div>
           <div class="product-cover">
             <img src="${safe(info.icon)}" alt="${safe(info.name)}" loading="lazy" onerror="this.src='https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true'">
-            <div class="absolute bottom-3 left-3 px-3 py-1 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-[10px] font-bold text-amber-300 flex items-center gap-1.5 shadow-lg">
-              <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              ${safe(info.visits)} Kunjungan
+            <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-bold text-amber-300 flex items-center gap-1.5 shadow-md">
+              👁️ ${safe(info.visits)} Kunjungan
             </div>
           </div>
           <div class="p-6 space-y-3">
@@ -761,10 +643,7 @@ async function renderClientProjects() {
           </div>
         </div>
         <div class="p-6 pt-0">
-          <a href="${robloxGameUrl}" target="_blank" class="gold-btn rounded-xl w-full py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-md text-center block cursor-pointer flex items-center justify-center gap-2">
-            Lihat Game
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
+          <a href="${robloxGameUrl}" target="_blank" class="btn gold rounded-xl w-full py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-md text-center block cursor-pointer">Lihat Game</a>
         </div>
       </article>
     `;
@@ -786,31 +665,21 @@ function saveProjectExperience() {
   toast('Project Experience berhasil ditambahkan.');
 }
 
-async function removeProjectExperience(pid) {
+function removeProjectExperience(pid) {
   customProjects = customProjects.filter(id => id !== pid);
-  try {
-    await api('/api/auto-projects/' + pid, { method: 'DELETE' });
-  } catch {}
   renderAdminProjects();
   renderClientProjects();
   addLog(`Project Experience ID ${pid} dihapus.`);
   toast('Project dihapus.');
 }
 
-async function renderAdminProjects() {
+function renderAdminProjects() {
   const list = $('adminProjectList');
   if(!list) return;
-  let autoProjects = [];
-  try {
-    const res = await api('/api/auto-projects');
-    if(res.success && Array.isArray(res.projects)) autoProjects = res.projects;
-  } catch {}
-  const allProjects = [...new Set([...autoProjects, ...customProjects])];
-
-  list.innerHTML = allProjects.map(pid => `
+  list.innerHTML = customProjects.map(pid => `
     <div class="flex items-center justify-between p-3 rounded-2xl bg-black/50 border border-white/5">
       <span class="font-mono text-xs text-amber-200">Place ID: ${safe(pid)}</span>
-      <button type="button" onclick="removeProjectExperience('${safe(pid)}')" class="btn text-red-400 hover:text-red-300 text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
+      <button type="button" onclick="removeProjectExperience('${safe(pid)}')" class="btn text-red-400 hover:text-red-300 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
     </div>
   `).join('') || '<p class="muted text-xs">Belum ada project id tambahan.</p>';
 }
@@ -867,7 +736,7 @@ async function loadAdmin() {
   renderLicenseChoices();
   renderProductFilterDropdown();
   renderLicenses();
-  await renderAdminProjects();
+  renderAdminProjects();
 }
 
 async function saveProduct() {
@@ -951,15 +820,7 @@ function renderProducts() {
 function renderLicenseChoices() {
   const choices = $('licenseProductChoices');
   if(!choices) return;
-  choices.innerHTML = products.filter(p => p.is_active).map(p => `
-    <label class="checkrow flex items-center gap-3 rounded-2xl p-3.5 cursor-pointer">
-      <input type="checkbox" name="licenseProducts" value="${p.id}" class="accent-amber-400 w-4 h-4 rounded">
-      <span>
-        <b class="block text-xs font-bold text-white">${safe(p.product_name)}</b>
-        <span class="muted text-[10px]">${safe(p.product_code)}</span>
-      </span>
-    </label>
-  `).join('') || '<p class="muted text-xs">Tambahkan dan aktifkan produk terlebih dahulu.</p>';
+  choices.innerHTML = products.filter(p => p.is_active).map(p => `<label class="checkrow flex items-center gap-3 rounded-2xl p-3.5 cursor-pointer"><input type="radio" name="licenseProduct" value="${p.id}" class="accent-amber-400"><span><b class="block text-xs font-bold text-white">${safe(p.product_name)}</b><span class="muted text-[10px]">${safe(p.product_code)}</span></span></label>`).join('') || '<p class="muted text-xs">Tambahkan dan aktifkan produk terlebih dahulu.</p>';
 }
 
 function renderProductFilterDropdown() {
@@ -983,23 +844,21 @@ async function deleteProduct(id) {
 }
 
 async function createLicense() {
-  const selectedCheckboxes = document.querySelectorAll('input[name="licenseProducts"]:checked');
-  if(selectedCheckboxes.length === 0) return toast('Pilih minimal satu produk.');
-  const productIds = Array.from(selectedCheckboxes).map(cb => Number(cb.value));
-
+  const selected = document.querySelector('input[name="licenseProduct"]:checked');
+  if(!selected) return toast('Pilih tepat satu produk.');
   const keyInput = $('newKey'), expInput = $('newExpires'), ownerInput = $('newOwner'), groupInput = $('newGroup');
-  const body = { license_key: keyInput ? keyInput.value.trim() : '', product_ids: productIds, expires_at: expInput ? expInput.value || null : null };
+  const body = { license_key: keyInput ? keyInput.value.trim() : '', product_ids: [Number(selected.value)], expires_at: expInput ? expInput.value || null : null };
   if(mode === 'personal') body.owner_name = ownerInput ? ownerInput.value.trim() : '';
   else body.group_id = groupInput ? groupInput.value.trim() : '';
   try {
     const d = await api('/api/licenses/create', { method: 'POST', body: JSON.stringify(body) });
-    addLog(`Lisensi baru dibuat dengan ${productIds.length} produk terikat.`);
+    addLog(`Lisensi baru dibuat untuk produk ID ${selected.value}`);
     toast(d.message || 'Lisensi dibuat.');
     if(keyInput) keyInput.value = '';
     if(expInput) expInput.value = '';
     if(ownerInput) ownerInput.value = '';
     if(groupInput) groupInput.value = '';
-    document.querySelectorAll('input[name="licenseProducts"]').forEach(x => x.checked = false);
+    document.querySelectorAll('input[name="licenseProduct"]').forEach(x => x.checked = false);
     await loadAdmin();
   } catch(e) { toast(e.message); }
 }
@@ -1019,31 +878,15 @@ function renderLicenses() {
   });
 
   rowsContainer.innerHTML = filtered.map(l => {
-    const pList = l.products || [];
-    const active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date());
+    const p = (l.products || [])[0], active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date());
     const owner = l.owner_display_name || l.owner_name || 'Pemilik tidak terdeteksi', avatar = l.owner_avatar_url || '';
-    const productsHtml = pList.map(p => `<span class="inline-block bg-amber-500/10 text-amber-300 text-[10px] px-2 py-0.5 rounded mr-1 mb-1 border border-amber-500/20">${safe(p.product_name)}</span>`).join('') || '<span class="muted text-[10px]">Tanpa Produk</span>';
-
-    return `<tr class="hover:bg-white/[0.03] transition-colors"><td class="py-4 pr-4"><div class="space-y-1">${productsHtml}</div></td><td class="py-4 pr-4"><div class="flex items-center gap-3 min-w-0"><img src="${safe(avatar)}" alt="" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" onerror="this.style.display='none'"><div class="min-w-0"><div class="font-semibold text-white break-words">${safe(owner)}</div><div class="muted mt-0.5 text-[10px] font-mono break-all">${l.group_id?'Grup ID: '+safe(l.group_id):'User ID: '+safe(l.owner_user_id||'-')}</div></div></div></td><td class="py-4 pr-4 font-mono text-[11px] text-amber-200/90 break-all">${safe(l.license_key)}</td><td class="py-4 pr-4"><span class="font-semibold text-[11px] px-3 py-1 rounded-full ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'Aktif':'Expired'}</span></td><td class="py-4 pr-4 text-gray-300 font-medium">${fmtDate(l.expires_at)}</td><td class="py-4"><div class="flex gap-2"><button type="button" onclick="toggleLicense(${l.id},${!l.is_active})" class="btn border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-white/5 cursor-pointer">${l.is_active?'Nonaktifkan':'Aktifkan'}</button><button type="button" onclick="deleteLicense(${l.id})" class="btn text-red-300 border border-red-500/20 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-red-500/5 cursor-pointer">Delete</button></div></td></tr>`;
+    return `<tr class="hover:bg-white/[0.03] transition-colors"><td class="py-4 pr-4"><div class="font-bold text-white">${safe(p?.product_name||l.product_name||'-')}</div><div class="muted mt-0.5 text-[11px]">${safe(p?.product_code||'-')}</div></td><td class="py-4 pr-4"><div class="flex items-center gap-3 min-w-0"><img src="${safe(avatar)}" alt="" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" onerror="this.style.display='none'"><div class="min-w-0"><div class="font-semibold text-white break-words">${safe(owner)}</div><div class="muted mt-0.5 text-[10px] font-mono break-all">${l.group_id?'Grup ID: '+safe(l.group_id):'User ID: '+safe(l.owner_user_id||'-')}</div></div></div></td><td class="py-4 pr-4 font-mono text-[11px] text-amber-200/90 break-all">${safe(l.license_key)}</td><td class="py-4 pr-4"><span class="font-semibold text-[11px] px-3 py-1 rounded-full ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'Aktif':'Expired'}</span></td><td class="py-4 pr-4 text-gray-300 font-medium">${fmtDate(l.expires_at)}</td><td class="py-4"><div class="flex gap-2"><button type="button" onclick="toggleLicense(${l.id},${!l.is_active})" class="btn border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-white/5 cursor-pointer">${l.is_active?'Nonaktifkan':'Aktifkan'}</button><button type="button" onclick="deleteLicense(${l.id})" class="btn text-red-300 border border-red-500/20 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-red-500/5 cursor-pointer">Delete</button></div></td></tr>`;
   }).join('') || '<tr><td colspan="6" class="py-8 muted text-center font-medium">Tidak ada data lisensi ditemukan untuk produk ini.</td></tr>';
 }
 
 async function toggleLicense(id, active) {
-  const nextStatus = active === true;
-  try {
-    const result = await api('/api/licenses/' + encodeURIComponent(String(id)) + '/status', {
-      method: 'PATCH',
-      body: JSON.stringify({ is_active: nextStatus })
-    });
-    if (!result || result.success !== true || result.license?.is_active !== nextStatus) {
-      throw new Error('Server tidak mengonfirmasi perubahan status lisensi.');
-    }
-    addLog(`Lisensi ID ${id} berhasil ${nextStatus ? 'diaktifkan' : 'dinonaktifkan'}.`);
-    await loadAdmin();
-    toast(nextStatus ? 'Lisensi berhasil diaktifkan.' : 'Lisensi berhasil dinonaktifkan.');
-  } catch(e) {
-    toast('Gagal mengubah status: ' + e.message);
-  }
+  try { await api('/api/licenses/' + id + '/status', { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); addLog(`Status lisensi ID ${id} diubah ke ${active}`); await loadAdmin(); toast('Status lisensi diperbarui.'); }
+  catch(e) { toast(e.message); }
 }
 
 async function deleteLicense(id) {
@@ -1052,39 +895,8 @@ async function deleteLicense(id) {
   catch(e) { toast(e.message); }
 }
 
-let groupLookupTimer = null;
-let lastGroupLookupId = '';
-async function lookupGroupName() {
-  const field = $('newGroup');
-  const status = $('groupLookupStatus');
-  if (!field || !status) return;
-  const id = field.value.trim();
-  if (!/^\d{1,20}$/.test(id)) {
-    lastGroupLookupId = '';
-    status.textContent = id ? 'Group ID harus berupa angka.' : 'Nama komunitas akan dibaca otomatis dari Roblox.';
-    status.className = 'muted text-[11px] mt-2';
-    return;
-  }
-  if (id === lastGroupLookupId) return;
-  clearTimeout(groupLookupTimer);
-  groupLookupTimer = setTimeout(async () => {
-    status.textContent = 'Membaca nama komunitas dari Roblox...';
-    status.className = 'text-amber-300 text-[11px] mt-2';
-    try {
-      const data = await api('/api/roblox-group/' + encodeURIComponent(id));
-      if (field.value.trim() !== id) return;
-      lastGroupLookupId = id;
-      status.textContent = 'Komunitas ditemukan: ' + (data.group?.groupName || 'Tanpa nama');
-      status.className = 'text-emerald-300 text-[11px] mt-2';
-    } catch (e) {
-      if (field.value.trim() !== id) return;
-      status.textContent = e.message;
-      status.className = 'text-red-300 text-[11px] mt-2';
-    }
-  }, 450);
-}
-
 window.addEventListener('DOMContentLoaded', async () => {
+  renderAdminProjects();
   try {
     const s = await api('/api/admin-session');
     if(s.authenticated) { await openAdmin(); return; }
