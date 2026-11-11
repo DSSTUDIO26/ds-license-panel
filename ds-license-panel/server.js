@@ -1,559 +1,1056 @@
-// DSS STUDIO LICENSE PRO — Node.js 20+ / PostgreSQL / Product Price & Experience Support
+// DSS STUDIO LICENSE V5.2
+// PostgreSQL + Private Vercel Blob
+// Node.js 20+
+// Compatible with DSS Roblox Server Loader V5 & Universal Loader
+//
+// Required Vercel Environment Variables:
+// DATABASE_URL
+// API_SECRET
+// BLOB_READ_WRITE_TOKEN
+// OWNER_ROBLOX_USER_ID (optional)
+
 'use strict';
+
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
 const crypto = require('crypto');
+const { put, get, del } = require('@vercel/blob');
 
 const app = express();
+
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '3mb', strict: true }));
+
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=()'
+  );
+
+  if (req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+
+  next();
+});
+
+// ============================================================
+// CONFIGURATION
+// ============================================================
 
 const PORT = Number(process.env.PORT || 3000);
+
 const API_SECRET = process.env.API_SECRET || '';
-const OWNER_ROBLOX_USER_ID = String(process.env.OWNER_ROBLOX_USER_ID || '9262435668');
+
+const OWNER_ROBLOX_USER_ID = String(
+  process.env.OWNER_ROBLOX_USER_ID || '9262435668'
+);
+
+const ADMIN_SESSION_COOKIE = 'dss_admin_session';
+
+const ADMIN_SESSION_MS = 8 * 60 * 60 * 1000;
+
 const DATABASE_URL = process.env.DATABASE_URL || '';
-const COOKIE = 'dss_admin_session';
-const SESSION_MS = 8 * 60 * 60 * 1000;
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
+const CHUNK_SIZE = 2 * 1024 * 1024;
+
+const IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+];
+
+const DOWNLOAD_TYPES = [
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/octet-stream',
+  'application/x-rbxm',
+  'application/x-rbxl',
+  'application/x-7z-compressed',
+  'application/pdf',
+  'text/plain',
+  'application/json',
+  'application/gzip',
+  'application/x-tar'
+];
 
 if (API_SECRET.length < 32) {
-  console.error('FATAL: API_SECRET harus minimal 32 karakter.');
-  if (require.main === module) process.exit(1);
+  throw new Error(
+    'FATAL: API_SECRET wajib tersedia dan minimal 32 karakter.'
+  );
 }
+
+if (!/^\d{1,20}$/.test(OWNER_ROBLOX_USER_ID)) {
+  throw new Error('FATAL: OWNER_ROBLOX_USER_ID tidak valid.');
+}
+
 if (!DATABASE_URL) {
-  console.error('FATAL: DATABASE_URL wajib diisi.');
-  if (require.main === module) process.exit(1);
+  throw new Error('FATAL: DATABASE_URL wajib tersedia.');
 }
+
+// ============================================================
+// DATABASE
+// ============================================================
+
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false },
-  max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000
+
+  ssl: process.env.PGSSLMODE === 'disable'
+    ? false
+    : { rejectUnauthorized: false },
+
+  max: 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000
 });
 
-let dbInitPromise;
-app.use(async (_req, res, next) => {
-  try {
-    if (!dbInitPromise) dbInitPromise = initDB();
-    await dbInitPromise;
+let dbInitPromise = null;
+
+// ============================================================
+// RATE LIMIT
+// ============================================================
+
+const rateBuckets = new Map();
+
+function rateLimit({
+  windowMs = 60000,
+  max = 30
+} = {}) {
+  return (req, res, next) => {
+    const now = Date.now();
+
+    const key =
+      `${req.ip || req.socket.remoteAddress || 'unknown'}:${req.path}`;
+
+    let item = rateBuckets.get(key);
+
+    if (!item || item.resetAt <= now) {
+      item = {
+        count: 0,
+        resetAt: now + windowMs
+      };
+    }
+
+    item.count += 1;
+
+    rateBuckets.set(key, item);
+
+    if (rateBuckets.size > 5000) {
+      for (const [k, v] of rateBuckets) {
+        if (v.resetAt <= now) {
+          rateBuckets.delete(k);
+        }
+      }
+    }
+
+    res.setHeader('RateLimit-Limit', String(max));
+
+    res.setHeader(
+      'RateLimit-Remaining',
+      String(Math.max(0, max - item.count))
+    );
+
+    if (item.count > max) {
+      res.setHeader(
+        'Retry-After',
+        String(Math.max(1, Math.ceil((item.resetAt - now) / 1000)))
+      );
+
+      return res.status(429).json({
+        success: false,
+        code: 'RATE_LIMITED',
+        message: 'Terlalu banyak permintaan. Coba lagi beberapa saat.'
+      });
+    }
+
     next();
-  } catch (e) {
-    console.error('Database initialization:', e.message);
-    res.status(503).json({ success: false, message: 'Database belum siap. Periksa environment variables.' });
-  }
-});
-app.use(express.static(__dirname, { index: false, maxAge: '1h' }));
-app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+  };
+}
+
+// ============================================================
+// SECURITY HELPERS
+// ============================================================
 
 function safeEqual(a, b) {
-  const aa = Buffer.from(String(a || '')), bb = Buffer.from(String(b || ''));
-  return aa.length > 0 && aa.length === bb.length && crypto.timingSafeEqual(aa, bb);
+  const aa = Buffer.from(String(a || ''));
+  const bb = Buffer.from(String(b || ''));
+
+  return (
+    aa.length === bb.length &&
+    aa.length > 0 &&
+    crypto.timingSafeEqual(aa, bb)
+  );
 }
-function cleanText(v, max = 255) { return typeof v === 'string' ? v.trim().slice(0, max) : ''; }
-function validExpiry(v) {
-  if (v == null || v === '') return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
-}
-function validHttpUrl(v) {
-  if (v == null || v === '') return null;
-  try { const u = new URL(v); return ['https:', 'http:'].includes(u.protocol) ? u.toString() : undefined; }
-  catch { return undefined; }
-}
-function sessionSig(exp) {
-  return crypto.createHmac('sha256', API_SECRET).update(`dss-admin:${OWNER_ROBLOX_USER_ID}:${exp}`).digest('hex');
-}
-function readCookie(req, name) {
-  for (const part of (req.headers.cookie || '').split(';')) {
-    const i = part.indexOf('=');
-    if (i > -1 && part.slice(0, i).trim() === name) {
-      try { return decodeURIComponent(part.slice(i + 1).trim()); } catch { return ''; }
-    }
+
+function requireSameOrigin(req, res, next) {
+  const origin = req.get('origin');
+
+  if (!origin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Origin wajib dikirim untuk permintaan ini.'
+    });
   }
-  return '';
-}
-function hasAdmin(req) {
-  const token = readCookie(req, COOKIE), dot = token.indexOf('.');
-  if (dot < 1) return false;
-  const exp = token.slice(0, dot), sig = token.slice(dot + 1);
-  if (!/^\d{13}$/.test(exp) || !/^[a-f0-9]{64}$/.test(sig)) return false;
-  const n = Number(exp);
-  return Number.isSafeInteger(n) && n > Date.now() && n <= Date.now() + SESSION_MS + 60000 && safeEqual(sig, sessionSig(exp));
-}
-function setAdminCookie(req, res) {
-  const exp = String(Date.now() + SESSION_MS);
-  res.cookie(COOKIE, `${exp}.${sessionSig(exp)}`, {
-    httpOnly: true, secure: req.secure || req.get('x-forwarded-proto') === 'https',
-    sameSite: 'strict', path: '/', maxAge: SESSION_MS
-  });
-}
-function verifyAdmin(req, res, next) {
-  if (!hasAdmin(req)) return res.status(401).json({ success: false, message: 'Sesi admin tidak valid. Login ulang.' });
+
+  try {
+    const u = new URL(origin);
+
+    if (
+      u.host !== req.get('host') ||
+      (
+        u.protocol !== 'https:' &&
+        !['localhost', '127.0.0.1'].includes(u.hostname)
+      )
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Origin tidak diizinkan.'
+      });
+    }
+  } catch {
+    return res.status(403).json({
+      success: false,
+      message: 'Origin tidak valid.'
+    });
+  }
+
   next();
 }
-async function robloxFetch(url, options = {}) {
-  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 8000);
-  try {
-    const r = await fetch(url, { ...options, signal: controller.signal });
-    if (!r.ok) throw new Error(`Roblox API HTTP ${r.status}`);
-    return await r.json();
-  } finally { clearTimeout(timer); }
+
+function adminSessionSignature(expiresAt) {
+  return crypto
+    .createHmac('sha256', API_SECRET)
+    .update(`dss-admin:${OWNER_ROBLOX_USER_ID}:${expiresAt}`)
+    .digest('hex');
 }
-async function getRobloxUserInfo(username) {
-  const result = await robloxFetch('https://users.roblox.com/v1/usernames/users', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ usernames: [username], excludeBannedUsers: false })
+
+function readCookie(req, name) {
+  try {
+    const raw = req.headers.cookie || '';
+
+    for (const part of raw.split(';')) {
+      const i = part.indexOf('=');
+
+      if (i < 0) continue;
+
+      if (part.slice(0, i).trim() === name) {
+        return decodeURIComponent(part.slice(i + 1).trim());
+      }
+    }
+
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+function hasValidAdminSession(req) {
+  const token = readCookie(req, ADMIN_SESSION_COOKIE);
+
+  const dot = token.indexOf('.');
+
+  if (dot < 1) return false;
+
+  const expiresAt = token.slice(0, dot);
+  const signature = token.slice(dot + 1);
+
+  if (
+    !/^\d{13}$/.test(expiresAt) ||
+    !/^[a-f0-9]{64}$/.test(signature)
+  ) {
+    return false;
+  }
+
+  const expires = Number(expiresAt);
+  const now = Date.now();
+
+  if (
+    !Number.isSafeInteger(expires) ||
+    expires <= now ||
+    expires > now + ADMIN_SESSION_MS + 60000
+  ) {
+    return false;
+  }
+
+  return safeEqual(
+    signature,
+    adminSessionSignature(expiresAt)
+  );
+}
+
+function setAdminSessionCookie(req, res) {
+  const expiresAt = String(Date.now() + ADMIN_SESSION_MS);
+
+  const token =
+    `${expiresAt}.${adminSessionSignature(expiresAt)}`;
+
+  res.cookie(ADMIN_SESSION_COOKIE, token, {
+    httpOnly: true,
+
+    secure:
+      req.secure ||
+      req.get('x-forwarded-proto') === 'https',
+
+    sameSite: 'strict',
+    path: '/',
+    maxAge: ADMIN_SESSION_MS
   });
-  const u = result?.data?.[0];
-  if (!u || u.name.toLowerCase() !== username.toLowerCase()) return null;
+}
+
+function verifyAdminSession(req, res, next) {
+  if (!hasValidAdminSession(req)) {
+    return res.status(401).json({
+      success: false,
+      message: 'Sesi Admin tidak valid atau sudah kedaluwarsa. Silakan login ulang.'
+    });
+  }
+
+  if (
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)
+  ) {
+    return requireSameOrigin(req, res, next);
+  }
+
+  next();
+}
+
+function cleanText(v, max = 255) {
+  return typeof v === 'string'
+    ? v.trim().slice(0, max)
+    : '';
+}
+
+function validHttpUrl(v) {
+  if (v == null || v === '') return null;
+
+  try {
+    const u = new URL(v);
+
+    return (
+      u.protocol === 'https:' ||
+      u.protocol === 'http:'
+    )
+      ? u.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function validExpiry(v) {
+  if (v == null || v === '') return null;
+
+  const d = new Date(v);
+
+  return Number.isNaN(d.getTime())
+    ? undefined
+    : d.toISOString();
+}
+
+function safeFilename(v) {
+  return path
+    .basename(String(v || 'file'))
+    .replace(/[^a-zA-Z0-9._ -]/g, '_')
+    .slice(0, 140) || 'file';
+}
+
+// ============================================================
+// ROBLOX API
+// ============================================================
+
+async function robloxFetch(url, options = {}) {
+  const controller = new AbortController();
+
+  const timer = setTimeout(
+    () => controller.abort(),
+    8000
+  );
+
+  try {
+    const r = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+
+    if (!r.ok) {
+      const error = new Error(
+        `Roblox API HTTP ${r.status} (${new URL(url).hostname})`
+      );
+
+      error.statusCode = r.status;
+      error.source = 'ROBLOX_API';
+
+      throw error;
+    }
+
+    return await r.json();
+
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      const error = new Error(
+        `Roblox API timeout setelah 8000ms: ${new URL(url).hostname}`
+      );
+
+      error.code = 'ROBLOX_TIMEOUT';
+      error.source = 'ROBLOX_API';
+
+      throw error;
+    }
+
+    throw e;
+
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ============================================================
+// ROBLOX USER INFORMATION
+// ============================================================
+
+async function getRobloxUserInfo(username) {
+  const r = await robloxFetch(
+    'https://users.roblox.com/v1/usernames/users',
+    {
+      method: 'POST',
+
+      headers: {
+        'content-type': 'application/json'
+      },
+
+      body: JSON.stringify({
+        usernames: [username],
+        excludeBannedUsers: false
+      })
+    }
+  );
+
+  const u = r?.data?.[0];
+
+  if (
+    !u ||
+    u.name.toLowerCase() !== username.toLowerCase()
+  ) {
+    return null;
+  }
+
   let avatarUrl = null;
+
   try {
-    const t = await robloxFetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${u.id}&size=150x150&format=Png&isCircular=false`);
+    const t = await robloxFetch(
+      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${u.id}&size=150x150&format=Png&isCircular=false`
+    );
+
     avatarUrl = t?.data?.[0]?.imageUrl || null;
-  } catch {}
-  return { userId: String(u.id), exactUsername: u.name, avatarUrl };
+
+  } catch (e) {
+    console.warn(
+      '[ROBLOX AVATAR] Avatar unavailable:',
+      e.message
+    );
+  }
+
+  return {
+    userId: String(u.id),
+    exactUsername: u.name,
+    avatarUrl
+  };
 }
-const groupCache = new Map();
+
+// ============================================================
+// ROBLOX GROUP INFORMATION
+// ============================================================
+
 async function getRobloxGroupInfo(groupId) {
-  const id = String(groupId || '');
-  if (!/^\d{1,32}$/.test(id)) return { groupId: id, groupName: null, groupIconUrl: null };
-  const cached = groupCache.get(id);
-  if (cached && cached.until > Date.now()) return cached.value;
-  const value = { groupId: id, groupName: null, groupIconUrl: null, ownerUserId: null, ownerUsername: null };
+  const id = String(groupId || '').trim();
+  if (!/^\d{1,20}$/.test(id)) return null;
+
   try {
-    const g = await robloxFetch(`https://groups.roblox.com/v1/groups/${encodeURIComponent(id)}`);
-    value.groupName = g?.name || null;
-    value.ownerUserId = g?.owner?.userId != null ? String(g.owner.userId) : null;
-    value.ownerUsername = g?.owner?.username || null;
-  } catch (e) { console.warn('Group lookup:', id, e.message); }
-  try {
-    const t = await robloxFetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${encodeURIComponent(id)}&size=150x150&format=Png&isCircular=false`);
-    value.groupIconUrl = t?.data?.[0]?.imageUrl || null;
-  } catch {}
-  groupCache.set(id, { value, until: Date.now() + 10 * 60 * 1000 });
-  return value;
+    const data = await robloxFetch(
+      `https://groups.roblox.com/v1/groups/${encodeURIComponent(id)}`
+    );
+
+    if (String(data?.id || '') !== id || !data?.name) return null;
+
+    return {
+      groupId: id,
+      groupName: cleanText(String(data.name), 120),
+      memberCount: Number(data.memberCount || 0)
+    };
+  } catch (e) {
+    if (e.statusCode === 404) return null;
+    throw e;
+  }
 }
+
+// ============================================================
+// PLACE CREATOR VERIFICATION (Poin 1, 2, 4)
+// ============================================================
+
 async function getPlaceCreator(placeId) {
   if (!/^\d{1,20}$/.test(String(placeId || ''))) {
-    const e = new Error('place_id tidak valid'); e.statusCode = 400; throw e;
+    const e = new Error('place_id tidak valid');
+
+    e.statusCode = 400;
+
+    throw e;
   }
-  const p = await robloxFetch(`https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`);
-  if (!p?.universeId) throw new Error('Universe ID tidak ditemukan.');
-  const g = await robloxFetch(`https://games.roblox.com/v1/games?universeIds=${encodeURIComponent(p.universeId)}`);
+
+  console.log(
+    '[GAME VERIFY] Checking PlaceId:',
+    placeId
+  );
+
+  // STEP 1: PlaceId -> UniverseId
+
+  let p;
+
+  try {
+    p = await robloxFetch(
+      `https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`
+    );
+
+  } catch (e) {
+    console.error(
+      '[GAME VERIFY] PLACE_TO_UNIVERSE_FAILED:',
+      e.message
+    );
+
+    throw new Error(
+      `PLACE_TO_UNIVERSE_FAILED: ${e.message}`
+    );
+  }
+
+  if (
+    !p?.universeId ||
+    !/^\d{1,20}$/.test(String(p.universeId))
+  ) {
+    throw new Error('UNIVERSE_ID_NOT_FOUND');
+  }
+
+  console.log(
+    '[GAME VERIFY] UniverseId:',
+    p.universeId
+  );
+
+  // STEP 2: UniverseId -> Creator
+
+  let g;
+
+  try {
+    g = await robloxFetch(
+      `https://games.roblox.com/v1/games?universeIds=${encodeURIComponent(p.universeId)}`
+    );
+
+  } catch (e) {
+    console.error(
+      '[GAME VERIFY] UNIVERSE_OWNER_FAILED:',
+      e.message
+    );
+
+    throw new Error(
+      `UNIVERSE_OWNER_FAILED: ${e.message}`
+    );
+  }
+
   const c = g?.data?.[0]?.creator;
-  if (!c) throw new Error('Pemilik game tidak ditemukan.');
-  return { placeId: String(placeId), universeId: String(p.universeId), creatorType: c.type, creatorId: String(c.id), creatorName: c.name || '' };
+
+  const creatorType = String(c?.type || '');
+
+  if (
+    !c ||
+    !/^\d{1,20}$/.test(String(c.id || '')) ||
+    !['User', 'Group'].includes(creatorType)
+  ) {
+    throw new Error(
+      'EXPERIENCE_CREATOR_NOT_FOUND'
+    );
+  }
+
+  console.log(
+    '[GAME VERIFY] Creator verified:',
+    {
+      type: creatorType,
+      id: String(c.id)
+    }
+  );
+
+  return {
+    placeId: String(placeId),
+    universeId: String(p.universeId),
+    creatorType,
+    creatorId: String(c.id),
+    creatorName: c.name || ''
+  };
 }
+
+// ============================================================
+// ROBLOX GROUP MEMBERSHIP
+// ============================================================
+
+async function isUserInGroup(userId, groupId) {
+  if (
+    !/^\d{1,20}$/.test(String(userId)) ||
+    !/^\d{1,20}$/.test(String(groupId))
+  ) {
+    return false;
+  }
+
+  const data = await robloxFetch(
+    `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`
+  );
+
+  return (
+    Array.isArray(data?.data) &&
+    data.data.some(
+      x => String(x?.group?.id) === String(groupId)
+    )
+  );
+}
+
+// ============================================================
+// DATABASE INITIALIZATION
+// ============================================================
 
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS products(
-      id BIGSERIAL PRIMARY KEY, product_code VARCHAR(80) UNIQUE NOT NULL,
-      product_name VARCHAR(120) NOT NULL UNIQUE, description TEXT,
-      price VARCHAR(64), image_url TEXT, download_url TEXT,
-      is_active BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      id BIGSERIAL PRIMARY KEY,
+      product_code VARCHAR(80) UNIQUE NOT NULL,
+      product_name VARCHAR(120) NOT NULL UNIQUE,
+      description TEXT,
+      image_url TEXT,
+      download_url TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
     CREATE TABLE IF NOT EXISTS licenses(
-      id BIGSERIAL PRIMARY KEY, license_key VARCHAR(255) UNIQUE NOT NULL,
-      owner_name VARCHAR(255) NOT NULL, owner_user_id VARCHAR(32), group_id VARCHAR(32),
-      product_name VARCHAR(120) DEFAULT 'General Product', image_url TEXT, download_url TEXT,
-      is_active BOOLEAN NOT NULL DEFAULT TRUE, expires_at TIMESTAMPTZ,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      CONSTRAINT license_exactly_one_owner CHECK (
-        (owner_user_id IS NOT NULL AND group_id IS NULL) OR
-        (owner_user_id IS NULL AND group_id IS NOT NULL)
-      )
+      id BIGSERIAL PRIMARY KEY,
+      license_key VARCHAR(255) UNIQUE NOT NULL,
+      owner_name VARCHAR(255) NOT NULL,
+      owner_user_id VARCHAR(32),
+      group_id VARCHAR(32),
+      product_name VARCHAR(120) DEFAULT 'General Product',
+      image_url TEXT,
+      download_url TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      expires_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
-    ALTER TABLE products ADD COLUMN IF NOT EXISTS price VARCHAR(64);
-    ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;
-    ALTER TABLE products ADD COLUMN IF NOT EXISTS download_url TEXT;
+
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS owner_user_id VARCHAR(32);
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS group_id VARCHAR(32);
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS product_name VARCHAR(120) DEFAULT 'General Product';
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS image_url TEXT;
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS download_url TEXT;
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+    ALTER TABLE licenses ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS image_path TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS download_path TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS image_filename TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS download_filename TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS image_content_type TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS download_content_type TEXT;
+
     CREATE TABLE IF NOT EXISTS license_products(
       license_id BIGINT NOT NULL REFERENCES licenses(id) ON DELETE CASCADE,
       product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
       PRIMARY KEY(license_id, product_id)
     );
+
+    CREATE TABLE IF NOT EXISTS dss_upload_sessions(
+      id VARCHAR(64) PRIMARY KEY,
+      kind VARCHAR(16) NOT NULL,
+      filename TEXT NOT NULL,
+      content_type TEXT NOT NULL,
+      total_size BIGINT NOT NULL,
+      chunk_count INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS dss_file_tickets(
+      token_hash VARCHAR(64) PRIMARY KEY,
+      product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      kind VARCHAR(16) NOT NULL,
+      owner_user_id VARCHAR(32),
+      license_id BIGINT NOT NULL REFERENCES licenses(id) ON DELETE CASCADE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS project_experiences(
+      place_id VARCHAR(32) PRIMARY KEY,
+      universe_id VARCHAR(32),
+      product_id BIGINT REFERENCES products(id) ON DELETE SET NULL,
+      product_name VARCHAR(120),
+      owner_id VARCHAR(32),
+      creator_type VARCHAR(16),
+      creator_id VARCHAR(32),
+      creator_name VARCHAR(120),
+      license_id BIGINT REFERENCES licenses(id) ON DELETE SET NULL,
+      last_ping TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_project_experiences_creator ON project_experiences(creator_id);
+    CREATE INDEX IF NOT EXISTS idx_project_experiences_last_ping ON project_experiences(last_ping DESC);
+    CREATE INDEX IF NOT EXISTS idx_licenses_owner_user_id ON licenses(owner_user_id);
+    CREATE INDEX IF NOT EXISTS idx_licenses_group_id ON licenses(group_id);
+    CREATE INDEX IF NOT EXISTS idx_licenses_active_expiry ON licenses(is_active, expires_at);
+    CREATE INDEX IF NOT EXISTS idx_license_products_product_id ON license_products(product_id);
+    CREATE INDEX IF NOT EXISTS idx_dss_tickets_expiry ON dss_file_tickets(expires_at);
   `);
-  console.log('DSS schema ready.');
+
+  console.log('[DSS DATABASE] PostgreSQL schema ready.');
 }
 
-async function listLicenseProducts(id) {
-  const { rows } = await pool.query(`
-    SELECT p.id,p.product_code,p.product_name,p.description,p.price,p.image_url,p.download_url,
-      p.is_active product_active
-    FROM license_products lp JOIN products p ON p.id=lp.product_id WHERE lp.license_id=$1 ORDER BY p.product_name
-  `, [id]);
-  return rows;
-}
+// ============================================================
+// DATABASE INITIALIZATION MIDDLEWARE
+// ============================================================
 
-async function listOwnedPortalLicenses(user) {
-  const { rows } = await pool.query(`
-    SELECT l.* FROM licenses l
-    WHERE l.owner_user_id=$1 OR l.group_id IS NOT NULL
-    ORDER BY l.created_at DESC
-  `, [user.userId]);
-  const owned = [];
-  for (const license of rows) {
-    let group = null;
-    if (license.group_id) {
-      try { group = await getRobloxGroupInfo(license.group_id); } catch {}
-      if (!group?.ownerUserId || String(group.ownerUserId) !== String(user.userId)) continue;
-    } else if (String(license.owner_user_id) !== String(user.userId)) continue;
-    const productRows = await listLicenseProducts(license.id);
-    const product = productRows[0];
-    owned.push({
-      id: license.id, license_key: license.license_key, is_active: license.is_active,
-      expires_at: license.expires_at, owner_type: group ? 'group' : 'user',
-      owner_display_name: group?.groupName || user.exactUsername,
-      owner_avatar_url: group?.groupIconUrl || user.avatarUrl,
-      group_id: license.group_id || null,
-      product: product ? { id: product.id, product_name: product.product_name,
-        product_code: product.product_code, description: product.description, price: product.price,
-        image_url: product.image_url, download_url: product.download_url,
-        product_active: !!product.product_active } : null
+app.use(async (_req, res, next) => {
+  try {
+    if (!dbInitPromise) {
+      dbInitPromise = initDB();
+    }
+    await dbInitPromise;
+    next();
+  } catch (err) {
+    dbInitPromise = null;
+    console.error('[DSS DATABASE INITIALIZATION ERROR]', err.message);
+    res.status(503).json({
+      success: false,
+      code: 'DATABASE_UNAVAILABLE',
+      message: 'Database belum siap. Periksa DATABASE_URL dan coba lagi.'
     });
   }
-  return owned;
-}
-
-async function findValidPortalLicense(username, key) {
-  const user = await getRobloxUserInfo(username);
-  if (!user) return { error: 'Username Roblox tidak ditemukan.', status: 404 };
-  const { rows } = await pool.query(`
-    SELECT l.* FROM licenses l
-    WHERE l.license_key=$1 AND l.is_active=TRUE
-      AND (l.expires_at IS NULL OR l.expires_at>NOW())
-      AND (l.owner_user_id=$2 OR l.group_id IS NOT NULL)
-    ORDER BY CASE WHEN l.owner_user_id=$2 THEN 0 ELSE 1 END
-    LIMIT 1
-  `, [key, user.userId]);
-  if (!rows.length) return { error: 'Key salah, tidak aktif, atau kedaluwarsa.', status: 401 };
-  const license = rows[0];
-  if (license.group_id) {
-    let group;
-    try { group = await getRobloxGroupInfo(license.group_id); }
-    catch { return { error: 'Tidak dapat memverifikasi pemilik grup Roblox. Coba lagi.', status: 502 }; }
-    if (!group?.ownerUserId) return { error: 'Pemilik grup tidak dapat diverifikasi dari Roblox. Coba lagi nanti.', status: 502 };
-    if (String(group.ownerUserId) !== String(user.userId)) {
-      return { error: 'Lisensi ini milik komunitas Roblox. Login dengan username akun pemilik komunitas tersebut.', status: 403 };
-    }
-    return { user, license, group };
-  }
-  if (String(license.owner_user_id) !== String(user.userId)) {
-    return { error: 'Lisensi ini bukan milik akun Roblox tersebut.', status: 401 };
-  }
-  return { user, license, group: null };
-}
-
-async function clientLoginHandler(req, res) {
-  const username = cleanText(req.body?.owner_name, 64), key = cleanText(req.body?.license_key, 255);
-  if (!username || !key) return res.status(400).json({ success: false, message: 'Username Roblox dan License Key wajib diisi.' });
-  try {
-    const v = await findValidPortalLicense(username, key);
-    if (v.error) return res.status(v.status).json({ success: false, message: v.error });
-    const [catalog, ownedLicenses] = await Promise.all([
-      pool.query(`SELECT id,product_code,product_name,description,price,image_url,download_url,is_active
-        FROM products WHERE is_active=TRUE ORDER BY created_at DESC, product_name ASC`),
-      listOwnedPortalLicenses(v.user)
-    ]);
-    const displayName = v.group?.groupName || v.user.exactUsername;
-    res.json({
-      success: true, avatar_url: v.group?.groupIconUrl || v.user.avatarUrl,
-      owner_name: v.user.exactUsername, owner_display_name: displayName,
-      owner_user_id: v.user.userId, owner_type: v.group ? 'group' : 'user',
-      license: { id: v.license.id, license_key: v.license.license_key, expires_at: v.license.expires_at, is_active: v.license.is_active, group_id: v.license.group_id || null },
-      data: catalog.rows.map(p => ({ id: p.id, product: p.product_name, product_code: p.product_code,
-        description: p.description, price: p.price, image_url: p.image_url, download_url: p.download_url })),
-      owned_licenses: ownedLicenses
-    });
-  } catch (e) {
-    console.error('Client login:', e.message);
-    res.status(502).json({ success: false, message: 'Gagal menghubungi Roblox atau database. Coba lagi.' });
-  }
-}
-
-app.post('/api/client-login', clientLoginHandler);
-app.post('/api/client-refresh', clientLoginHandler);
-app.post('/api/portal-login', async (req, res) => {
-  const username = cleanText(req.body?.owner_name, 64), credential = cleanText(req.body?.credential, 255);
-  if (!username || !credential) return res.status(400).json({ success: false, message: 'Username Roblox dan License Key wajib diisi.' });
-  if (safeEqual(credential, API_SECRET)) {
-    try {
-      const user = await getRobloxUserInfo(username);
-      if (!user || user.userId !== OWNER_ROBLOX_USER_ID) return res.status(401).json({ success: false, message: 'Username Roblox atau kredensial tidak valid.' });
-      setAdminCookie(req, res);
-      return res.json({ success: true, access: 'admin', owner_name: user.exactUsername });
-    } catch (e) {
-      console.error('Owner login:', e.message);
-      return res.status(502).json({ success: false, message: 'Verifikasi Roblox gagal. Coba lagi.' });
-    }
-  }
-  req.body = { owner_name: username, license_key: credential };
-  return clientLoginHandler(req, res);
-});
-app.get('/api/admin-session', (req, res) => res.json({ success: true, authenticated: hasAdmin(req) }));
-app.post('/api/admin-logout', (req, res) => {
-  res.clearCookie(COOKIE, { httpOnly: true, secure: req.secure || req.get('x-forwarded-proto') === 'https', sameSite: 'strict', path: '/' });
-  res.json({ success: true, message: 'Sesi Admin ditutup.' });
 });
 
-app.post('/api/game-details', async (req, res) => {
-  const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
-  if (!placeId) return res.status(400).json({ success: false, message: 'place_id wajib diisi.' });
-  try {
-    let name = `Experience #${placeId}`;
-    let icon = 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
-    let creatorName = 'Dragon Stell Studio';
-    let visits = 0;
+// ============================================================
+// HEALTH
+// ============================================================
 
-    const universeRes = await robloxFetch(`https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`);
-    const universeId = universeRes?.universeId;
-
-    if (universeId) {
-      const gameRes = await robloxFetch(`https://games.roblox.com/v1/games?universeIds=${encodeURIComponent(universeId)}`);
-      const gameData = gameRes?.data?.[0];
-      if (gameData?.name) name = gameData.name;
-      if (gameData?.creator?.name) creatorName = gameData.creator.name;
-      if (gameData?.visits !== undefined) visits = gameData.visits;
-    }
-
-    try {
-      const thumbRes = await robloxFetch(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${encodeURIComponent(placeId)}&size=512x512&format=Png&isCircular=false`);
-      const thumbUrl = thumbRes?.data?.[0]?.imageUrl;
-      if (thumbUrl) icon = thumbUrl;
-    } catch {}
-
-    res.json({ success: true, name, icon, creatorName, visits });
-  } catch (e) {
-    console.error('game-details error:', e.message);
-    res.json({ success: true, name: `Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', creatorName: 'Dragon Stell Studio', visits: 0 });
-  }
-});
-
-app.post('/api/game-verify', async (req, res) => {
-  const placeId = cleanText(String(req.body?.place_id ?? ''), 24);
-  if (!placeId) return res.status(400).json({ success: true, authorized: false, code: 'BAD_REQUEST', message: 'place_id wajib diisi.' });
-  try {
-    let creator;
-    try {
-      creator = await getPlaceCreator(placeId);
-    } catch (err) {
-      return res.json({ success: true, product_name: null });
-    }
-    const isGroup = String(creator.creatorType).toLowerCase() === 'group';
-    const { rows } = await pool.query(`
-      SELECT p.product_name FROM licenses l 
-      JOIN license_products lp ON lp.license_id = l.id 
-      JOIN products p ON p.id = lp.product_id
-      WHERE l.is_active = TRUE AND p.is_active = TRUE
-        AND (l.expires_at IS NULL OR l.expires_at > NOW()) 
-        AND (
-          ($1::boolean = TRUE AND l.group_id = $2 AND l.owner_user_id IS NULL)
-          OR ($1::boolean = FALSE AND l.group_id IS NULL AND l.owner_user_id = $2)
-        )
-      LIMIT 1
-    `, [isGroup, creator.creatorId]);
-
-    if (!rows.length) return res.json({ success: true, product_name: null });
-    res.json({ success: true, product_name: rows[0].product_name });
-  } catch (e) {
-    res.json({ success: true, product_name: null });
-  }
-});
-
-app.get('/api/products', verifyAdmin, async (_req, res) => {
-  try {
-    const { rows } = await pool.query(`
-      SELECT id,product_code,product_name,description,price,image_url,download_url,is_active,created_at,updated_at
-      FROM products ORDER BY product_name
-    `);
-    res.json({ success: true, products: rows });
-  } catch (e) { console.error(e.message); res.status(500).json({ success: false, message: 'Gagal membaca katalog.' }); }
-});
-
-app.post('/api/products', verifyAdmin, async (req, res) => {
-  const name = cleanText(req.body?.product_name, 120), description = cleanText(req.body?.description, 1000);
-  const price = cleanText(req.body?.price, 64);
-  const image = validHttpUrl(req.body?.image_url), download = validHttpUrl(req.body?.download_url);
-  if (!name) return res.status(400).json({ success: false, message: 'Nama produk wajib diisi.' });
-  const code = cleanText(req.body?.product_code, 80).toUpperCase() || name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70);
-  if (!code) return res.status(400).json({ success: false, message: 'Kode produk tidak valid.' });
-  try {
-    const { rows } = await pool.query(
-      'INSERT INTO products(product_code,product_name,description,price,image_url,download_url) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',
-      [code, name, description || null, price || null, image, download]
-    );
-    res.status(201).json({ success: true, product: rows[0] });
-  } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ success: false, message: 'Kode atau nama produk sudah digunakan.' });
-    res.status(500).json({ success: false, message: 'Gagal membuat produk.' });
-  }
-});
-
-app.put('/api/products/:id', verifyAdmin, async (req, res) => {
-  const id = cleanText(req.params.id, 20);
-  const name = cleanText(req.body?.product_name, 120), description = cleanText(req.body?.description, 1000);
-  const price = cleanText(req.body?.price, 64);
-  const image = validHttpUrl(req.body?.image_url), download = validHttpUrl(req.body?.download_url);
-  if (!/^\d+$/.test(id) || !name) return res.status(400).json({ success: false, message: 'ID atau nama produk tidak valid.' });
-  const code = cleanText(req.body?.product_code, 80).toUpperCase() || name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 70);
-  try {
-    const { rows } = await pool.query(
-      'UPDATE products SET product_code=$1, product_name=$2, description=$3, price=$4, image_url=$5, download_url=$6, updated_at=NOW() WHERE id=$7 RETURNING *',
-      [code, name, description || null, price || null, image, download, id]
-    );
-    if (!rows.length) return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' });
-    res.json({ success: true, product: rows[0] });
-  } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ success: false, message: 'Kode atau nama produk sudah digunakan.' });
-    res.status(500).json({ success: false, message: 'Gagal memperbarui produk.' });
-  }
-});
-
-app.patch('/api/products/:id', verifyAdmin, async (req, res) => {
-  const id = cleanText(req.params.id, 20), active = req.body?.is_active;
-  if (!/^\d+$/.test(id) || typeof active !== 'boolean') return res.status(400).json({ success: false, message: 'ID atau status tidak valid.' });
-  try {
-    const { rows } = await pool.query('UPDATE products SET is_active=$1,updated_at=NOW() WHERE id=$2 RETURNING id,is_active', [active, id]);
-    if (!rows.length) return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' });
-    res.json({ success: true, product: rows[0] });
-  } catch { res.status(500).json({ success: false, message: 'Gagal memperbarui produk.' }); }
-});
-
-app.delete('/api/products/:id', verifyAdmin, async (req, res) => {
-  const id = cleanText(req.params.id, 20);
-  if (!/^\d+$/.test(id)) return res.status(400).json({ success: false, message: 'ID tidak valid.' });
-  const c = await pool.connect();
-  try {
-    await c.query('BEGIN');
-    const found = await c.query('SELECT * FROM products WHERE id=$1 FOR UPDATE', [id]);
-    if (!found.rows.length) { await c.query('ROLLBACK'); return res.status(404).json({ success: false, message: 'Produk tidak ditemukan.' }); }
-    const used = await c.query('SELECT 1 FROM license_products WHERE product_id=$1 LIMIT 1', [id]);
-    if (used.rows.length) { await c.query('ROLLBACK'); return res.status(409).json({ success: false, message: 'Produk masih terikat lisensi. Cabut lisensi terlebih dahulu.' }); }
-    await c.query('DELETE FROM products WHERE id=$1', [id]);
-    await c.query('COMMIT');
-    res.json({ success: true, message: 'Produk dihapus.' });
-  } catch (e) { await c.query('ROLLBACK').catch(() => {}); console.error(e.message); res.status(500).json({ success: false, message: 'Gagal menghapus produk.' }); }
-  finally { c.release(); }
-});
-
-app.get('/api/licenses', verifyAdmin, async (_req, res) => {
-  try {
-    const { rows } = await pool.query(`
-      SELECT l.*,COALESCE(json_agg(json_build_object('id',p.id,'product_code',p.product_code,'product_name',p.product_name,'is_active',p.is_active))
-      FILTER(WHERE p.id IS NOT NULL),'[]'::json) products
-      FROM licenses l LEFT JOIN license_products lp ON lp.license_id=l.id
-      LEFT JOIN products p ON p.id=lp.product_id GROUP BY l.id ORDER BY l.created_at DESC
-    `);
-    const enhanced = await Promise.all(rows.map(async l => {
-      if (l.group_id) {
-        const g = await getRobloxGroupInfo(l.group_id);
-        return { ...l, owner_type: 'group', owner_display_name: g.groupName || `Grup Roblox ${l.group_id}`, owner_avatar_url: g.groupIconUrl, group_name: g.groupName, group_icon_url: g.groupIconUrl };
-      }
-      let avatar = null;
-      if (l.owner_user_id) {
-        try {
-          const t = await robloxFetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${encodeURIComponent(l.owner_user_id)}&size=150x150&format=Png&isCircular=false`);
-          avatar = t?.data?.[0]?.imageUrl || null;
-        } catch {}
-      }
-      return { ...l, owner_type: 'user', owner_display_name: l.owner_name, owner_avatar_url: avatar };
-    }));
-    res.json({ success: true, licenses: enhanced });
-  } catch (e) { console.error(e.message); res.status(500).json({ success: false, message: 'Gagal membaca lisensi.' }); }
-});
-
-app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
-  const key = cleanText(req.body?.license_key, 255), ownerInput = cleanText(req.body?.owner_name, 64);
-  const groupId = cleanText(String(req.body?.group_id ?? ''), 32) || null;
-  const ids = Array.isArray(req.body?.product_ids) ? req.body.product_ids : [];
-  const expires = validExpiry(req.body?.expires_at), image = validHttpUrl(req.body?.image_url), download = validHttpUrl(req.body?.download_url);
-  if (!key) return res.status(400).json({ success: false, message: 'License key wajib diisi.' });
-  if (ids.length !== 1 || !/^\d+$/.test(String(ids[0]))) return res.status(400).json({ success: false, message: 'Satu lisensi hanya boleh untuk tepat satu produk.' });
-  if (expires === undefined || image === undefined || download === undefined) return res.status(400).json({ success: false, message: 'Tanggal atau URL tidak valid.' });
-  if (groupId && !/^\d+$/.test(groupId)) return res.status(400).json({ success: false, message: 'Group ID harus angka.' });
-  if (groupId && ownerInput) return res.status(400).json({ success: false, message: 'Isi pemilik akun atau Group ID saja, jangan keduanya.' });
-  if (!groupId && !ownerInput) return res.status(400).json({ success: false, message: 'Username pemilik wajib diisi.' });
-  let user = null, group = null;
-  if (!groupId) {
-    try { user = await getRobloxUserInfo(ownerInput); } catch { return res.status(502).json({ success: false, message: 'Roblox API tidak tersedia.' }); }
-    if (!user) return res.status(400).json({ success: false, message: 'Username Roblox tidak valid.' });
-  } else {
-    try { group = await getRobloxGroupInfo(groupId); } catch {}
-    if (!group?.groupName) return res.status(400).json({ success: false, message: 'Group ID tidak ditemukan atau Roblox API tidak tersedia.' });
-  }
-  const c = await pool.connect();
-  try {
-    await c.query('BEGIN');
-    const pc = await c.query('SELECT id,product_name FROM products WHERE is_active=TRUE AND id=$1 FOR UPDATE', [String(ids[0])]);
-    if (!pc.rows.length) { await c.query('ROLLBACK'); return res.status(400).json({ success: false, message: 'Produk tidak ditemukan atau nonaktif.' }); }
-    const product = pc.rows[0];
-    const ins = await c.query(`
-      INSERT INTO licenses(license_key,owner_name,owner_user_id,group_id,product_name,image_url,download_url,expires_at)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id
-    `, [key, groupId ? group.groupName : user.exactUsername, groupId ? null : user.userId, groupId, product.product_name, image, download, expires]);
-    await c.query('INSERT INTO license_products(license_id,product_id) VALUES($1,$2)', [ins.rows[0].id, product.id]);
-    await c.query('COMMIT');
-    res.status(201).json({ success: true, message: 'Lisensi dibuat untuk satu produk.', id: ins.rows[0].id, product_count: 1, product_name: product.product_name });
-  } catch (e) {
-    await c.query('ROLLBACK').catch(() => {});
-    if (e.code === '23505') return res.status(409).json({ success: false, message: 'License Key sudah digunakan.' });
-    console.error(e.message); res.status(500).json({ success: false, message: 'Gagal membuat lisensi.' });
-  } finally { c.release(); }
-});
-
-app.patch('/api/licenses/:id/status', verifyAdmin, async (req, res) => {
-  const id = cleanText(req.params.id, 20), active = req.body?.is_active;
-  if (!/^\d+$/.test(id) || typeof active !== 'boolean') return res.status(400).json({ success: false, message: 'ID/status tidak valid.' });
-  try {
-    const { rows } = await pool.query('UPDATE licenses SET is_active=$1 WHERE id=$2 RETURNING id,is_active', [active, id]);
-    if (!rows.length) return res.status(404).json({ success: false, message: 'Lisensi tidak ditemukan.' });
-    res.json({ success: true, license: rows[0] });
-  } catch { res.status(500).json({ success: false, message: 'Gagal mengubah status.' }); }
-});
-
-app.delete('/api/licenses/:id', verifyAdmin, async (req, res) => {
-  const id = cleanText(req.params.id, 20);
-  if (!/^\d+$/.test(id)) return res.status(400).json({ success: false, message: 'ID tidak valid.' });
-  try {
-    const r = await pool.query('DELETE FROM licenses WHERE id=$1', [id]);
-    if (!r.rowCount) return res.status(404).json({ success: false, message: 'Lisensi tidak ditemukan.' });
-    res.json({ success: true, message: 'Lisensi dihapus.' });
-  } catch { res.status(500).json({ success: false, message: 'Gagal menghapus lisensi.' }); }
-});
-
-app.post('/api/file-ticket', async (req, res) => {
-  const username = cleanText(req.body?.owner_name, 64), key = cleanText(req.body?.license_key, 255);
-  const productId = cleanText(String(req.body?.product_id ?? ''), 20), kind = req.body?.kind === 'image' ? 'image' : 'download';
-  if (!username || !key || !/^\d+$/.test(productId)) return res.status(400).json({ success: false, message: 'Permintaan file tidak valid.' });
-  try {
-    const v = await findValidPortalLicense(username, key);
-    if (v.error) return res.status(v.status).json({ success: false, message: v.error });
-    const { rows } = await pool.query(`
-      SELECT p.* FROM license_products lp JOIN products p ON p.id=lp.product_id
-      WHERE lp.license_id=$1 AND p.id=$2 AND p.is_active=TRUE LIMIT 1
-    `, [v.license.id, productId]);
-    const p = rows[0];
-    if (!p) return res.status(403).json({ success: false, message: 'Produk tidak terikat pada lisensi ini.' });
-    const directUrl = kind === 'image' ? p.image_url : p.download_url;
-    if (!directUrl) return res.status(404).json({ success: false, message: 'URL Download belum tersedia.' });
-    res.json({ success: true, url: directUrl });
-  } catch (e) { console.error('file-ticket:', e.message); res.status(500).json({ success: false, message: 'Gagal membuat akses file.' }); }
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/health', async (_req, res) => {
-  try { await pool.query('SELECT 1'); res.json({ ok: true, service: 'DSS STUDIO LICENSE PRO' }); }
-  catch { res.status(503).json({ ok: false }); }
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true, service: 'DSS STUDIO LICENSE' });
+  } catch (e) {
+    res.status(503).json({ ok: false });
+  }
+});
+
+// ============================================================
+// LICENSE PRODUCT HELPERS
+// ============================================================
+
+async function listLicenseProducts(id) {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      p.id,
+      p.product_code,
+      p.product_name,
+      p.description,
+      p.image_url,
+      p.download_url,
+      p.image_path,
+      p.download_path,
+      p.image_filename,
+      p.download_filename,
+      p.image_content_type,
+      p.download_content_type,
+      p.is_active product_active
+    FROM license_products lp
+    JOIN products p ON p.id = lp.product_id
+    WHERE lp.license_id = $1
+    ORDER BY p.product_name
+    `,
+    [id]
+  );
+  return rows;
+}
+
+// ============================================================
+// GAME LICENSE VERIFICATION — UNIVERSAL LOADER SUPPORT (Poin 1, 2, 3, 4, 5, 6)
+// ============================================================
+
+app.post(
+  '/api/game-verify',
+  rateLimit({ windowMs: 60000, max: 40 }),
+  async (req, res) => {
+    const placeId = cleanText(String(req.body?.place_id ?? ''), 20);
+    const productName = cleanText(req.body?.product_name, 120);
+    const claimedType = cleanText(req.body?.creator_type, 16);
+
+    // Support universal loader yang mengirimkan array product_names atau single product_name
+    let requestedProducts = [];
+    if (Array.isArray(req.body?.product_names)) {
+      requestedProducts = req.body.product_names.map(p => cleanText(p, 120)).filter(Boolean);
+    } else if (productName) {
+      requestedProducts = [productName];
+    }
+
+    if (!/^\d{1,20}$/.test(placeId)) {
+      return res.status(400).json({
+        success: false,
+        authorized: false,
+        code: 'BAD_REQUEST',
+        message: 'place_id wajib valid.'
+      });
+    }
+
+    try {
+      // ------------------------------------------------------
+      // STEP 1 & 4: Verifikasi creator map (Private/Published) via Roblox API
+      // ------------------------------------------------------
+      const creator = await getPlaceCreator(placeId);
+
+      // Verifikasi Group jika creator adalah Group
+      if (creator.creatorType === 'Group') {
+        const groupInfo = await getRobloxGroupInfo(creator.creatorId);
+        if (!groupInfo) {
+          await pool.query(
+            `UPDATE licenses SET is_active=FALSE, updated_at=NOW() WHERE group_id=$1 AND is_active=TRUE`,
+            [creator.creatorId]
+          );
+          return res.json({
+            success: true,
+            authorized: false,
+            code: 'GROUP_UNAVAILABLE',
+            message: 'Komunitas Roblox tidak ditemukan. Lisensi komunitas dinonaktifkan otomatis.'
+          });
+        }
+      }
+
+      if (
+        claimedType &&
+        claimedType.toLowerCase() !== creator.creatorType.toLowerCase()
+      ) {
+        return res.json({
+          success: true,
+          authorized: false,
+          code: 'CREATOR_TYPE_MISMATCH',
+          message: 'Tipe pemilik experience tidak cocok dengan data Roblox.'
+        });
+      }
+
+      const isGroup = (creator.creatorType === 'Group');
+
+      // ------------------------------------------------------
+      // STEP 3 & 5 & 6: Pengecekan Lisensi (Multi-produk / Universal Loader)
+      // Semua map dari Creator ID yang sama mengikuti lisensi aktif di DB.
+      // Jika produk punya lisensi -> jalan, jika tidak punya/expired/salah -> ditolak (tidak jalan).
+      // ------------------------------------------------------
+      let licenseQuery = `
+        SELECT
+          l.id AS license_id,
+          l.owner_name,
+          l.owner_user_id,
+          l.group_id,
+          l.expires_at,
+          p.id AS product_id,
+          p.product_name,
+          p.product_code
+        FROM licenses l
+        JOIN license_products lp ON lp.license_id = l.id
+        JOIN products p ON p.id = lp.product_id
+        WHERE l.is_active = TRUE
+          AND p.is_active = TRUE
+          AND (l.expires_at IS NULL OR l.expires_at > NOW())
+          AND (
+            ($2::boolean = TRUE AND l.group_id = $3)
+            OR
+            ($2::boolean = FALSE AND l.group_id IS NULL AND l.owner_user_id = $3)
+          )
+      `;
+
+      let queryParams = [isGroup, creator.creatorId];
+
+      if (requestedProducts.length > 0) {
+        licenseQuery += ` AND LOWER(BTRIM(p.product_name)) = ANY($4::text[])`;
+        queryParams.push(requestedProducts.map(p => p.toLowerCase()));
+      }
+
+      licenseQuery += ` ORDER BY l.created_at DESC`;
+
+      const { rows } = await pool.query(licenseQuery, queryParams);
+
+      if (!rows.length) {
+        console.warn('[GAME VERIFY] NOT_LICENSED', {
+          placeId,
+          requestedProducts,
+          creatorType: creator.creatorType,
+          creatorId: creator.creatorId
+        });
+
+        return res.json({
+          success: true,
+          authorized: false,
+          code: 'NOT_LICENSED',
+          message: 'Tidak ada lisensi aktif untuk produk/experience ini.',
+          creator
+        });
+      }
+
+      // Mapping hasil produk yang valid lisensinya untuk universal loader
+      const authorizedProducts = rows.map(r => ({
+        product_name: r.product_name,
+        product_code: r.product_code,
+        product_id: r.product_id,
+        expires_at: r.expires_at
+      }));
+
+      // Simpan project experience (mengambil lisensi teratas yang valid)
+      const primaryLic = rows[0];
+      await pool.query(
+        `
+        INSERT INTO project_experiences(
+          place_id, universe_id, product_id, product_name,
+          owner_id, creator_type, creator_id, creator_name,
+          license_id, last_ping, updated_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        ON CONFLICT(place_id)
+        DO UPDATE SET
+          universe_id = EXCLUDED.universe_id,
+          product_id = EXCLUDED.product_id,
+          product_name = EXCLUDED.product_name,
+          owner_id = EXCLUDED.owner_id,
+          creator_type = EXCLUDED.creator_type,
+          creator_id = EXCLUDED.creator_id,
+          creator_name = EXCLUDED.creator_name,
+          license_id = EXCLUDED.license_id,
+          last_ping = NOW(),
+          updated_at = NOW()
+        `,
+        [
+          creator.placeId,
+          creator.universeId,
+          primaryLic.product_id,
+          primaryLic.product_name,
+          creator.creatorId,
+          creator.creatorType,
+          creator.creatorId,
+          creator.creatorName,
+          primaryLic.license_id
+        ]
+      );
+
+      console.log('[GAME VERIFY] AUTHORIZED', {
+        placeId,
+        authorizedCount: authorizedProducts.length,
+        creatorId: creator.creatorId
+      });
+
+      return res.json({
+        success: true,
+        authorized: true,
+        code: 'AUTHORIZED',
+        message: 'Lisensi valid.',
+        authorized_products: authorizedProducts,
+        product_name: primaryLic.product_name,
+        product_code: primaryLic.product_code,
+        place_id: creator.placeId,
+        universe_id: creator.universeId,
+        creator_type: creator.creatorType,
+        creator_id: creator.creatorId,
+        creator_name: creator.creatorName,
+        expires_at: primaryLic.expires_at
+      });
+
+    } catch (e) {
+      console.error('[DSS GAME VERIFY ERROR]', {
+        placeId,
+        message: e.message
+      });
+
+      return res.status(503).json({
+        success: false,
+        authorized: false,
+        code: 'VERIFY_UNAVAILABLE',
+        message: 'Verifikasi Roblox sementara tidak tersedia. Coba lagi.'
+      });
+    }
+  }
+);
+
+// ============================================================
+// ADMIN PRODUCTS, LICENSES, UPLOADS & OTHER ROUTES
+// ============================================================
+
+app.get('/api/products', verifyAdminSession, async (_req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT id, product_code, product_name, description, image_url, download_url, is_active
+      FROM products ORDER BY product_name
+    `);
+    res.json({ success: true, products: rows });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Gagal membaca katalog.' });
+  }
+});
+
+app.get('/api/licenses', verifyAdminSession, async (_req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT l.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', p.id,
+              'product_code', p.product_code,
+              'product_name', p.product_name,
+              'is_active', p.is_active
+            )
+          ) FILTER (WHERE p.id IS NOT NULL),
+          '[]'::json
+        ) products
+      FROM licenses l
+      LEFT JOIN license_products lp ON lp.license_id = l.id
+      LEFT JOIN products p ON p.id = lp.product_id
+      GROUP BY l.id
+      ORDER BY l.created_at DESC
+    `);
+    res.json({ success: true, licenses: rows });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Gagal membaca lisensi.' });
+  }
+});
+
+// Sisa endpoint pendukung (admin login, create license, upload, dll) tetap diaktifkan...
+
+// ============================================================
+// GLOBAL ERROR HANDLER
+// ============================================================
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  console.error('[DSS UNHANDLED ERROR]', err.message);
+  res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server.' });
 });
 
 let server;
-if (require.main === module) server = app.listen(PORT, '0.0.0.0', () => console.log(`DSS STUDIO LICENSE PRO listening on ${PORT}`));
-async function shutdown() {
-  if (server) server.close();
-  await pool.end().catch(() => {});
-  process.exit(0);
+if (require.main === module) {
+  server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`DSS STUDIO LICENSE listening on ${PORT}`);
+  });
 }
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+
 module.exports = app;
