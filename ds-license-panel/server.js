@@ -474,6 +474,32 @@ async function getRobloxUserInfo(username) {
 }
 
 // ============================================================
+// ROBLOX GROUP INFORMATION
+// ============================================================
+
+async function getRobloxGroupInfo(groupId) {
+  const id = String(groupId || '').trim();
+  if (!/^\d{1,20}$/.test(id)) return null;
+
+  try {
+    const data = await robloxFetch(
+      `https://groups.roblox.com/v1/groups/${encodeURIComponent(id)}`
+    );
+
+    if (String(data?.id || '') !== id || !data?.name) return null;
+
+    return {
+      groupId: id,
+      groupName: cleanText(String(data.name), 120),
+      memberCount: Number(data.memberCount || 0)
+    };
+  } catch (e) {
+    if (e.statusCode === 404) return null;
+    throw e;
+  }
+}
+
+// ============================================================
 // PLACE CREATOR VERIFICATION
 // ============================================================
 
@@ -635,6 +661,9 @@ async function initDB() {
 
     ALTER TABLE licenses
       ADD COLUMN IF NOT EXISTS group_id VARCHAR(32);
+
+    ALTER TABLE licenses
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
     ALTER TABLE licenses
       ADD COLUMN IF NOT EXISTS product_name VARCHAR(120) DEFAULT 'General Product';
@@ -892,6 +921,33 @@ async function initDB() {
         row.id,
         e.message
       );
+    }
+  }
+
+  // ==========================================================
+  // LEGACY GROUP NAME MIGRATION
+  // ==========================================================
+  // Mengganti label COMMUNITY_GROUP pada lisensi lama dengan
+  // nama komunitas Roblox yang sebenarnya, jika masih tersedia.
+  const oldGroups = await pool.query(`
+    SELECT id, group_id
+    FROM licenses
+    WHERE group_id IS NOT NULL
+      AND (owner_name = 'COMMUNITY_GROUP' OR owner_name IS NULL OR BTRIM(owner_name) = '')
+    LIMIT 100
+  `);
+
+  for (const row of oldGroups.rows) {
+    try {
+      const group = await getRobloxGroupInfo(row.group_id);
+      if (group) {
+        await pool.query(
+          `UPDATE licenses SET owner_name=$1, updated_at=NOW() WHERE id=$2`,
+          [group.groupName, row.id]
+        );
+      }
+    } catch (e) {
+      console.warn('[GROUP NAME MIGRATION DEFERRED]', row.id, e.message);
     }
   }
 
@@ -1375,6 +1431,25 @@ app.post(
       const creator = await getPlaceCreator(
         placeId
       );
+
+      // Group yang sudah dihapus/tidak ditemukan otomatis mencabut
+      // lisensi komunitas terkait. Gangguan Roblox API (5xx/timeout)
+      // tidak akan dianggap sebagai penghapusan grup.
+      if (creator.creatorType === 'Group') {
+        const groupInfo = await getRobloxGroupInfo(creator.creatorId);
+        if (!groupInfo) {
+          await pool.query(
+            `UPDATE licenses SET is_active=FALSE, updated_at=NOW() WHERE group_id=$1 AND is_active=TRUE`,
+            [creator.creatorId]
+          );
+          return res.json({
+            success: true,
+            authorized: false,
+            code: 'GROUP_UNAVAILABLE',
+            message: 'Komunitas Roblox tidak ditemukan. Lisensi komunitas dinonaktifkan otomatis.'
+          });
+        }
+      }
 
       // ------------------------------------------------------
       // STEP 2: Check claimed creator type
@@ -2505,6 +2580,31 @@ app.get(
 );
 
 // ============================================================
+// ROBLOX GROUP PREVIEW (ADMIN)
+// ============================================================
+
+app.get(
+  '/api/roblox-group/:id',
+  verifyAdminSession,
+  async (req, res) => {
+    const id = cleanText(req.params.id, 20);
+    if (!/^\d{1,20}$/.test(id)) {
+      return res.status(400).json({ success: false, message: 'Group ID harus berupa angka.' });
+    }
+    try {
+      const group = await getRobloxGroupInfo(id);
+      if (!group) {
+        return res.status(404).json({ success: false, message: 'Komunitas Roblox tidak ditemukan.' });
+      }
+      return res.json({ success: true, group });
+    } catch (e) {
+      console.error('[GROUP PREVIEW]', e.message);
+      return res.status(502).json({ success: false, message: 'Tidak dapat membaca data komunitas Roblox saat ini.' });
+    }
+  }
+);
+
+// ============================================================
 // CREATE LICENSE
 // ============================================================
 
@@ -2598,6 +2698,26 @@ app.post(
     }
 
     let user = null;
+    let groupInfo = null;
+
+    if (groupId) {
+      try {
+        groupInfo = await getRobloxGroupInfo(groupId);
+      } catch (e) {
+        console.error('[LICENSE GROUP LOOKUP]', e.message);
+        return res.status(502).json({
+          success: false,
+          message: 'Roblox Groups API sedang tidak tersedia. Coba lagi.'
+        });
+      }
+
+      if (!groupInfo) {
+        return res.status(400).json({
+          success: false,
+          message: 'Group ID tidak ditemukan atau komunitas Roblox sudah tidak tersedia.'
+        });
+      }
+    }
 
     if (!groupId) {
       try {
@@ -2671,7 +2791,7 @@ app.post(
         [
           key,
           groupId
-            ? 'COMMUNITY_GROUP'
+            ? groupInfo.groupName
             : user.exactUsername,
 
           groupId
@@ -2763,7 +2883,8 @@ app.patch(
         `
         UPDATE licenses
 
-        SET is_active=$1
+        SET is_active=$1,
+            updated_at=NOW()
 
         WHERE id=$2
 
