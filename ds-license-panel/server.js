@@ -653,6 +653,21 @@ async function initDB() {
             PRIMARY KEY(license_id, product_id)
         );
 
+        -- BACKFILL LISENSI LAMA: sebelum license_products tersedia,
+        -- hubungan produk hanya tersimpan di licenses.product_name.
+        -- Hubungkan otomatis agar lisensi lama tetap dapat diverifikasi.
+        INSERT INTO license_products(license_id, product_id)
+        SELECT
+            l.id,
+            p.id
+        FROM licenses l
+        INNER JOIN products p
+            ON LOWER(BTRIM(p.product_name)) = LOWER(BTRIM(l.product_name))
+        WHERE
+            l.product_name IS NOT NULL
+            AND BTRIM(l.product_name) <> ''
+        ON CONFLICT (license_id, product_id) DO NOTHING;
+
         CREATE TABLE IF NOT EXISTS project_experiences(
             place_id VARCHAR(32) PRIMARY KEY,
             product_name VARCHAR(120),
