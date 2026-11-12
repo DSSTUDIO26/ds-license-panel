@@ -28,7 +28,38 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '1mb', strict: true }));
+
+app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+});
+
+const rateBuckets = new Map();
+function rateLimit({ windowMs = 60_000, max = 30 } = {}) {
+    return (req, res, next) => {
+        const key = `${req.ip || req.socket.remoteAddress}:${req.path}`;
+        const now = Date.now();
+        let bucket = rateBuckets.get(key);
+        if (!bucket || bucket.resetAt <= now) bucket = { count: 0, resetAt: now + windowMs };
+        bucket.count += 1;
+        rateBuckets.set(key, bucket);
+        if (rateBuckets.size > 5000) {
+            for (const [k, v] of rateBuckets) if (v.resetAt <= now) rateBuckets.delete(k);
+        }
+        res.setHeader('RateLimit-Limit', String(max));
+        res.setHeader('RateLimit-Remaining', String(Math.max(0, max - bucket.count)));
+        if (bucket.count > max) {
+            res.setHeader('Retry-After', String(Math.ceil((bucket.resetAt - now) / 1000)));
+            return sendError(res, 429, 'Terlalu banyak permintaan. Coba lagi beberapa saat.');
+        }
+        next();
+    };
+}
 
 // ============================================================
 // CONFIGURATION
@@ -67,7 +98,7 @@ const pool = new Pool({
     connectionString: DATABASE_URL,
     ssl: process.env.PGSSLMODE === 'disable'
         ? false
-        : { rejectUnauthorized: false },
+        : { rejectUnauthorized: process.env.PGSSL_REJECT_UNAUTHORIZED !== 'false' },
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000
@@ -227,6 +258,17 @@ function setAdminCookie(req, res) {
 }
 
 function verifyAdmin(req, res, next) {
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        const origin = req.get('origin');
+        const host = req.get('host');
+        if (origin) {
+            try {
+                if (new URL(origin).host !== host) return sendError(res, 403, 'Origin request tidak diizinkan.');
+            } catch {
+                return sendError(res, 403, 'Origin request tidak valid.');
+            }
+        }
+    }
     if (!hasAdmin(req)) {
         return sendError(
             res,
@@ -413,7 +455,9 @@ async function getPlaceCreator(placeId) {
         universeId: String(universe.universeId),
         creatorType: creator.type,
         creatorId: String(creator.id),
-        creatorName: creator.name || ''
+        creatorName: creator.name || '',
+        experienceName: game?.data?.[0]?.name || `Experience #${id}`,
+        visits: Number(game?.data?.[0]?.visits || 0)
     };
 }
 
@@ -479,9 +523,49 @@ async function initDB() {
             place_id VARCHAR(32) PRIMARY KEY,
             product_name VARCHAR(120),
             owner_id VARCHAR(32),
+            license_id BIGINT REFERENCES licenses(id) ON DELETE SET NULL,
+            creator_type VARCHAR(10),
+            universe_id VARCHAR(32),
+            experience_name VARCHAR(255),
+            icon_url TEXT,
+            visits BIGINT NOT NULL DEFAULT 0,
             last_ping TIMESTAMPTZ DEFAULT NOW()
         );
 
+        ALTER TABLE project_experiences ADD COLUMN IF NOT EXISTS license_id BIGINT REFERENCES licenses(id) ON DELETE SET NULL;
+        ALTER TABLE project_experiences ADD COLUMN IF NOT EXISTS creator_type VARCHAR(10);
+        ALTER TABLE project_experiences ADD COLUMN IF NOT EXISTS universe_id VARCHAR(32);
+        ALTER TABLE project_experiences ADD COLUMN IF NOT EXISTS experience_name VARCHAR(255);
+        ALTER TABLE project_experiences ADD COLUMN IF NOT EXISTS icon_url TEXT;
+        ALTER TABLE project_experiences ADD COLUMN IF NOT EXISTS visits BIGINT NOT NULL DEFAULT 0;
+
+        -- Backfill project rows created by the previous server version.
+        UPDATE project_experiences pe
+        SET license_id = matched.license_id
+        FROM (
+            SELECT DISTINCT ON (old_pe.place_id)
+                old_pe.place_id,
+                l.id AS license_id
+            FROM project_experiences old_pe
+            INNER JOIN licenses l
+                ON (
+                    (old_pe.creator_type = 'User' AND l.owner_user_id = old_pe.owner_id)
+                    OR (old_pe.creator_type = 'Group' AND l.group_id = old_pe.owner_id)
+                    OR (old_pe.creator_type IS NULL AND (
+                        l.owner_user_id = old_pe.owner_id OR l.group_id = old_pe.owner_id
+                    ))
+                )
+            INNER JOIN license_products lp ON lp.license_id = l.id
+            INNER JOIN products p ON p.id = lp.product_id
+            WHERE old_pe.license_id IS NULL
+                AND LOWER(p.product_name) = LOWER(old_pe.product_name)
+                AND l.is_active = TRUE
+                AND p.is_active = TRUE
+                AND (l.expires_at IS NULL OR l.expires_at > NOW())
+            ORDER BY old_pe.place_id, l.created_at DESC
+        ) matched
+        WHERE pe.place_id = matched.place_id
+            AND pe.license_id IS NULL;
         CREATE INDEX IF NOT EXISTS idx_licenses_owner_user
             ON licenses(owner_user_id);
 
@@ -491,8 +575,8 @@ async function initDB() {
         CREATE INDEX IF NOT EXISTS idx_license_products_product
             ON license_products(product_id);
 
-        CREATE INDEX IF NOT EXISTS idx_project_experiences_ping
-            ON project_experiences(last_ping);
+        CREATE INDEX IF NOT EXISTS idx_project_experiences_ping ON project_experiences(last_ping);
+        CREATE INDEX IF NOT EXISTS idx_project_experiences_license ON project_experiences(license_id);
     `);
 
     console.log('[DSS] Database schema ready.');
@@ -737,6 +821,23 @@ async function clientLoginHandler(req, res) {
             verification.group?.groupName
             || verification.user.exactUsername;
 
+        const ownedLicenseIds = ownedLicenses.map(item => String(item.id));
+        let licensedProjects = [];
+        if (ownedLicenseIds.length) {
+            const projectResult = await pool.query(`
+                SELECT DISTINCT pe.place_id, pe.product_name, pe.owner_id,
+                    pe.creator_type, pe.universe_id, pe.experience_name,
+                    pe.icon_url, pe.visits, pe.last_ping
+                FROM project_experiences pe
+                INNER JOIN licenses active_license ON active_license.id = pe.license_id
+                WHERE pe.license_id = ANY($1::bigint[])
+                    AND active_license.is_active = TRUE
+                    AND (active_license.expires_at IS NULL OR active_license.expires_at > NOW())
+                ORDER BY pe.last_ping DESC
+            `, [ownedLicenseIds]);
+            licensedProjects = projectResult.rows;
+        }
+
         return res.json({
             success: true,
 
@@ -767,7 +868,8 @@ async function clientLoginHandler(req, res) {
                 download_url: product.download_url
             })),
 
-            owned_licenses: ownedLicenses
+            owned_licenses: ownedLicenses,
+            projects: licensedProjects
         });
     } catch (error) {
         console.error('[CLIENT LOGIN]', error.message);
@@ -780,14 +882,14 @@ async function clientLoginHandler(req, res) {
     }
 }
 
-app.post('/api/client-login', clientLoginHandler);
-app.post('/api/client-refresh', clientLoginHandler);
+app.post('/api/client-login', rateLimit({ windowMs: 60_000, max: 12 }), clientLoginHandler);
+app.post('/api/client-refresh', rateLimit({ windowMs: 60_000, max: 20 }), clientLoginHandler);
 
 // ============================================================
 // PORTAL LOGIN
 // ============================================================
 
-app.post('/api/portal-login', async (req, res) => {
+app.post('/api/portal-login', rateLimit({ windowMs: 60_000, max: 8 }), async (req, res) => {
     const username = cleanText(req.body?.owner_name, 64);
     const credential = cleanText(req.body?.credential, 255);
 
@@ -866,7 +968,7 @@ app.post('/api/admin-logout', (req, res) => {
 // GAME DETAILS
 // ============================================================
 
-app.post('/api/game-details', async (req, res) => {
+app.post('/api/game-details', rateLimit({ windowMs: 60_000, max: 40 }), async (req, res) => {
     const placeId = validNumericId(req.body?.place_id, 20);
 
     if (!placeId) {
@@ -954,176 +1056,88 @@ app.post('/api/game-details', async (req, res) => {
 
 app.post('/api/game-verify', async (req, res) => {
     const placeId = validNumericId(req.body?.place_id, 20);
-    const productName = cleanText(req.body?.product_name, 120);
+    const requestedProductName = cleanText(req.body?.product_name, 120);
 
-    let creatorId = validNumericId(req.body?.creator_id, 32);
-    let creatorType = cleanText(req.body?.creator_type, 10);
-
-    if (!placeId) {
-        return sendError(
-            res,
-            400,
-            'Place ID tidak valid.',
-            { authorized: false }
-        );
-    }
-
-    if (!productName) {
-        return sendError(
-            res,
-            400,
-            'Product Name wajib diisi.',
-            { authorized: false }
-        );
-    }
-
-    if (
-        creatorType
-        && !['User', 'Group'].includes(creatorType)
-    ) {
-        return sendError(
-            res,
-            400,
-            'Creator Type tidak valid.',
-            { authorized: false }
-        );
-    }
+    if (!placeId) return sendError(res, 400, 'Place ID tidak valid.', { authorized: false });
 
     try {
-        // Jika Creator ID atau Creator Type tidak dikirim,
-        // server mencoba mengambil data creator dari Roblox API.
-        if (!creatorId || !creatorType) {
-            const creator = await getPlaceCreator(placeId);
+        // Creator is always resolved from Roblox, never trusted from client payload.
+        const creator = await getPlaceCreator(placeId);
+        const creatorId = validNumericId(creator.creatorId, 32);
+        const creatorType = creator.creatorType;
 
-            creatorId = creator.creatorId;
-            creatorType = creator.creatorType;
-        }
-
-        if (!creatorId || !creatorType) {
-            return res.json({
-                success: true,
-                authorized: false,
-                product_name: productName,
-                place_id: placeId,
-                message: 'Creator tidak dapat diverifikasi.'
-            });
-        }
-
-        if (!validNumericId(creatorId, 32)) {
-            return sendError(
-                res,
-                400,
-                'Creator ID tidak valid.',
-                { authorized: false }
-            );
-        }
-
-        if (!['User', 'Group'].includes(creatorType)) {
-            return sendError(
-                res,
-                400,
-                'Creator Type tidak valid.',
-                { authorized: false }
-            );
+        if (!creatorId || !['User', 'Group'].includes(creatorType)) {
+            return res.json({ success: true, authorized: false, place_id: placeId,
+                message: 'Creator experience tidak dapat diverifikasi.' });
         }
 
         const { rows } = await pool.query(`
-            SELECT
-                p.product_name,
-                l.id AS license_id,
-                l.owner_user_id,
-                l.group_id
-
+            SELECT p.product_name, l.id AS license_id, l.owner_user_id, l.group_id
             FROM licenses l
-
-            INNER JOIN license_products lp
-                ON lp.license_id = l.id
-
-            INNER JOIN products p
-                ON p.id = lp.product_id
-
-            WHERE
-                l.is_active = TRUE
+            INNER JOIN license_products lp ON lp.license_id = l.id
+            INNER JOIN products p ON p.id = lp.product_id
+            WHERE l.is_active = TRUE
                 AND p.is_active = TRUE
-
-                AND LOWER(p.product_name) = LOWER($1)
-
+                AND ($1::text = '' OR LOWER(p.product_name) = LOWER($1))
+                AND (l.expires_at IS NULL OR l.expires_at > NOW())
                 AND (
-                    l.expires_at IS NULL
-                    OR l.expires_at > NOW()
+                    ($2 = 'User' AND l.owner_user_id = $3)
+                    OR ($2 = 'Group' AND l.group_id = $3)
                 )
-
-                AND (
-                    (
-                        $2 = 'User'
-                        AND l.owner_user_id = $3
-                    )
-                    OR
-                    (
-                        $2 = 'Group'
-                        AND l.group_id = $3
-                    )
-                )
-
+            ORDER BY l.created_at DESC
             LIMIT 1
-        `, [
-            productName,
-            creatorType,
-            creatorId
-        ]);
+        `, [requestedProductName, creatorType, creatorId]);
 
         if (!rows.length) {
-            return res.json({
-                success: true,
-                authorized: false,
-                product_name: productName,
-                place_id: placeId,
-                creator_id: creatorId,
-                creator_type: creatorType,
-                message: 'Lisensi produk tidak ditemukan atau tidak aktif.'
-            });
+            return res.json({ success: true, authorized: false, place_id: placeId,
+                creator_id: creatorId, creator_type: creatorType,
+                product_name: requestedProductName || null,
+                message: 'Tidak ditemukan lisensi aktif yang cocok dengan pemilik experience.' });
         }
 
         const authorizedProduct = rows[0];
+        let iconUrl = null;
+        try {
+            const thumbnail = await robloxFetch(
+                `https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${encodeURIComponent(placeId)}&size=512x512&format=Png&isCircular=false`
+            );
+            iconUrl = thumbnail?.data?.[0]?.imageUrl || null;
+        } catch {}
 
-        // Catat experience yang berhasil diverifikasi.
-        // Satu Place ID menyimpan satu produk terbaru.
         await pool.query(`
             INSERT INTO project_experiences(
-                place_id,
-                product_name,
-                owner_id,
-                last_ping
+                place_id, product_name, owner_id, license_id, creator_type,
+                universe_id, experience_name, icon_url, visits, last_ping
             )
-
-            VALUES($1, $2, $3, NOW())
-
-            ON CONFLICT(place_id)
-            DO UPDATE SET
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+            ON CONFLICT(place_id) DO UPDATE SET
                 product_name = EXCLUDED.product_name,
                 owner_id = EXCLUDED.owner_id,
+                license_id = EXCLUDED.license_id,
+                creator_type = EXCLUDED.creator_type,
+                universe_id = EXCLUDED.universe_id,
+                experience_name = EXCLUDED.experience_name,
+                icon_url = COALESCE(EXCLUDED.icon_url, project_experiences.icon_url),
+                visits = EXCLUDED.visits,
                 last_ping = NOW()
-        `, [
-            placeId,
-            authorizedProduct.product_name,
-            creatorId
-        ]);
+        `, [placeId, authorizedProduct.product_name, creatorId, authorizedProduct.license_id,
+            creatorType, creator.universeId, creator.experienceName, iconUrl, creator.visits]);
 
         return res.json({
-            success: true,
-            authorized: true,
+            success: true, authorized: true,
             product_name: authorizedProduct.product_name,
             place_id: placeId,
+            universe_id: creator.universeId,
+            experience_name: creator.experienceName,
             creator_id: creatorId,
-            creator_type: creatorType
+            creator_type: creatorType,
+            message: 'Experience terverifikasi dan tersinkron otomatis.'
         });
     } catch (error) {
         console.error('[GAME VERIFY]', error.message);
-
-        return res.status(500).json({
-            success: false,
-            authorized: false,
-            message: 'Verifikasi lisensi gagal.'
+        return res.status(error.statusCode || 502).json({
+            success: false, authorized: false,
+            message: 'Verifikasi Roblox gagal. Coba lagi.'
         });
     }
 });
@@ -1132,31 +1146,24 @@ app.post('/api/game-verify', async (req, res) => {
 // AUTO PROJECTS
 // ============================================================
 
-app.get('/api/auto-projects', async (_req, res) => {
+app.get('/api/auto-projects', verifyAdmin, async (_req, res) => {
     try {
         const { rows } = await pool.query(`
-            SELECT
-                place_id,
-                product_name,
-                owner_id,
-                last_ping
-            FROM project_experiences
-            ORDER BY last_ping DESC
+            SELECT pe.place_id, pe.product_name, pe.owner_id, pe.license_id,
+                pe.creator_type, pe.universe_id, pe.experience_name,
+                pe.icon_url, pe.visits, pe.last_ping,
+                l.owner_name, l.owner_user_id, l.group_id,
+                l.is_active AS license_active, l.expires_at
+            FROM project_experiences pe
+            INNER JOIN licenses l ON l.id = pe.license_id
+            WHERE l.is_active = TRUE
+                AND (l.expires_at IS NULL OR l.expires_at > NOW())
+            ORDER BY pe.last_ping DESC
         `);
-
-        return res.json({
-            success: true,
-            projects: rows.map(row => row.place_id),
-            data: rows
-        });
+        return res.json({ success: true, projects: rows.map(row => row.place_id), data: rows });
     } catch (error) {
         console.error('[AUTO PROJECTS]', error.message);
-
-        return res.status(500).json({
-            success: false,
-            projects: [],
-            data: []
-        });
+        return sendError(res, 500, 'Gagal membaca project experience.');
     }
 });
 
@@ -1892,7 +1899,7 @@ app.delete('/api/licenses/:id', verifyAdmin, async (req, res) => {
 // FILE TICKET
 // ============================================================
 
-app.post('/api/file-ticket', async (req, res) => {
+app.post('/api/file-ticket', rateLimit({ windowMs: 60_000, max: 15 }), async (req, res) => {
     const username = cleanText(req.body?.owner_name, 64);
     const key = cleanText(req.body?.license_key, 255);
 
@@ -1994,7 +2001,8 @@ app.get('/health', async (_req, res) => {
         return res.json({
             ok: true,
             service: 'DSS STUDIO LICENSE PRO V3',
-            database: 'connected'
+            database: 'connected',
+            uptime_seconds: Math.floor(process.uptime())
         });
     } catch {
         return res.status(503).json({
