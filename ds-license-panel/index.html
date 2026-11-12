@@ -700,7 +700,9 @@ a:hover{color:#fff}
 <script>
 const API = '';
 let mode = 'personal', products = [], licenses = [], clientUser = '', clientKey = '', clientData = null;
-let customProjects = ['114330086695098']; 
+let customProjects = ['114330086695098'];
+let autoProjects = [];
+let clientProjects = [];
 const expCache = new Map();
 const $ = id => document.getElementById(id);
 
@@ -824,6 +826,8 @@ async function portalLogin() {
 
 async function showClient(d) {
   clientData = d;
+  clientProjects = Array.isArray(d.projects) ? d.projects : [];
+  expCache.clear();
   const loginBox = $('clientLoginBox'), dash = $('clientDashboard'), cName = $('clientName'), cAvatar = $('clientAvatar'), cExpiry = $('clientExpiry'), pCount = $('productCount'), statProd = $('statProducts'), statAccess = $('statAccessType'), cLicenses = $('clientLicenseDetails'), cProducts = $('clientProducts');
   
   if(loginBox) loginBox.classList.add('hidden');
@@ -874,29 +878,28 @@ async function showClient(d) {
   showClientTab('home');
 }
 
-async function fetchExperienceDetails(placeId) {
-  if(expCache.has(placeId)) return expCache.get(placeId);
-  const data = { name: `Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', creator: 'Dragon Stell Studio', visits: 0, rawVisits: 0, verifiedProduct: null };
+async function fetchExperienceDetails(placeId, projectMeta = null) {
+  const cacheKey = String(placeId);
+  if(expCache.has(cacheKey)) return expCache.get(cacheKey);
+  const data = {
+    name: projectMeta?.experience_name || `Experience #${placeId}`,
+    icon: projectMeta?.icon_url || 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true',
+    creator: projectMeta?.owner_name || 'Roblox Creator',
+    visits: Number(projectMeta?.visits || 0).toLocaleString('id-ID'),
+    rawVisits: Number(projectMeta?.visits || 0),
+    verifiedProduct: projectMeta?.product_name || null
+  };
   try {
     const res = await api('/api/game-details', { method: 'POST', body: JSON.stringify({ place_id: placeId }) });
     if (res.success) {
-      data.name = res.name;
-      data.icon = res.icon;
-      data.creator = res.creatorName;
-      data.rawVisits = Number(res.visits || 0);
+      data.name = res.name || data.name;
+      data.icon = res.icon || data.icon;
+      data.creator = res.creatorName || data.creator;
+      data.rawVisits = Number(res.visits || data.rawVisits || 0);
       data.visits = data.rawVisits.toLocaleString('id-ID');
     }
   } catch {}
-
-  // Deteksi otomatis produk yang dipakai di experience ini berdasarkan database/lisensi aktif
-  try {
-    const vRes = await api('/api/game-verify', { method: 'POST', body: JSON.stringify({ place_id: placeId }) });
-    if(vRes.success && vRes.product_name) {
-      data.verifiedProduct = vRes.product_name;
-    }
-  } catch {}
-
-  expCache.set(placeId, data);
+  expCache.set(cacheKey, data);
   return data;
 }
 
@@ -905,10 +908,16 @@ async function renderClientProjects() {
   if(!container) return;
   container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-amber-300 animate-pulse">Memuat dan mengurutkan data experience dari Roblox API...</div>`;
 
+  const entries = [
+    ...clientProjects.map(project => ({ pid: String(project.place_id), meta: project })),
+    ...customProjects
+      .filter(pid => !clientProjects.some(project => String(project.place_id) === String(pid)))
+      .map(pid => ({ pid: String(pid), meta: null }))
+  ];
   let projectInfos = [];
-  for(const pid of customProjects) {
-    const info = await fetchExperienceDetails(pid);
-    projectInfos.push({ pid, ...info });
+  for(const entry of entries) {
+    const info = await fetchExperienceDetails(entry.pid, entry.meta);
+    projectInfos.push({ pid: entry.pid, ...info });
   }
 
   // Urutkan berdasarkan kunjungan terbanyak ke tersedikit
@@ -948,7 +957,7 @@ function saveProjectExperience() {
   if(!input) return;
   const pid = input.value.trim();
   if(!pid || !/^\d+$/.test(pid)) return toast('Masukkan Place ID angka yang valid.');
-  if(customProjects.includes(pid)) return toast('Project ID sudah terdaftar.');
+  if(customProjects.includes(pid) || autoProjects.some(project => String(project.place_id) === pid)) return toast('Project ID sudah terdaftar.');
   customProjects.push(pid);
   input.value = '';
   renderAdminProjects();
@@ -957,23 +966,45 @@ function saveProjectExperience() {
   toast('Project Experience berhasil ditambahkan.');
 }
 
-function removeProjectExperience(pid) {
-  customProjects = customProjects.filter(id => id !== pid);
-  renderAdminProjects();
-  renderClientProjects();
-  addLog(`Project Experience ID ${pid} dihapus.`);
-  toast('Project dihapus.');
+async function removeProjectExperience(pid, isAuto = false) {
+  try {
+    if(isAuto) {
+      await api('/api/auto-projects/' + encodeURIComponent(pid), { method: 'DELETE', body: '{}' });
+      autoProjects = autoProjects.filter(project => String(project.place_id) !== String(pid));
+      clientProjects = clientProjects.filter(project => String(project.place_id) !== String(pid));
+    } else {
+      customProjects = customProjects.filter(id => String(id) !== String(pid));
+    }
+    expCache.delete(String(pid));
+    renderAdminProjects();
+    renderClientProjects();
+    addLog(`Project Experience ID ${pid} dihapus.`);
+    toast('Project dihapus.');
+  } catch(e) {
+    toast('Gagal menghapus project: ' + e.message);
+  }
 }
 
 function renderAdminProjects() {
   const list = $('adminProjectList');
   if(!list) return;
-  list.innerHTML = customProjects.map(pid => `
-    <div class="flex items-center justify-between p-3 rounded-2xl bg-black/50 border border-white/5">
-      <span class="font-mono text-xs text-amber-200">Place ID: ${safe(pid)}</span>
-      <button type="button" onclick="removeProjectExperience('${safe(pid)}')" class="btn text-red-400 hover:text-red-300 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
+  const autoHtml = autoProjects.map(project => `
+    <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-black/50 border border-white/10">
+      <div class="min-w-0">
+        <div class="font-mono text-xs text-white">Place ID: ${safe(project.place_id)}</div>
+        <div class="text-[10px] muted mt-1">${safe(project.experience_name || 'Verified Experience')} · ${safe(project.product_name || 'Licensed Product')}</div>
+        <div class="text-[9px] text-emerald-300 mt-1">AUTO-SYNC · ${safe(project.license_active ? 'LICENSE ACTIVE' : 'LICENSE STATUS CHECK')}</div>
+      </div>
+      <button type="button" onclick="removeProjectExperience('${safe(project.place_id)}', true)" class="btn text-red-300 hover:text-red-200 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
     </div>
-  `).join('') || '<p class="muted text-xs">Belum ada project id tambahan.</p>';
+  `).join('');
+  const manualHtml = customProjects.map(pid => `
+    <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-black/40 border border-white/5">
+      <span class="font-mono text-xs text-gray-200">Manual Place ID: ${safe(pid)}</span>
+      <button type="button" onclick="removeProjectExperience('${safe(pid)}', false)" class="btn text-red-300 hover:text-red-200 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
+    </div>
+  `).join('');
+  list.innerHTML = autoHtml + manualHtml || '<p class="muted text-xs">Belum ada project terverifikasi. Project akan muncul setelah Roblox Loader berhasil memverifikasi lisensi.</p>';
 }
 
 async function downloadOwnedProduct(id, key) {
@@ -1021,9 +1052,14 @@ async function logoutAdmin() {
 }
 
 async function loadAdmin() {
-  const [p, l] = await Promise.all([api('/api/products'), api('/api/licenses')]);
+  const [p, l, projects] = await Promise.all([
+    api('/api/products'),
+    api('/api/licenses'),
+    api('/api/auto-projects')
+  ]);
   products = p.products || [];
   licenses = l.licenses || [];
+  autoProjects = projects.data || [];
   renderProducts();
   renderLicenseChoices();
   renderProductFilterDropdown();
