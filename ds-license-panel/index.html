@@ -1,915 +1,1942 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DRAGON STELL STUDIO — Management Console</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
+<meta name="theme-color" content="#090b10">
+<title>DSS STUDIO LICENSE</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-:root{color-scheme:dark}
-* { box-sizing: border-box; }
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: #040507;
-  color: #f4f4f5;
-  background-image: 
-    radial-gradient(circle at 15% 10%, rgba(185, 155, 81, 0.08) 0, transparent 40%),
-    radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.06) 0, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(185, 155, 81, 0.04) 0, transparent 50%);
-  background-attachment: fixed;
-}
-.glass {
-  background: rgba(12, 13, 18, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-}
-.glass-card {
-  background: linear-gradient(145deg, rgba(18, 20, 28, 0.9), rgba(10, 11, 15, 0.95));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-}
-.field {
-  background: #08090d;
-  border: 1px solid #22232b;
-  outline: none;
-  transition: all 0.2s ease;
-}
-.field:focus { border-color: #b99b51; box-shadow: 0 0 15px rgba(185, 155, 81, 0.15); }
-.gold {
-  background: linear-gradient(135deg, #b99b51 0%, #e8d59a 50%, #9a7b32 100%);
-  color: #121008;
-  font-weight: 700;
-}
-.muted { color: #9898a0; }
-.btn { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-.btn:hover { filter: brightness(1.12); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(185, 155, 81, 0.2); }
-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-#toast { transition: opacity 0.3s ease, transform 0.3s ease; }
-
-@keyframes shimmerGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-.animated-title {
-  background: linear-gradient(270deg, #ffffff, #b99b51, #a1a1aa, #ffffff);
-  background-size: 300% 300%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmerGradient 8s ease infinite;
+:root {
+  --bg:#080a0f;
+  --panel:#10141c;
+  --panel2:#151a24;
+  --panel3:#1b2230;
+  --line:rgba(255,255,255,.075);
+  --text:#f1f3f7;
+  --muted:#858d9d;
+  --silver:#cbd2dc;
+  --gold:#c9a96e;
+  --gold2:#e3c58d;
+  --green:#42c98b;
+  --red:#ed6874;
+  --blue:#75a9ed;
+  --radius:18px;
+  --shadow:0 18px 60px rgba(0,0,0,.28);
 }
 
-@keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.98) translateY(8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse at 15% 0%,rgba(201,169,110,.09),transparent 35%),
+    radial-gradient(ellipse at 90% 15%,rgba(95,125,170,.08),transparent 35%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+  font-size:14px;
 }
-.animate-fade { animation: fadeInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.gold{color:var(--gold2)}
+.small{font-size:12px}
+.strong{font-weight:700}
+.wrap{max-width:1440px;margin:auto;padding:0 28px}
+svg{width:19px;height:19px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-.product-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-  overflow: hidden;
-  border-radius: 24px;
-  background: linear-gradient(160deg, rgba(16, 18, 26, 0.9), rgba(8, 9, 13, 0.95));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+/* HEADER */
+.topbar{
+  height:76px;
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(8,10,15,.86);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line);
 }
-.product-card:hover {
-  border-color: rgba(185, 155, 81, 0.45);
-  transform: translateY(-6px);
-  box-shadow: 0 20px 45px -12px rgba(185, 155, 81, 0.2);
+.topbar-inner{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
 }
-.product-cover {
-  width: 100%;
-  height: 200px;
-  background: #06070a;
-  overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  position: relative;
+.brand{display:flex;align-items:center;gap:13px;min-width:0}
+.brand-mark{
+  width:42px;height:42px;border-radius:13px;
+  display:grid;place-items:center;
+  background:linear-gradient(145deg,#d8c49e,#8f7043);
+  color:#17130c;font-family:Outfit;font-weight:800;font-size:17px;
+  box-shadow:0 5px 22px rgba(201,169,110,.18);
 }
-.product-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+.brand-name{font-family:Outfit;font-size:15px;font-weight:800;letter-spacing:1.2px}
+.brand-sub{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+.header-right{display:flex;align-items:center;gap:14px}
+.server-status{
+  display:flex;align-items:center;gap:8px;
+  color:var(--muted);font-size:12px;
+  padding:9px 12px;border:1px solid var(--line);
+  border-radius:30px;background:rgba(255,255,255,.025)
 }
-.product-card:hover .product-cover img { transform: scale(1.07); }
-.product-cover .fallback-text {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  color: #71717a;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--red)}
+.status-dot.online{background:var(--green);box-shadow:0 0 10px rgba(66,201,139,.6)}
+.status-dot.checking{background:var(--gold);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.user-chip{
+  display:flex;align-items:center;gap:9px;
+  padding:6px 11px 6px 6px;border:1px solid var(--line);
+  border-radius:30px;background:rgba(255,255,255,.035)
 }
-.product-card h3, .product-card p { overflow-wrap: anywhere; }
-.checkrow {
-  background: #08090d;
-  border: 1px solid #22232b;
-  transition: all 0.2s ease;
+.avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:#242b38;object-fit:cover;
 }
-.checkrow:has(input:checked) {
-  border-color: #b99b51;
-  background: rgba(185, 155, 81, 0.08);
+.user-chip span{font-size:12px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* LAYOUT */
+.app-layout{display:grid;grid-template-columns:235px minmax(0,1fr);gap:28px;padding-top:28px;padding-bottom:60px}
+.sidebar{position:sticky;top:102px;align-self:start}
+.side-label{font-size:10px;letter-spacing:1.7px;color:#626c7e;font-weight:700;padding:0 13px;margin:22px 0 10px}
+.nav-btn{
+  display:flex;align-items:center;gap:12px;
+  width:100%;padding:12px 13px;margin:3px 0;
+  color:#939bab;background:transparent;border:1px solid transparent;
+  border-radius:11px;text-align:left;font-size:13px;font-weight:600;
+  transition:.2s;
+}
+.nav-btn:hover{background:rgba(255,255,255,.045);color:white}
+.nav-btn.active{
+  color:var(--gold2);background:linear-gradient(90deg,rgba(201,169,110,.14),rgba(201,169,110,.035));
+  border-color:rgba(201,169,110,.15)
+}
+.nav-btn.active svg{color:var(--gold2)}
+.sidebar-bottom{
+  margin-top:35px;padding:15px;border:1px solid var(--line);
+  background:rgba(255,255,255,.025);border-radius:14px
+}
+.sidebar-bottom strong{font-size:12px}
+.sidebar-bottom p{font-size:11px;color:var(--muted);line-height:1.6;margin:8px 0 0}
+
+/* MAIN */
+.main{min-width:0}
+.page{display:none;animation:appear .25s ease}
+.page.active{display:block}
+@keyframes appear{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.page-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:24px}
+.page-heading h1{font-family:Outfit;font-size:27px;margin:0 0 7px;letter-spacing:-.6px}
+.page-heading p{color:var(--muted);margin:0;font-size:13px;line-height:1.6}
+.eyebrow{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:800;margin-bottom:10px}
+
+/* HERO */
+.hero{
+  position:relative;overflow:hidden;
+  padding:34px;border:1px solid rgba(201,169,110,.19);
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 85% 30%,rgba(201,169,110,.17),transparent 30%),
+    linear-gradient(120deg,#171a20,#11151d 58%,#171b24);
+  box-shadow:var(--shadow);
+  margin-bottom:22px;
+}
+.hero:after{
+  content:"DSS";position:absolute;right:35px;top:50%;
+  transform:translateY(-50%);font-family:Outfit;font-size:125px;
+  font-weight:800;letter-spacing:-10px;color:rgba(255,255,255,.025);
+  pointer-events:none
+}
+.hero-content{position:relative;z-index:1;max-width:650px}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 10px;border:1px solid rgba(201,169,110,.25);
+  background:rgba(201,169,110,.08);border-radius:30px;
+  color:var(--gold2);font-size:10px;font-weight:700;letter-spacing:1.2px
+}
+.hero h1{font-family:Outfit;font-size:clamp(28px,4vw,43px);line-height:1.12;margin:18px 0 12px;letter-spacing:-1px}
+.hero h1 span{color:var(--gold2)}
+.hero p{color:#a6adba;line-height:1.8;max-width:540px;margin:0 0 22px;font-size:13px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:1px solid var(--line);border-radius:10px;padding:11px 15px;
+  color:var(--text);background:rgba(255,255,255,.055);
+  font-size:12px;font-weight:700;transition:.2s
+}
+.btn:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
+.btn-primary{
+  color:#17130c;border:0;
+  background:linear-gradient(135deg,#e1c994,#b28d56);
+  box-shadow:0 7px 20px rgba(201,169,110,.13)
+}
+.btn-primary:hover{background:linear-gradient(135deg,#f0d9a9,#c49b60)}
+.btn-danger{color:#ff9ca5;border-color:rgba(237,104,116,.22);background:rgba(237,104,116,.08)}
+.btn-success{color:#75e0ad;border-color:rgba(66,201,139,.2);background:rgba(66,201,139,.08)}
+.btn-sm{padding:8px 10px;font-size:11px;border-radius:8px}
+.btn-block{width:100%}
+
+/* CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:23px}
+.stat-card{
+  padding:17px;border-radius:15px;
+  border:1px solid var(--line);
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))
+}
+.stat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:17px}
+.stat-icon{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  color:var(--gold2);background:rgba(201,169,110,.1)
+}
+.stat-value{font-family:Outfit;font-size:25px;font-weight:700;letter-spacing:-.5px}
+.stat-label{color:var(--muted);font-size:11px;margin-top:5px}
+.section-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:17px;padding:20px;
+  margin-bottom:18px;min-width:0
+}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.section-head h3{font-family:Outfit;font-size:16px;margin:0}
+.section-head p{font-size:11px;color:var(--muted);margin:5px 0 0}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.quick-card{
+  padding:17px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,255,255,.025);cursor:pointer;transition:.2s
+}
+.quick-card:hover{border-color:rgba(201,169,110,.35);background:rgba(201,169,110,.05);transform:translateY(-2px)}
+.quick-card svg{color:var(--gold2);margin-bottom:13px}
+.quick-card strong{display:block;font-size:12px}
+.quick-card span{display:block;color:var(--muted);font-size:11px;margin-top:6px;line-height:1.5}
+
+/* PRODUCT */
+.product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.product-card{
+  overflow:hidden;border:1px solid var(--line);border-radius:15px;
+  background:linear-gradient(150deg,#151a23,#10141b);transition:.22s
+}
+.product-card:hover{transform:translateY(-3px);border-color:rgba(201,169,110,.25)}
+.product-image{
+  width:100%;height:150px;object-fit:cover;background:#202632;
+  display:block
+}
+.product-placeholder{
+  height:150px;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 30%,#343b48,#171c26 70%);
+  color:#6e7889
+}
+.product-placeholder svg{width:38px;height:38px}
+.product-body{padding:15px}
+.product-title{font-family:Outfit;font-size:15px;font-weight:700;margin:0 0 7px}
+.product-desc{font-size:11px;color:var(--muted);line-height:1.65;min-height:37px}
+.product-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0}
+.price{color:var(--gold2);font-size:13px;font-weight:800}
+.product-actions{display:flex;gap:7px}
+.product-actions .btn{flex:1}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th{text-align:left;color:#788294;font-size:10px;letter-spacing:1px;font-weight:700;padding:12px;border-bottom:1px solid var(--line)}
+td{padding:13px 12px;border-bottom:1px solid rgba(255,255,255,.045);font-size:12px;color:#cbd1dc}
+tr:last-child td{border-bottom:0}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 9px;border-radius:30px;font-size:10px;font-weight:700;
+  background:rgba(255,255,255,.06);color:#abb3c1;white-space:nowrap
+}
+.badge.active{color:#78dfa9;background:rgba(66,201,139,.1)}
+.badge.inactive{color:#f18b95;background:rgba(237,104,116,.1)}
+.badge.gold{color:var(--gold2);background:rgba(201,169,110,.1)}
+.action-row{display:flex;gap:6px;flex-wrap:wrap}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;color:#aeb6c4;font-weight:700}
+.field input,.field textarea,.field select{
+  width:100%;padding:12px 13px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.09);outline:none;
+  background:#0c1017;color:#f1f3f7;font-size:12px;transition:.2s
+}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:rgba(201,169,110,.6);box-shadow:0 0 0 3px rgba(201,169,110,.07)}
+.field textarea{min-height:85px;resize:vertical;line-height:1.6}
+.field input::placeholder,.field textarea::placeholder{color:#566071}
+.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:17px}
+
+/* EMPTY / LOADING */
+.empty{
+  text-align:center;padding:38px 15px;color:var(--muted);
+  border:1px dashed rgba(255,255,255,.1);border-radius:13px
+}
+.empty svg{width:30px;height:30px;color:#626d7e;margin-bottom:12px}
+.empty strong{display:block;color:#c5ccd7;font-size:13px;margin-bottom:6px}
+.empty span{font-size:11px;line-height:1.6}
+.skeleton{
+  height:170px;border-radius:14px;
+  background:linear-gradient(100deg,#151a23 20%,#202735 40%,#151a23 60%);
+  background-size:200% 100%;animation:shimmer 1.4s infinite
+}
+@keyframes shimmer{to{background-position:-200% 0}}
+.notice{
+  padding:12px 14px;border-radius:11px;
+  border:1px solid rgba(201,169,110,.17);
+  background:rgba(201,169,110,.055);color:#c8b58f;
+  font-size:11px;line-height:1.65;margin-bottom:15px
+}
+
+/* LOGIN */
+.login-screen{
+  min-height:calc(100vh - 76px);display:grid;place-items:center;padding:35px 18px
+}
+.login-card{
+  width:min(100%,440px);padding:30px;
+  border:1px solid rgba(201,169,110,.18);border-radius:21px;
+  background:linear-gradient(145deg,#171c26,#0e1219);
+  box-shadow:0 25px 90px rgba(0,0,0,.4)
+}
+.login-brand{text-align:center;margin-bottom:25px}
+.login-brand .brand-mark{width:55px;height:55px;margin:0 auto 15px;font-size:20px}
+.login-brand h1{font-family:Outfit;font-size:23px;margin:0 0 7px}
+.login-brand p{font-size:12px;color:var(--muted);margin:0}
+.login-card .field{margin-bottom:15px}
+.login-card .btn{margin-top:5px}
+.login-foot{text-align:center;font-size:10px;color:#687284;margin-top:19px;line-height:1.7}
+
+/* MODAL */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;
+  display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(9px)
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  width:min(100%,560px);max-height:90vh;overflow:auto;
+  background:#131923;border:1px solid rgba(255,255,255,.1);
+  border-radius:18px;padding:22px;box-shadow:0 25px 90px rgba(0,0,0,.55)
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-head h3{font-family:Outfit;font-size:18px;margin:0}
+.close-btn{border:0;background:rgba(255,255,255,.06);color:#aeb6c4;border-radius:8px;width:32px;height:32px;display:grid;place-items:center}
+
+/* TOAST */
+.toast-area{position:fixed;right:20px;bottom:20px;z-index:200;display:flex;flex-direction:column;gap:9px;max-width:min(360px,calc(100vw - 40px))}
+.toast{
+  display:flex;align-items:flex-start;gap:10px;padding:13px 15px;
+  background:#1a202b;border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow);font-size:12px;line-height:1.5;
+  animation:toastIn .2s ease
+}
+.toast.success{border-color:rgba(66,201,139,.25)}
+.toast.error{border-color:rgba(237,104,116,.25)}
+.toast svg{margin-top:1px}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.footer{border-top:1px solid var(--line);padding:22px 0;color:#626c7c;font-size:10px;text-align:center;letter-spacing:.5px}
+
+/* MOBILE */
+.mobile-nav{display:none}
+@media(max-width:1050px){
+  .product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .wrap{padding:0 16px}
+  .topbar{height:66px}
+  .brand-mark{width:37px;height:37px}
+  .brand-name{font-size:13px}
+  .brand-sub{font-size:9px}
+  .server-status{padding:8px;font-size:0}
+  .server-status .status-dot{margin:0}
+  .user-chip span{max-width:75px}
+  .app-layout{display:block;padding-top:20px}
+  .sidebar{display:none}
+  .mobile-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    background:rgba(10,13,19,.94);backdrop-filter:blur(20px);
+    border-top:1px solid var(--line);justify-content:space-around;gap:3px
+  }
+  .mobile-nav .nav-btn{
+    width:auto;flex:1;display:flex;flex-direction:column;gap:5px;
+    padding:8px 3px;margin:0;border-radius:9px;
+    font-size:9px;text-align:center;justify-content:center
+  }
+  .mobile-nav .nav-btn svg{width:18px;height:18px}
+  .footer{margin-bottom:65px}
+  .hero{padding:25px 20px}
+  .hero:after{font-size:85px;right:15px}
+  .hero h1{font-size:30px}
+  .page-heading h1{font-size:23px}
+  .section-card{padding:15px}
+  .quick-grid{grid-template-columns:1fr}
+  .quick-card{display:flex;align-items:center;gap:13px}
+  .quick-card svg{margin:0}
+  .quick-card span{margin-top:4px}
+}
+@media(max-width:480px){
+  .product-grid{grid-template-columns:1fr}
+  .stats-grid{gap:9px}
+  .stat-card{padding:13px}
+  .stat-value{font-size:22px}
+  .form-grid{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+  .hero h1{font-size:27px}
+  .hero p{font-size:12px}
+  .page-heading{flex-direction:column}
+  .login-card{padding:23px 19px}
+  .header-right{gap:7px}
 }
 </style>
 </head>
-<body class="min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
 
-<!-- Toast Notification -->
-<div id="toast" class="fixed z-50 bottom-6 right-6 opacity-0 translate-y-2 pointer-events-none glass rounded-2xl px-5 py-3.5 text-xs shadow-2xl max-w-[90vw] border border-amber-500/30 font-medium flex items-center gap-3">
-  <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-  <span id="toastText">Notifikasi</span>
-</div>
+<body>
 
-<!-- Header -->
-<header class="glass sticky top-0 z-40 border-x-0 border-t-0 shadow-xl">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-3.5 min-w-0">
-      <div class="relative">
-        <div class="absolute -inset-1 bg-gradient-to-r from-amber-500 to-indigo-500 rounded-2xl blur opacity-30"></div>
-        <img class="relative w-11 h-11 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" alt="DSS" src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true">
-      </div>
-      <div class="min-w-0">
-        <div class="font-extrabold tracking-wide text-sm sm:text-base truncate text-white flex items-center gap-2">
-          DRAGON STELL STUDIO
-          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="System Online"></span>
-        </div>
-        <div class="text-[9px] tracking-[0.3em] text-amber-400/90 font-bold uppercase">Secure License & Management Console</div>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">DS</div>
+      <div>
+        <div class="brand-name">DSS STUDIO LICENSE</div>
+        <div class="brand-sub">DRAGON STELL STUDIO</div>
       </div>
     </div>
-    
-    <div class="shrink-0 flex items-center gap-3">
-      <a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold tracking-wide uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 shadow-sm">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-        <span class="hidden sm:inline">Contact Me</span>
-      </a>
-      <div class="h-5 w-[1px] bg-white/10 hidden sm:block"></div>
-      <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-inner">
-        <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-        CREATOR STELL
-      </span>
+
+    <div class="header-right">
+      <div class="server-status" title="Status koneksi server">
+        <span class="status-dot checking" id="serverDot"></span>
+        <span id="serverText">Memeriksa server</span>
+      </div>
+      <div class="user-chip hidden" id="userChip">
+        <img class="avatar" id="headerAvatar" alt="Avatar">
+        <span id="headerUsername">Account</span>
+      </div>
     </div>
   </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
-
-  <section id="clientTab" class="max-w-5xl mx-auto space-y-8 animate-fade">
-    <div id="welcome" class="text-center py-6 sm:py-10 space-y-4 relative">
-      <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"><div class="w-[500px] h-[300px] bg-gradient-to-r from-amber-500 to-indigo-600 rounded-full blur-[120px]"></div></div>
-      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-extrabold tracking-[0.25em] uppercase bg-amber-500/10 text-amber-400 border border-amber-500/25 mb-1 shadow-sm">Secure Authentication Portal</span>
-      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight animated-title">WELCOME TO DRAGON STELL STUDIO</h1>
-      <p class="muted text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">Sistem manajemen lisensi terenkripsi profesional untuk autentikasi produk dan unduhan resmi ekosistem Dragon Stell.</p>
+<!-- LOGIN -->
+<section class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">DS</div>
+      <h1>Welcome to DSS Portal</h1>
+      <p>Secure License Management System</p>
     </div>
 
-    <!-- Kotak Login Klien -->
-    <div id="clientLoginBox" class="glass-card rounded-3xl p-7 sm:p-10 max-w-lg mx-auto space-y-6 shadow-2xl border border-white/10 relative overflow-hidden">
-      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-600 via-amber-400 to-indigo-500"></div>
-      <div class="space-y-1.5">
-        <h2 class="text-xl font-extrabold text-white">Masuk ke Portal Klien</h2>
-        <p class="muted text-xs">Verifikasi kepemilikan produk menggunakan kredensial Roblox Anda.</p>
-      </div>
-      <div class="space-y-4 pt-1">
-        <div>
-          <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Username Roblox</label>
-          <div class="relative"><span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500 font-semibold">@</span><input id="loginUsername" class="field w-full rounded-2xl pl-9 pr-4 py-3.5 text-sm font-medium text-white" placeholder="UsernameRoblox" autocomplete="username"></div>
-        </div>
-        <div>
-          <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">License Key</label>
-          <div class="relative">
-            <input id="loginKey" type="password" class="field w-full rounded-2xl pl-4 pr-11 py-3.5 text-sm font-medium text-white" placeholder="DSS-XXXX-XXXX-XXXX" autocomplete="current-password">
-            <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-white transition-colors cursor-pointer" title="Tampilkan/Sembunyikan Key"><svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
-          </div>
-        </div>
-      </div>
-      <button type="button" id="portalLoginBtn" onclick="portalLogin()" class="btn gold rounded-2xl w-full py-4 font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-amber-900/30 cursor-pointer">Login Securely</button>
-      <p id="clientError" class="hidden text-xs text-red-400 text-center font-medium bg-red-500/10 py-3 rounded-2xl border border-red-500/20"></p>
+    <div class="notice">
+      Masuk menggunakan username Roblox dan License Key yang telah diberikan.
+      Admin menggunakan kredensial portal.
     </div>
 
-    <!-- Dashboard Klien -->
-    <div id="clientDashboard" class="hidden space-y-6 animate-fade">
-      <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center justify-between shadow-2xl relative overflow-hidden border border-amber-500/25">
-        <div class="flex items-center gap-5 min-w-0 relative z-10">
-          <div class="relative">
-            <img id="clientAvatar" class="w-20 h-20 rounded-2xl bg-black border-2 border-amber-400/50 object-cover shadow-2xl" alt="Avatar">
-          </div>
-          <div class="min-w-0 space-y-1.5">
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30">Roblox Verified Account</div>
-            <b id="clientName" class="text-xl sm:text-2xl font-extrabold block truncate text-white tracking-tight"></b>
-            <p id="clientExpiry" class="muted text-xs font-medium"></p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 relative z-10 flex-wrap">
-          <button type="button" onclick="refreshClient()" class="btn border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white/5 hover:bg-white/10 flex items-center gap-2 cursor-pointer shadow-sm">🔄 Refresh Data</button>
-          <button type="button" onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 flex items-center gap-1.5 cursor-pointer">Keluar</button>
-        </div>
+    <form id="loginForm">
+      <div class="field">
+        <label>USERNAME ROBLOX</label>
+        <input id="loginUsername" autocomplete="username" maxlength="64" placeholder="Masukkan username Roblox" required>
       </div>
 
-      <!-- Navigasi Tab Klien -->
-      <nav class="glass rounded-2xl p-2.5 flex gap-2 overflow-x-auto shadow-xl border border-white/10">
-        <button type="button" id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2.5 cursor-pointer">🏠 Beranda Utama</button>
-        <button type="button" id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">📦 Showcase Produk</button>
-        <button type="button" id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">🔑 Lisensi & Unduhan</button>
-        <button type="button" id="nav-projects" onclick="showClientTab('projects')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer">🎮 Project Experience</button>
-      </nav>
-
-      <!-- Sub-Tab Beranda -->
-      <div id="client-home" class="client-page space-y-6 animate-fade">
-        <div class="grid sm:grid-cols-3 gap-5">
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
-            <p class="muted text-xs font-bold uppercase tracking-wider">Produk Dimiliki</p>
-            <p id="statProducts" class="text-4xl font-extrabold text-amber-300 mt-3">0</p>
-          </div>
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
-            <p class="muted text-xs font-bold uppercase tracking-wider">Status Akun</p>
-            <p class="text-xl font-extrabold text-emerald-400 mt-3 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>Terverifikasi Aman</p>
-          </div>
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
-            <p class="muted text-xs font-bold uppercase tracking-wider">Tipe Akses</p>
-            <p id="statAccessType" class="text-lg font-extrabold text-white mt-3">Lisensi Resmi</p>
-          </div>
-        </div>
-
-        <div class="glass-card rounded-3xl p-8 shadow-2xl space-y-5 border border-white/10 relative overflow-hidden">
-          <div class="space-y-1.5 relative z-10">
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Selamat Datang di Portal Eksklusif Dragon Stell Studio</h2>
-          </div>
-          <p class="muted text-sm leading-relaxed relative z-10 max-w-3xl">
-            Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengeksplorasi Project Experience resmi Anda.
-          </p>
-          <div class="pt-3 flex flex-wrap gap-3.5 relative z-10">
-            <button type="button" onclick="showClientTab('showcase')" class="btn gold rounded-2xl px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg">Jelajahi Showcase Produk</button>
-            <button type="button" onclick="showClientTab('projects')" class="btn border border-white/10 rounded-2xl px-6 py-3.5 text-xs font-bold text-white bg-white/5 hover:bg-white/10">Buka Project Experience</button>
-          </div>
-        </div>
+      <div class="field">
+        <label>LICENSE KEY / ADMIN CREDENTIAL</label>
+        <input id="loginCredential" type="password" autocomplete="current-password" maxlength="255" placeholder="Masukkan License Key" required>
       </div>
 
-      <!-- Sub-Tab Showcase -->
-      <div id="client-showcase" class="client-page hidden space-y-6 animate-fade">
-        <div class="flex flex-wrap items-end justify-between gap-4">
+      <button class="btn btn-primary btn-block" id="loginButton" type="submit">
+        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
+        LOGIN TO PORTAL
+      </button>
+    </form>
+
+    <div class="login-foot">
+      DSS STUDIO LICENSE PRO V2<br>
+      Protected License Verification
+    </div>
+  </div>
+</section>
+
+<!-- APPLICATION -->
+<div id="application" class="hidden">
+  <div class="wrap app-layout">
+
+    <aside class="sidebar">
+      <div class="side-label">WORKSPACE</div>
+      <button class="nav-btn active" data-page="home">
+        <svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg>
+        Overview
+      </button>
+      <button class="nav-btn" data-page="showcase">
+        <svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/></svg>
+        Product Catalog
+      </button>
+      <button class="nav-btn" data-page="licenses">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg>
+        My Licenses
+      </button>
+
+      <div class="side-label admin-only hidden">ADMINISTRATION</div>
+      <button class="nav-btn admin-only hidden" data-page="admin-products">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/><path d="M8 2v3M16 2v3"/></svg>
+        Manage Products
+      </button>
+      <button class="nav-btn admin-only hidden" data-page="admin-licenses">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>
+        Manage Licenses
+      </button>
+      <button class="nav-btn admin-only hidden" data-page="projects">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4M8 10l2 2-2 2M13 14h3"/></svg>
+        Project Experiences
+      </button>
+
+      <div class="sidebar-bottom">
+        <strong>DRAGON STELL STUDIO</strong>
+        <p>Professional license platform. All product and license data is synchronized with the server database.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- HOME -->
+      <section class="page active" id="page-home">
+        <div class="hero">
+          <div class="hero-content">
+            <div class="hero-tag">
+              <span class="status-dot online"></span>
+              DSS LICENSE PLATFORM
+            </div>
+            <h1>Manage your systems.<br><span>Elevate your experience.</span></h1>
+            <p>
+              Selamat datang di DSS STUDIO LICENSE. Kelola produk,
+              pantau lisensi, dan akses sistem yang telah terverifikasi
+              dalam satu portal.
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" onclick="navigate('showcase')">
+                Explore Products
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+              <button class="btn" onclick="refreshPortal()">
+                <svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg>
+                Refresh Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg></div>
+            </div>
+            <div class="stat-value" id="statProducts">0</div>
+            <div class="stat-label">Available Products</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg></div>
+            </div>
+            <div class="stat-value" id="statLicenses">0</div>
+            <div class="stat-label">Owned Licenses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v5c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            </div>
+            <div class="stat-value" id="statActive">0</div>
+            <div class="stat-label">Active Licenses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            </div>
+            <div class="stat-value" id="statServer">--</div>
+            <div class="stat-label">Server Status</div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-head">
+            <div>
+              <h3>Quick Access</h3>
+              <p>Akses halaman portal dengan cepat.</p>
+            </div>
+          </div>
+          <div class="quick-grid">
+            <div class="quick-card" onclick="navigate('showcase')">
+              <svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg>
+              <div><strong>Product Catalog</strong><span>Lihat produk yang tersedia di katalog.</span></div>
+            </div>
+            <div class="quick-card" onclick="navigate('licenses')">
+              <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg>
+              <div><strong>My Licenses</strong><span>Periksa status dan akses lisensi.</span></div>
+            </div>
+            <div class="quick-card" onclick="refreshPortal()">
+              <svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg>
+              <div><strong>Synchronize</strong><span>Ambil data terbaru dari server.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-head">
+            <div>
+              <h3>Account Information</h3>
+              <p>Informasi akun yang telah diverifikasi.</p>
+            </div>
+            <span class="badge active">Verified Account</span>
+          </div>
+          <div id="accountInfo" class="muted small">Belum ada informasi akun.</div>
+        </div>
+      </section>
+
+      <!-- SHOWCASE -->
+      <section class="page" id="page-showcase">
+        <div class="page-heading">
           <div>
-            <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Showcase Produk</h2>
-            <p class="muted text-xs sm:text-sm mt-1">Katalog produk profesional berkualitas tinggi dari Dragon Stell Studio.</p>
+            <div class="eyebrow">DSS MARKETPLACE</div>
+            <h1>Product Catalog</h1>
+            <p>Produk resmi yang tersedia dari database DSS STUDIO LICENSE.</p>
           </div>
-          <span id="productCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/25 shrink-0"></span>
+          <button class="btn" onclick="loadClientData()">
+            <svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg>
+            Refresh
+          </button>
         </div>
-        <div id="clientProducts" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-      </div>
+        <div id="productGrid" class="product-grid"></div>
+      </section>
 
-      <!-- Sub-Tab Lisensi & Unduhan -->
-      <div id="client-licenses" class="client-page hidden space-y-6 animate-fade">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Lisensi & Unduhan Saya</h2>
-          <p class="muted text-xs sm:text-sm mt-1">Daftar hak akses dan file unduhan resmi yang terikat pada akun atau grup Anda.</p>
-        </div>
-        <div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-      </div>
-
-      <!-- Sub-Tab Project Experience -->
-      <div id="client-projects" class="client-page hidden space-y-6 animate-fade">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Project Experience Terdaftar</h2>
-          <p class="muted text-xs sm:text-sm mt-1">Daftar experience Roblox terverifikasi lengkap dengan statistik pengunjung, produk terdeteksi, dan tautan langsung.</p>
-        </div>
-        <div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Bagian Admin Management Console -->
-  <section id="adminTab" class="hidden space-y-8 animate-fade">
-    <div class="text-center py-3">
-      <p class="text-amber-400 text-xs uppercase tracking-[0.3em] font-bold mb-2">Management Console</p>
-      <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">Admin Dashboard</h1>
-      <p class="muted text-xs sm:text-sm mt-2 max-w-lg mx-auto">Kelola katalog produk, harga, URL Vercel Blob, Project Experience ID, dan Logs sistem dengan aman.</p>
-    </div>
-
-    <div id="adminPanel" class="space-y-8">
-      <div class="glass-card rounded-2xl p-6 flex items-center justify-between gap-4 shadow-xl border border-amber-500/25">
-        <div>
-          <p class="text-xs uppercase tracking-wider text-amber-400 font-extrabold">Owner Session Active</p>
-          <p class="muted text-xs mt-0.5">Hak akses penuh terverifikasi melalui Roblox Administrator ID</p>
-        </div>
-        <button type="button" onclick="logoutAdmin()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 cursor-pointer">Keluar Admin</button>
-      </div>
-
-      <div class="grid lg:grid-cols-2 gap-8">
-        <!-- Form Produk -->
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
+      <!-- USER LICENSES -->
+      <section class="page" id="page-licenses">
+        <div class="page-heading">
           <div>
-            <h2 id="formTitle" class="font-bold text-lg text-white">Tambah Produk Baru</h2>
-            <p class="muted text-xs mt-1">Masukkan detail produk, harga, dan URL file Vercel Blob.</p>
+            <div class="eyebrow">ACCOUNT ACCESS</div>
+            <h1>My Licenses</h1>
+            <p>Daftar lisensi yang terhubung dengan akun Roblox kamu.</p>
           </div>
-          <input type="hidden" id="editProductId">
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Nama Produk</label><input id="productName" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Contoh: Roleplay System"></div>
-          <div class="grid sm:grid-cols-2 gap-3.5">
-            <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Kode Produk</label><input id="productCode" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ROLE_SYSTEM"></div>
-            <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Harga Produk</label><input id="productPrice" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Rp 150.000"></div>
-          </div>
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Deskripsi Singkat</label><textarea id="productDescription" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white resize-none" rows="2" placeholder="Fitur produk..."></textarea></div>
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Image URL (Vercel Blob Public)</label><input id="productImageUrl" class="field rounded-2xl px-3.5 py-3.5 w-full text-xs font-mono text-white" placeholder="https://..."></div>
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Download URL (File .rbxm)</label><input id="productDownloadUrl" class="field rounded-2xl px-3.5 py-3.5 w-full text-xs font-mono text-white" placeholder="https://..."></div>
-          <div class="pt-2 flex gap-3">
-            <button type="button" id="saveProductBtn" onclick="saveProduct()" class="btn rounded-2xl border border-amber-500/30 text-amber-200 py-4 w-full text-xs font-bold uppercase tracking-wider bg-amber-500/15 hover:bg-amber-500/25 shadow-md cursor-pointer">+ Tambah Produk</button>
-            <button type="button" id="cancelEditBtn" onclick="resetProductForm()" class="hidden btn rounded-2xl border border-white/10 muted py-4 px-6 text-xs font-bold hover:bg-white/5 cursor-pointer">Batal</button>
-          </div>
-          <div class="pt-4 border-t border-white/5"><p class="text-xs font-bold text-white mb-3">Daftar Katalog Produk</p><div id="productCatalog" class="space-y-2.5 max-h-60 overflow-y-auto pr-1"></div></div>
+          <button class="btn" onclick="loadClientData()">Refresh</button>
         </div>
+        <div id="myLicenses"></div>
+      </section>
 
-        <!-- Buat Lisensi & Project Experience ID -->
-        <div class="space-y-8">
-          <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
-            <div>
-              <h2 class="font-bold text-lg text-white">Buat Lisensi Baru</h2>
-              <p class="muted text-xs mt-1">Hubungkan tepat satu produk untuk akun pribadi atau grup.</p>
-            </div>
-            <div class="grid grid-cols-2 gap-2 p-1 bg-black/40 rounded-2xl border border-white/5">
-              <button type="button" id="personalMode" onclick="setMode('personal')" class="gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer">Akun Pribadi</button>
-              <button type="button" id="groupMode" onclick="setMode('group')" class="text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer">Group Experience</button>
-            </div>
-            <div>
-              <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">License Key</label>
-              <div class="flex gap-2.5">
-                <input id="newKey" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-mono font-medium text-white" placeholder="DSS-XXXX">
-                <button type="button" onclick="generateKey()" class="btn border border-white/10 rounded-2xl px-5 py-3.5 text-xs font-semibold bg-white/5 hover:bg-white/10 shrink-0 cursor-pointer">Generate</button>
-              </div>
-            </div>
-            <div id="ownerFields"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Username Pemilik Roblox</label><input id="newOwner" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Username"></div>
-            <div id="groupFields" class="hidden"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Group ID Roblox</label><input id="newGroup" inputmode="numeric" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ID Grup"></div>
-            <div><label class="text-[11px] uppercase tracking-wider muted font-semibold block mb-2.5">Pilih Satu Produk</label><div id="licenseProductChoices" class="space-y-2.5 max-h-40 overflow-y-auto pr-1"></div></div>
-            <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Masa Kedaluwarsa (Opsional)</label><input id="newExpires" type="date" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-medium text-white"></div>
-            <button type="button" onclick="createLicense()" class="btn gold rounded-2xl w-full py-4 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/30 cursor-pointer">Simpan Lisensi Baru</button>
+      <!-- ADMIN PRODUCTS -->
+      <section class="page" id="page-admin-products">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">ADMIN CONTROL</div>
+            <h1>Manage Products</h1>
+            <p>Data produk dibaca dan disimpan langsung ke PostgreSQL.</p>
           </div>
-
-          <!-- Tambah Project Experience ID -->
-          <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
-            <div>
-              <h2 class="font-bold text-lg text-white">Tambah Project Experience ID</h2>
-              <p class="muted text-xs mt-1">Masukkan Place ID Roblox agar otomatis tertata rapi di dashboard klien.</p>
-            </div>
-            <div class="flex gap-2.5">
-              <input id="newPlaceId" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-mono font-medium text-white" placeholder="Contoh: 114330086695098">
-              <button type="button" onclick="saveProjectExperience()" class="btn border border-amber-500/30 text-amber-200 rounded-2xl px-6 py-3.5 text-xs font-bold uppercase tracking-wider bg-amber-500/15 hover:bg-amber-500/25 shrink-0 cursor-pointer">+ Tambah</button>
-            </div>
-            <div id="adminProjectList" class="space-y-2.5 max-h-40 overflow-y-auto pr-1"></div>
-          </div>
+          <button class="btn btn-primary" onclick="openProductModal()">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Add Product
+          </button>
         </div>
-      </div>
-
-      <!-- Database Lisensi & Logs Sistem -->
-      <div class="space-y-8">
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 class="font-bold text-lg text-white">Database Lisensi Berdasarkan Produk</h2>
-              <p class="muted text-xs mt-0.5">Filter dan kelola lisensi terkelompok per produk secara rapi.</p>
-            </div>
-            <div class="flex flex-wrap gap-3 w-full sm:w-auto">
-              <select id="productFilterSelect" onchange="renderLicenses()" class="field rounded-2xl px-4 py-2.5 text-xs font-medium text-amber-300 bg-black/70 border-amber-500/30 min-w-[200px]"><option value="all">Semua Produk (All)</option></select>
-              <input id="licenseSearch" oninput="renderLicenses()" class="field rounded-2xl px-4 py-2.5 text-xs w-full sm:w-64 font-medium text-white" placeholder="Cari key atau owner...">
-            </div>
-          </div>
-          <div class="overflow-x-auto"><table class="w-full text-left text-xs min-w-[850px]"><thead class="text-gray-400 border-b border-white/10 text-[11px] uppercase tracking-wider"><tr><th class="py-4 pr-4 font-semibold">Produk</th><th class="py-4 pr-4 font-semibold">Pemilik</th><th class="py-4 pr-4 font-semibold">License Key</th><th class="py-4 pr-4 font-semibold">Status</th><th class="py-4 pr-4 font-semibold">Expiry</th><th class="py-4 font-semibold">Aksi</th></tr></thead><tbody id="licenseRows" class="divide-y divide-white/5"></tbody></table></div>
+        <div class="notice">
+          Tidak ada produk contoh atau produk otomatis. Produk hanya dibuat ketika admin menekan tombol Add Product dan menyimpan formulir.
         </div>
-
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl border border-white/10">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="font-bold text-lg text-white">System Logs & Audit Trail</h2>
-              <p class="muted text-xs mt-0.5">Catatan aktivitas login klien, verifikasi, dan pembaruan admin secara real-time.</p>
-            </div>
-            <button type="button" onclick="clearLogs()" class="btn text-red-300 border border-red-500/20 rounded-xl px-3.5 py-2 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 cursor-pointer">Bersihkan Logs</button>
+        <div class="section-card">
+          <div class="section-head">
+            <div><h3>Product Database</h3><p>Daftar produk yang tersimpan di server.</p></div>
+            <button class="btn btn-sm" onclick="loadAdminProducts()">Refresh</button>
           </div>
-          <div id="adminLogsContainer" class="bg-black/70 border border-white/5 rounded-2xl p-4 font-mono text-[11px] text-gray-300 h-48 overflow-y-auto space-y-1.5 shadow-inner">
-            <div class="text-amber-400">[SYSTEM] Console management siap dan berjalan normal.</div>
-          </div>
+          <div id="adminProductTable"></div>
         </div>
-      </div>
+      </section>
 
-    </div>
-  </section>
+      <!-- ADMIN LICENSES -->
+      <section class="page" id="page-admin-licenses">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">ADMIN CONTROL</div>
+            <h1>Manage Licenses</h1>
+            <p>Kelola pemilik, produk, masa berlaku, dan status lisensi.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openLicenseModal()">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Create License
+          </button>
+        </div>
+        <div class="section-card">
+          <div class="section-head">
+            <div><h3>License Database</h3><p>Data lisensi dari server PostgreSQL.</p></div>
+            <button class="btn btn-sm" onclick="loadAdminLicenses()">Refresh</button>
+          </div>
+          <div id="adminLicenseTable"></div>
+        </div>
+      </section>
 
-</main>
+      <!-- PROJECTS -->
+      <section class="page" id="page-projects">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">AUTOMATIC DETECTION</div>
+            <h1>Project Experiences</h1>
+            <p>Experience yang tercatat setelah berhasil melewati verifikasi lisensi Roblox.</p>
+          </div>
+          <button class="btn" onclick="loadProjects()">Refresh</button>
+        </div>
+        <div class="notice">
+          Project tidak ditambahkan secara manual dari website. Server mencatat Place ID saat `/api/game-verify` berhasil memberikan authorized: true.
+        </div>
+        <div class="section-card">
+          <div class="section-head">
+            <div><h3>Verified Experiences</h3><p>Data otomatis dari project_experiences.</p></div>
+          </div>
+          <div id="projectTable"></div>
+        </div>
+      </section>
 
-<footer class="text-center muted text-xs border-t border-white/5 py-8 mt-16 bg-black/30">
-  <p>© 2026 DRAGON STELL STUDIO · CREATOR STELL MANAGEMENT CONSOLE</p>
+    </main>
+  </div>
+
+  <div class="mobile-nav">
+    <button class="nav-btn active" data-page="home">
+      <svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg>
+      Home
+    </button>
+    <button class="nav-btn" data-page="showcase">
+      <svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg>
+      Products
+    </button>
+    <button class="nav-btn" data-page="licenses">
+      <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg>
+      Licenses
+    </button>
+    <button class="nav-btn admin-only hidden" data-page="admin-products">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>
+      Products
+    </button>
+    <button class="nav-btn admin-only hidden" data-page="admin-licenses">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>
+      Admin
+    </button>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="wrap">© <span id="year"></span> DRAGON STELL STUDIO · DSS STUDIO LICENSE PRO V2</div>
 </footer>
 
+<!-- PRODUCT MODAL -->
+<div class="modal-backdrop" id="productModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="productModalTitle">Add Product</h3>
+      <button class="close-btn" onclick="closeModal('productModal')">
+        <svg viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="productForm">
+      <input type="hidden" id="productEditId">
+      <div class="form-grid">
+        <div class="field">
+          <label>PRODUCT NAME *</label>
+          <input id="productName" maxlength="120" required placeholder="Nama produk">
+        </div>
+        <div class="field">
+          <label>PRODUCT CODE</label>
+          <input id="productCode" maxlength="80" placeholder="Contoh: DSS_SYSTEM">
+        </div>
+        <div class="field">
+          <label>PRICE</label>
+          <input id="productPrice" maxlength="64" placeholder="Contoh: Rp 150.000">
+        </div>
+        <div class="field">
+          <label>IMAGE URL</label>
+          <input id="productImage" type="url" placeholder="https://...">
+        </div>
+        <div class="field full">
+          <label>DOWNLOAD URL</label>
+          <input id="productDownload" type="url" placeholder="https://...">
+        </div>
+        <div class="field full">
+          <label>DESCRIPTION</label>
+          <textarea id="productDescription" maxlength="1000" placeholder="Deskripsi produk..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" onclick="closeModal('productModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveProductButton">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LICENSE MODAL -->
+<div class="modal-backdrop" id="licenseModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Create License</h3>
+      <button class="close-btn" onclick="closeModal('licenseModal')">
+        <svg viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="licenseForm">
+      <div class="form-grid">
+        <div class="field full">
+          <label>LICENSE KEY *</label>
+          <input id="licenseKey" maxlength="255" required placeholder="Masukkan license key">
+        </div>
+        <div class="field full">
+          <label>ROBLOX USERNAME</label>
+          <input id="licenseOwner" maxlength="64" placeholder="Isi jika lisensi milik akun">
+        </div>
+        <div class="field full">
+          <label>OR GROUP ID</label>
+          <input id="licenseGroup" maxlength="32" placeholder="Isi jika lisensi milik komunitas">
+        </div>
+        <div class="field full">
+          <label>PRODUCT *</label>
+          <select id="licenseProduct" required>
+            <option value="">Loading products...</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>EXPIRY DATE (OPTIONAL)</label>
+          <input id="licenseExpiry" type="datetime-local">
+        </div>
+        <div class="field">
+          <label>IMAGE URL (OPTIONAL)</label>
+          <input id="licenseImage" type="url" placeholder="https://...">
+        </div>
+        <div class="field">
+          <label>DOWNLOAD URL (OPTIONAL)</label>
+          <input id="licenseDownload" type="url" placeholder="https://...">
+        </div>
+      </div>
+      <div class="notice" style="margin-top:15px;margin-bottom:0">
+        Satu lisensi hanya dapat dihubungkan ke satu produk, sesuai aturan Server JS.
+        Isi Username Roblox atau Group ID saja.
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" onclick="closeModal('licenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="createLicenseButton">Create License</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-area" id="toastArea"></div>
+
 <script>
+'use strict';
+
+/* ============================================================
+   DSS STUDIO LICENSE - FRONTEND
+   Backend: DSS STUDIO LICENSE PRO V2
+   API: Same origin
+   ============================================================ */
+
 const API = '';
-let mode = 'personal', products = [], licenses = [], clientUser = '', clientKey = '', clientData = null;
-let customProjects = ['114330086695098']; 
-const expCache = new Map();
+
+const state = {
+  role: null,
+  username: '',
+  avatar: '',
+  ownerDisplayName: '',
+  ownerType: 'user',
+  licenseKey: '',
+  license: null,
+  catalog: [],
+  ownedLicenses: [],
+  adminProducts: [],
+  adminLicenses: [],
+  projects: [],
+  currentPage: 'home',
+  busy: false
+};
+
 const $ = id => document.getElementById(id);
 
-function addLog(msg) {
-  const container = $('adminLogsContainer');
-  if(!container) return;
-  const time = new Date().toLocaleTimeString('id-ID');
-  container.innerHTML += `<div><span class="text-gray-500">[${time}]</span> ${safe(msg)}</div>`;
-  container.scrollTop = container.scrollHeight;
-}
-function clearLogs() {
-  const container = $('adminLogsContainer');
-  if(container) container.innerHTML = `<div class="text-amber-400">[SYSTEM] Logs dibersihkan.</div>`;
-  toast('Logs dibersihkan.');
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  })[char]);
 }
 
-function toast(s) {
-  const t = $('toast'), txt = $('toastText');
-  if(!t || !txt) return;
-  txt.textContent = s;
-  t.classList.remove('opacity-0', 'translate-y-2');
-  setTimeout(() => t.classList.add('opacity-0', 'translate-y-2'), 3200);
-}
-
-function showMainTab(tabName) {
-  const clientTab = $('clientTab'), adminTab = $('adminTab');
-  if (tabName === 'admin') {
-    if(clientTab) clientTab.classList.add('hidden');
-    if(adminTab) adminTab.classList.remove('hidden');
-  } else {
-    if(clientTab) clientTab.classList.remove('hidden');
-    if(adminTab) adminTab.classList.add('hidden');
-  }
-}
-
-function showClientTab(tab) {
-  showMainTab('client');
-  for(const t of ['home', 'showcase', 'licenses', 'projects']) {
-    const page = $('client-' + t), btn = $('nav-' + t);
-    if(page) page.classList.toggle('hidden', t !== tab);
-    if(btn) {
-      btn.className = 'client-nav ' + (t === tab ? 'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2.5 cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer');
-    }
-  }
-}
-
-async function api(url, options = {}) {
-  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-  delete headers['x-api-secret'];
-  const r = await fetch(API + url, { credentials: 'same-origin', ...options, headers });
-  let d;
-  try { d = await r.json(); } catch { d = { success: false, message: 'Respons server tidak valid.' }; }
-  if(!r.ok || d.success === false) throw new Error(d.message || `HTTP ${r.status}`);
-  return d;
-}
-
-function safe(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function fmtDate(s) { if(!s) return 'Selamanya'; const d = new Date(s); return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}); }
-
-function setMode(m) {
-  mode = m;
-  const ownerFields = $('ownerFields'), groupFields = $('groupFields'), personalMode = $('personalMode'), groupMode = $('groupMode');
-  if(ownerFields) ownerFields.classList.toggle('hidden', m !== 'personal');
-  if(groupFields) groupFields.classList.toggle('hidden', m !== 'group');
-  if(personalMode) personalMode.className = m === 'personal' ? 'gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
-  if(groupMode) groupMode.className = m === 'group' ? 'gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
-}
-
-function generateKey() {
-  const b = new Uint8Array(16);
-  crypto.getRandomValues(b);
-  const newKeyInput = $('newKey');
-  if(newKeyInput) newKeyInput.value = 'DSS-' + [...b].map(x => x.toString(16).padStart(2, '0').toUpperCase()).join('').match(/.{1,4}/g).join('-');
-}
-
-function togglePasswordVisibility() {
-  const keyInput = $('loginKey'), icon = $('eyeIcon');
-  if(!keyInput || !icon) return;
-  if(keyInput.type === 'password') {
-    keyInput.type = 'text';
-    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>`;
-  } else {
-    keyInput.type = 'password';
-    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>`;
-  }
-}
-
-async function portalLogin() {
-  const usernameInput = $('loginUsername'), credentialInput = $('loginKey'), clientErr = $('clientError'), btn = $('portalLoginBtn');
-  if(!usernameInput || !credentialInput) return;
-  const username = usernameInput.value.trim(), credential = credentialInput.value.trim();
-  if(clientErr) clientErr.classList.add('hidden');
-  if(!username || !credential) return toast('Username dan License Key wajib diisi.');
-  if(btn) { btn.disabled = true; btn.textContent = 'MEMVERIFIKASI...'; }
+function safeURL(value) {
+  if (!value) return '';
   try {
-    const d = await api('/api/portal-login', { method: 'POST', body: JSON.stringify({ owner_name: username, credential }) });
-    addLog(`Login berhasil oleh @${username}`);
-    if(d.access === 'admin') {
-      sessionStorage.removeItem('dss_user'); sessionStorage.removeItem('dss_key');
-      clientUser = ''; clientKey = '';
-      const loginBox = $('clientLoginBox'), dash = $('clientDashboard');
-      if(loginBox) loginBox.classList.remove('hidden');
-      if(dash) dash.classList.add('hidden');
-      credentialInput.value = '';
-      addLog(`Admin login berhasil.`);
-      await openAdmin();
-      toast('Akses Owner berhasil diverifikasi.');
-      return;
-    }
-    clientUser = d.owner_name; clientKey = credential;
-    sessionStorage.setItem('dss_user', clientUser); sessionStorage.setItem('dss_key', clientKey);
-    credentialInput.value = '';
-    await showClient(d);
-  } catch(e) {
-    if(clientErr) { clientErr.textContent = e.message; clientErr.classList.remove('hidden'); }
-    addLog(`Gagal login oleh @${username}: ${e.message}`);
-  } finally {
-    if(btn) { btn.disabled = false; btn.textContent = 'Login Securely'; }
+    const url = new URL(value, location.origin);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    return url.href;
+  } catch {
+    return '';
   }
 }
 
-async function showClient(d) {
-  clientData = d;
-  const loginBox = $('clientLoginBox'), dash = $('clientDashboard'), cName = $('clientName'), cAvatar = $('clientAvatar'), cExpiry = $('clientExpiry'), pCount = $('productCount'), statProd = $('statProducts'), statAccess = $('statAccessType'), cLicenses = $('clientLicenseDetails'), cProducts = $('clientProducts');
-  
-  if(loginBox) loginBox.classList.add('hidden');
-  if(dash) dash.classList.remove('hidden');
-  if(cName) cName.textContent = d.owner_display_name || d.owner_name || clientUser;
-  if(cAvatar) cAvatar.src = d.avatar_url || '';
-  if(cExpiry) cExpiry.textContent = 'Roblox Verified Account · ' + (d.owner_type === 'group' ? 'Komunitas Grup' : 'Akun Pribadi');
-  
-  const catalog = d.data || [], owned = d.owned_licenses || [];
-  if(pCount) pCount.textContent = catalog.length + ' produk tersedia';
-  if(statProd) statProd.textContent = String(owned.filter(l => l.is_active && l.product).length);
-  if(statAccess) statAccess.textContent = owned.some(l => l.owner_type === 'group') ? 'Pribadi + Grup' : 'Akun Pribadi';
-
-  await renderClientProjects();
-
-  if(cLicenses) {
-    cLicenses.innerHTML = owned.map(l => {
-      const active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date()), p = l.product;
-      return `<article class="product-card p-6 shadow-xl"><div class="flex items-start justify-between gap-2"><div><span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">${l.owner_type==='group'?'LISENSI KOMUNITAS':'LISENSI PRIBADI'}</span><h3 class="font-bold text-base mt-2.5 text-white">${safe(p?.product_name||'Produk tidak terhubung')}</h3><p class="muted text-xs mt-0.5">${safe(p?.product_code||'-')}</p></div><span class="text-[9px] font-extrabold rounded-full px-3 py-1 uppercase tracking-wider ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'AKTIF':'EXPIRED'}</span></div><div class="mt-5 space-y-2 text-xs"><div class="flex justify-between"><span class="muted">Pemilik:</span> <span class="font-medium text-white">${safe(l.owner_display_name||d.owner_name)}</span></div>${l.group_id?`<div class="flex justify-between"><span class="muted">Group ID:</span> <span class="font-mono text-white">${safe(l.group_id)}</span></div>`:''}<div class="flex flex-col gap-1.5 pt-1"><span class="muted">Key:</span><code class="break-all text-[11px] bg-black/50 p-2.5 rounded-xl border border-white/5 font-mono text-amber-200/90">${safe(l.license_key)}</code></div><div class="flex justify-between pt-1"><span class="muted">Kedaluwarsa:</span> <span class="font-medium text-white">${safe(fmtDate(l.expires_at))}</span></div></div><div class="mt-6">${active&&p?.download_url&&p?.product_active?`<button type="button" class="btn gold rounded-xl w-full py-3.5 text-xs font-bold tracking-wide uppercase shadow-md cursor-pointer flex items-center justify-center gap-2" onclick="downloadOwnedProduct(${p.id},decodeURIComponent('${encodeURIComponent(String(l.license_key)).replace(/'/g,'%27')}'))">Download Produk (.rbxm)</button>`:'<div class="text-center py-2.5 text-xs muted bg-white/5 rounded-xl border border-white/5 font-medium">Download tidak tersedia</div>'}</div></article>`
-    }).join('') || '<div class="glass-card rounded-2xl p-8 muted text-xs sm:col-span-2 lg:col-span-3 text-center">Belum ada lisensi terdaftar untuk akun atau grup ini.</div>';
-  }
-
-  if(cProducts) {
-    cProducts.innerHTML = catalog.map(p => {
-      const license = owned.find(l => l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date()) && l.product && String(l.product.id) === String(p.id));
-      return `<article class="product-card shadow-xl">
-        <div>
-          <div class="product-cover">
-            ${p.image_url ? `<img src="${safe(p.image_url)}" alt="${safe(p.product)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\'fallback-text\'>DRAGON STELL STUDIO</div>'">` : `<div class="fallback-text">DRAGON STELL STUDIO</div>`}
-          </div>
-          <div class="p-6 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">${safe(p.product_code || 'DSS PRODUCT')}</span>
-              ${p.price ? `<span class="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">${safe(p.price)}</span>` : ''}
-            </div>
-            <h3 class="font-bold text-base sm:text-lg leading-snug text-white">${safe(p.product)}</h3>
-            ${p.description ? `<p class="muted text-xs sm:text-sm leading-relaxed line-clamp-3">${safe(p.description)}</p>` : ''}
-          </div>
-        </div>
-        <div class="p-6 pt-0">
-          <div class="pt-4 border-t border-white/5">
-            ${license ? '<div class="text-emerald-400 text-xs font-bold flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> LISENSI DIMILIKI</div>' : `<a href="https://discord.gg/XkuKuv23bH" target="_blank" class="btn gold rounded-xl w-full py-3 text-xs font-bold uppercase tracking-wider text-center block cursor-pointer">Beli Produk (Buy)</a>`}
-          </div>
-        </div>
-      </article>`;
-    }).join('') || '<div class="glass-card rounded-2xl p-8 muted text-xs text-center">Belum ada produk di katalog.</div>';
-  }
-  showClientTab('home');
+function formatDate(value) {
+  if (!value) return 'Tidak kedaluwarsa';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('id-ID', {
+    dateStyle:'medium',
+    timeStyle:'short'
+  });
 }
 
-async function fetchExperienceDetails(placeId) {
-  if(expCache.has(placeId)) return expCache.get(placeId);
-  const data = { name: `Experience #${placeId}`, icon: 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true', creator: 'Dragon Stell Studio', visits: 0, rawVisits: 0, verifiedProduct: null };
-  try {
-    const res = await api('/api/game-details', { method: 'POST', body: JSON.stringify({ place_id: placeId }) });
-    if (res.success) {
-      data.name = res.name;
-      data.icon = res.icon;
-      data.creator = res.creatorName;
-      data.rawVisits = Number(res.visits || 0);
-      data.visits = data.rawVisits.toLocaleString('id-ID');
-    }
-  } catch {}
+function isExpired(value) {
+  if (!value) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.getTime() <= Date.now();
+}
 
-  // Deteksi otomatis produk yang dipakai di experience ini berdasarkan database/lisensi aktif
-  try {
-    const vRes = await api('/api/game-verify', { method: 'POST', body: JSON.stringify({ place_id: placeId }) });
-    if(vRes.success && vRes.product_name) {
-      data.verifiedProduct = vRes.product_name;
-    }
-  } catch {}
+function toast(message, type = 'info') {
+  const item = document.createElement('div');
+  item.className = `toast ${type}`;
 
-  expCache.set(placeId, data);
+  const icon = type === 'success'
+    ? '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>'
+    : type === 'error'
+      ? '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>'
+      : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>';
+
+  item.innerHTML = `${icon}<div>${escapeHTML(message)}</div>`;
+  $('toastArea').appendChild(item);
+
+  setTimeout(() => item.remove(), 4200);
+}
+
+async function api(path, options = {}) {
+  const headers = {
+    ...(options.body ? {'Content-Type':'application/json'} : {}),
+    ...(options.headers || {})
+  };
+
+  const response = await fetch(API + path, {
+    ...options,
+    headers,
+    credentials:'same-origin',
+    cache:'no-store'
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Server mengirim respons yang tidak valid.');
+  }
+
+  if (!response.ok || data.success === false) {
+    throw new Error(data.message || `Request gagal (${response.status})`);
+  }
+
   return data;
 }
 
-async function renderClientProjects() {
-  const container = $('clientDynamicProjects');
-  if(!container) return;
-  container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-amber-300 animate-pulse">Memuat dan mengurutkan data experience dari Roblox API...</div>`;
+/* ============================================================
+   SERVER HEALTH
+   ============================================================ */
 
-  let projectInfos = [];
-  for(const pid of customProjects) {
-    const info = await fetchExperienceDetails(pid);
-    projectInfos.push({ pid, ...info });
-  }
+async function checkServer() {
+  const dot = $('serverDot');
+  const label = $('serverText');
 
-  // Urutkan berdasarkan kunjungan terbanyak ke tersedikit
-  projectInfos.sort((a, b) => b.rawVisits - a.rawVisits);
+  dot.className = 'status-dot checking';
+  label.textContent = 'Memeriksa server';
 
-  let html = '';
-  for(const info of projectInfos) {
-    const robloxGameUrl = `https://www.roblox.com/games/${info.pid}`;
-    html += `
-      <article class="product-card shadow-xl">
-        <div>
-          <div class="product-cover">
-            <img src="${safe(info.icon)}" alt="${safe(info.name)}" loading="lazy" onerror="this.src='https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true'">
-            <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-bold text-amber-300 flex items-center gap-1.5 shadow-md">
-              👁️ ${safe(info.visits)} Kunjungan
-            </div>
-          </div>
-          <div class="p-6 space-y-3">
-            <h3 class="font-bold text-base sm:text-lg leading-snug text-white">${safe(info.name)}</h3>
-            <div class="text-xs muted space-y-1.5 pt-1.5 border-t border-white/5">
-              <div class="flex justify-between items-center"><span>Kreator:</span> <span class="font-semibold text-white">${safe(info.creator)}</span></div>
-              <div class="flex justify-between items-center"><span>Produk Terdeteksi:</span> <span class="font-semibold text-amber-400">${safe(info.verifiedProduct || 'Belum Terikat Lisensi')}</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="p-6 pt-0">
-          <a href="${robloxGameUrl}" target="_blank" class="btn gold rounded-xl w-full py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-md text-center block cursor-pointer">Lihat Game</a>
-        </div>
-      </article>
-    `;
-  }
-  container.innerHTML = html || '<div class="glass-card rounded-2xl p-8 muted text-xs text-center col-span-full">Belum ada Project Experience terdaftar.</div>';
-}
-
-function saveProjectExperience() {
-  const input = $('newPlaceId');
-  if(!input) return;
-  const pid = input.value.trim();
-  if(!pid || !/^\d+$/.test(pid)) return toast('Masukkan Place ID angka yang valid.');
-  if(customProjects.includes(pid)) return toast('Project ID sudah terdaftar.');
-  customProjects.push(pid);
-  input.value = '';
-  renderAdminProjects();
-  renderClientProjects();
-  addLog(`Project Experience ID ${pid} ditambahkan.`);
-  toast('Project Experience berhasil ditambahkan.');
-}
-
-function removeProjectExperience(pid) {
-  customProjects = customProjects.filter(id => id !== pid);
-  renderAdminProjects();
-  renderClientProjects();
-  addLog(`Project Experience ID ${pid} dihapus.`);
-  toast('Project dihapus.');
-}
-
-function renderAdminProjects() {
-  const list = $('adminProjectList');
-  if(!list) return;
-  list.innerHTML = customProjects.map(pid => `
-    <div class="flex items-center justify-between p-3 rounded-2xl bg-black/50 border border-white/5">
-      <span class="font-mono text-xs text-amber-200">Place ID: ${safe(pid)}</span>
-      <button type="button" onclick="removeProjectExperience('${safe(pid)}')" class="btn text-red-400 hover:text-red-300 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
-    </div>
-  `).join('') || '<p class="muted text-xs">Belum ada project id tambahan.</p>';
-}
-
-async function downloadOwnedProduct(id, key) {
   try {
-    const d = await api('/api/file-ticket', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: key, product_id: id, kind: 'download' }) });
-    addLog(`Klien mengunduh produk ID ${id}`);
-    window.location.href = d.url;
-  } catch(e) { toast(e.message); }
-}
+    const response = await fetch(API + '/health', {
+      cache:'no-store',
+      credentials:'same-origin'
+    });
 
-async function refreshClient() {
-  try {
-    const d = await api('/api/client-refresh', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: clientKey }) });
-    await showClient(d);
-    toast('Data lisensi diperbarui.');
-  } catch(e) { toast(e.message); logoutClient(); }
-}
+    const data = await response.json();
 
-function logoutClient() {
-  clientUser = ''; clientKey = ''; clientData = null;
-  sessionStorage.removeItem('dss_user'); sessionStorage.removeItem('dss_key');
-  const loginBox = $('clientLoginBox'), dash = $('clientDashboard');
-  if(loginBox) loginBox.classList.remove('hidden');
-  if(dash) dash.classList.add('hidden');
-  showClientTab('home');
-}
+    if (!response.ok || !data.ok) throw new Error('Offline');
 
-async function openAdmin() {
-  showMainTab('admin');
-  try { await loadAdmin(); }
-  catch(e) {
-    await api('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => {});
-    showClientTab('home');
-    throw e;
+    dot.className = 'status-dot online';
+    label.textContent = 'Server Online';
+    $('statServer').textContent = 'Online';
+  } catch {
+    dot.className = 'status-dot';
+    label.textContent = 'Server Offline';
+    $('statServer').textContent = 'Offline';
   }
 }
 
-async function logoutAdmin() {
-  await api('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => {});
-  const loginKey = $('loginKey');
-  if(loginKey) loginKey.value = '';
-  addLog('Admin logout.');
-  toast('Sesi Admin ditutup.');
-  showClientTab('home');
-}
+/* ============================================================
+   LOGIN / SESSION
+   ============================================================ */
 
-async function loadAdmin() {
-  const [p, l] = await Promise.all([api('/api/products'), api('/api/licenses')]);
-  products = p.products || [];
-  licenses = l.licenses || [];
-  renderProducts();
-  renderLicenseChoices();
-  renderProductFilterDropdown();
-  renderLicenses();
-  renderAdminProjects();
-}
+$('loginForm').addEventListener('submit', async event => {
+  event.preventDefault();
 
-async function saveProduct() {
-  const editId = $('editProductId').value, name = $('productName').value.trim(), code = $('productCode').value.trim(), price = $('productPrice').value.trim(), description = $('productDescription').value.trim(), image_url = $('productImageUrl').value.trim(), download_url = $('productDownloadUrl').value.trim();
-  if(!name) return toast('Nama produk wajib diisi.');
-  
-  const btn = $('saveProductBtn');
-  if(btn) { btn.disabled = true; btn.textContent = 'MENYIMPAN...'; }
+  if (state.busy) return;
+
+  const username = $('loginUsername').value.trim();
+  const credential = $('loginCredential').value.trim();
+
+  if (!username || !credential) {
+    toast('Username dan credential wajib diisi.', 'error');
+    return;
+  }
+
+  state.busy = true;
+  const button = $('loginButton');
+  button.disabled = true;
+  button.textContent = 'Memverifikasi...';
 
   try {
-    const payload = { product_name: name, product_code: code, price: price, description: description, image_url: image_url, download_url: download_url };
-    if(editId) {
-      await api('/api/products/' + editId, { method: 'PUT', body: JSON.stringify(payload) });
-      addLog(`Produk ${name} diperbarui.`);
-      toast('Produk berhasil diperbarui.');
+    const result = await api('/api/portal-login', {
+      method:'POST',
+      body:JSON.stringify({
+        owner_name:username,
+        credential
+      })
+    });
+
+    if (result.access === 'admin') {
+      state.role = 'admin';
+      state.username = result.owner_name || username;
+      state.licenseKey = '';
+      toast('Login admin berhasil.', 'success');
+      await enterApplication();
     } else {
-      await api('/api/products', { method: 'POST', body: JSON.stringify(payload) });
-      addLog(`Produk baru ${name} ditambahkan.`);
-      toast('Produk berhasil ditambahkan.');
+      state.role = 'client';
+      state.username = result.owner_name || username;
+      state.licenseKey = credential;
+      applyClientResponse(result);
+      toast('Login berhasil. Data lisensi telah dimuat.', 'success');
+      await enterApplication();
     }
-    resetProductForm();
-    await loadAdmin();
-  } catch(e) {
-    toast('Gagal: ' + e.message);
+
+    $('loginCredential').value = '';
+  } catch (error) {
+    toast(error.message, 'error');
   } finally {
-    if(btn) { btn.disabled = false; btn.textContent = editId ? 'Simpan Perubahan' : '+ Tambah Produk'; }
+    state.busy = false;
+    button.disabled = false;
+    button.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg> LOGIN TO PORTAL';
+  }
+});
+
+function applyClientResponse(data) {
+  state.username = data.owner_name || state.username;
+  state.ownerDisplayName = data.owner_display_name || state.username;
+  state.ownerType = data.owner_type || 'user';
+  state.avatar = data.avatar_url || '';
+  state.license = data.license || null;
+
+  // Server PRO V2 mengirim katalog pada property "data".
+  state.catalog = Array.isArray(data.data) ? data.data : [];
+  state.ownedLicenses = Array.isArray(data.owned_licenses)
+    ? data.owned_licenses
+    : [];
+}
+
+async function enterApplication() {
+  $('loginScreen').classList.add('hidden');
+  $('application').classList.remove('hidden');
+  $('userChip').classList.remove('hidden');
+
+  $('headerUsername').textContent =
+    state.role === 'admin' ? state.username : state.ownerDisplayName;
+
+  $('headerAvatar').src = safeURL(state.avatar) ||
+    'https://www.roblox.com/Thumbs/Avatar.ashx?x=150&y=150&format=png';
+
+  document.querySelectorAll('.admin-only').forEach(element => {
+    element.classList.toggle('hidden', state.role !== 'admin');
+  });
+
+  updateDashboard();
+  renderProducts();
+  renderMyLicenses();
+  renderAccountInfo();
+
+  navigate('home');
+
+  if (state.role === 'admin') {
+    await Promise.allSettled([
+      loadAdminProducts(),
+      loadAdminLicenses(),
+      loadProjects()
+    ]);
   }
 }
 
-function editProduct(id) {
-  const p = products.find(x => String(x.id) === String(id));
-  if(!p) return;
-  $('editProductId').value = p.id;
-  $('productName').value = p.product_name || '';
-  $('productCode').value = p.product_code || '';
-  $('productPrice').value = p.price || '';
-  $('productDescription').value = p.description || '';
-  $('productImageUrl').value = p.image_url || '';
-  $('productDownloadUrl').value = p.download_url || '';
-  $('formTitle').textContent = 'Edit Produk: ' + p.product_name;
-  $('saveProductBtn').textContent = 'Simpan Perubahan';
-  $('cancelEditBtn').classList.remove('hidden');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+async function restoreAdminSession() {
+  try {
+    const result = await api('/api/admin-session');
+
+    if (result.authenticated) {
+      state.role = 'admin';
+      state.username = 'DSS Administrator';
+      await enterApplication();
+    }
+  } catch (error) {
+    console.warn('Admin session:', error.message);
+  }
 }
 
-function resetProductForm() {
-  $('editProductId').value = '';
-  $('productName').value = '';
-  $('productCode').value = '';
-  $('productPrice').value = '';
-  $('productDescription').value = '';
-  $('productImageUrl').value = '';
-  $('productDownloadUrl').value = '';
-  $('formTitle').textContent = 'Tambah Produk Baru';
-  $('saveProductBtn').textContent = '+ Tambah Produk';
-  $('cancelEditBtn').classList.add('hidden');
+async function logout() {
+  try {
+    if (state.role === 'admin') {
+      await api('/api/admin-logout', {method:'POST'});
+    }
+  } catch (error) {
+    console.warn(error);
+  }
+
+  state.role = null;
+  state.username = '';
+  state.avatar = '';
+  state.licenseKey = '';
+  state.catalog = [];
+  state.ownedLicenses = [];
+  state.adminProducts = [];
+  state.adminLicenses = [];
+  state.projects = [];
+
+  $('application').classList.add('hidden');
+  $('loginScreen').classList.remove('hidden');
+  $('userChip').classList.add('hidden');
+  $('loginCredential').value = '';
+
+  toast('Kamu telah keluar dari portal.', 'success');
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+function navigate(page) {
+  const adminPages = [
+    'admin-products',
+    'admin-licenses',
+    'projects'
+  ];
+
+  if (adminPages.includes(page) && state.role !== 'admin') {
+    toast('Halaman ini hanya tersedia untuk admin.', 'error');
+    return;
+  }
+
+  state.currentPage = page;
+
+  document.querySelectorAll('.page').forEach(element => {
+    element.classList.toggle('active', element.id === `page-${page}`);
+  });
+
+  document.querySelectorAll('.nav-btn[data-page]').forEach(button => {
+    button.classList.toggle('active', button.dataset.page === page);
+  });
+
+  if (page === 'showcase') renderProducts();
+  if (page === 'licenses') renderMyLicenses();
+  if (page === 'admin-products') loadAdminProducts();
+  if (page === 'admin-licenses') loadAdminLicenses();
+  if (page === 'projects') loadProjects();
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-btn[data-page]').forEach(button => {
+  button.addEventListener('click', () => navigate(button.dataset.page));
+});
+
+/* ============================================================
+   CLIENT DATA
+   ============================================================ */
+
+async function loadClientData() {
+  if (state.role !== 'client') return;
+
+  try {
+    const result = await api('/api/client-refresh', {
+      method:'POST',
+      body:JSON.stringify({
+        owner_name:state.username,
+        license_key:state.licenseKey
+      })
+    });
+
+    applyClientResponse(result);
+    updateDashboard();
+    renderProducts();
+    renderMyLicenses();
+    renderAccountInfo();
+
+    toast('Data berhasil disinkronkan.', 'success');
+  } catch (error) {
+    toast(error.message, 'error');
+
+    if (
+      error.message.toLowerCase().includes('key salah') ||
+      error.message.toLowerCase().includes('kedaluwarsa') ||
+      error.message.toLowerCase().includes('login ulang')
+    ) {
+      await logout();
+    }
+  }
+}
+
+async function refreshPortal() {
+  await checkServer();
+
+  if (state.role === 'client') {
+    await loadClientData();
+  } else if (state.role === 'admin') {
+    await Promise.allSettled([
+      loadAdminProducts(),
+      loadAdminLicenses(),
+      loadProjects()
+    ]);
+    toast('Data admin diperbarui.', 'success');
+  }
+}
+
+function updateDashboard() {
+  $('statProducts').textContent = state.catalog.length;
+  $('statLicenses').textContent = state.ownedLicenses.length;
+
+  const active = state.ownedLicenses.filter(item =>
+    item.is_active && !isExpired(item.expires_at)
+  ).length;
+
+  $('statActive').textContent = active;
+
+  if (state.role === 'admin') {
+    $('statProducts').textContent = state.adminProducts.length;
+    $('statLicenses').textContent = state.adminLicenses.length;
+    $('statActive').textContent = state.adminLicenses.filter(item =>
+      item.is_active && !isExpired(item.expires_at)
+    ).length;
+  }
+}
+
+function renderAccountInfo() {
+  const displayName = state.ownerDisplayName || state.username;
+  const type = state.ownerType === 'group' ? 'Roblox Group' : 'Roblox User';
+
+  $('accountInfo').innerHTML = `
+    <div style="display:flex;align-items:center;gap:13px">
+      <img src="${escapeHTML(safeURL(state.avatar))}"
+        onerror="this.style.display='none'"
+        style="width:45px;height:45px;border-radius:50%;background:#252d3b;object-fit:cover">
+      <div>
+        <strong style="color:#e8ebf1">${escapeHTML(displayName)}</strong>
+        <div class="muted small" style="margin-top:5px">
+          ${escapeHTML(state.username)} · ${type}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:17px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="badge active">Verified</span>
+      <span class="badge">${state.role === 'admin' ? 'Administrator' : 'Client Account'}</span>
+    </div>
+  `;
+}
+
+/* ============================================================
+   PRODUCT CATALOG
+   ============================================================ */
+
+function productImageHTML(url, name) {
+  const safe = safeURL(url);
+
+  if (!safe) {
+    return `<div class="product-placeholder"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg></div>`;
+  }
+
+  return `
+    <img class="product-image"
+      src="${escapeHTML(safe)}"
+      alt="${escapeHTML(name)}"
+      loading="lazy"
+      onerror="this.outerHTML='<div class=&quot;product-placeholder&quot;>Image unavailable</div>'">
+  `;
 }
 
 function renderProducts() {
-  const catalog = $('productCatalog');
-  if(!catalog) return;
-  catalog.innerHTML = products.map(p => `
-    <div class="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2 hover:border-white/15 transition-colors">
-      <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <b class="text-xs font-bold text-white block truncate">${safe(p.product_name)}</b>
-            ${p.price ? `<span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">${safe(p.price)}</span>` : ''}
+  const grid = $('productGrid');
+
+  if (!state.catalog.length) {
+    grid.innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg>
+        <strong>Belum ada produk tersedia</strong>
+        <span>Katalog akan menampilkan produk yang aktif dari database server.</span>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = state.catalog.map(product => {
+    const name = product.product || product.product_name || 'Unnamed Product';
+    const image = product.image_url || '';
+    const price = product.price || 'Hubungi Admin';
+    const description = product.description || 'Tidak ada deskripsi produk.';
+
+    const owned = state.ownedLicenses.some(license =>
+      license.product &&
+      String(license.product.id) === String(product.id) &&
+      license.is_active &&
+      !isExpired(license.expires_at)
+    );
+
+    return `
+      <article class="product-card">
+        ${productImageHTML(image, name)}
+        <div class="product-body">
+          <h3 class="product-title">${escapeHTML(name)}</h3>
+          <div class="product-desc">${escapeHTML(description)}</div>
+          <div class="product-meta">
+            <span class="price">${escapeHTML(price)}</span>
+            <span class="badge ${owned ? 'active' : ''}">
+              ${owned ? 'Owned' : 'Available'}
+            </span>
           </div>
-          <p class="muted text-[10px] mt-1">${safe(p.product_code)} · ${p.image_url ? '<span class="text-emerald-400 font-semibold">Gambar OK</span>' : '<span class="text-amber-400">Tanpa Gambar</span>'} · ${p.download_url ? '<span class="text-emerald-400 font-semibold">File OK</span>' : '<span class="text-amber-400">Tanpa File</span>'}</p>
+          <div class="product-actions">
+            ${
+              owned
+                ? `<button class="btn btn-success btn-sm" onclick="navigate('licenses')">View License</button>`
+                : `<button class="btn btn-sm" onclick="toast('Silakan hubungi admin untuk mendapatkan lisensi produk ini.')">Contact Admin</button>`
+            }
+          </div>
         </div>
-        <div class="flex gap-2 shrink-0">
-          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border border-amber-500/30 text-amber-200 bg-amber-500/10 hover:bg-amber-500/25 cursor-pointer" onclick="editProduct(${p.id})">Edit</button>
-          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border ${p.is_active ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-white/10 muted'} cursor-pointer" onclick="toggleProduct(${p.id},${!p.is_active})">${p.is_active ? 'Aktif' : 'Nonaktif'}</button>
-          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border border-red-500/30 text-red-300 bg-red-500/10 hover:bg-red-500/20 cursor-pointer" onclick="deleteProduct(${p.id})">Delete</button>
+      </article>
+    `;
+  }).join('');
+}
+
+/* ============================================================
+   MY LICENSES
+   ============================================================ */
+
+function renderMyLicenses() {
+  const container = $('myLicenses');
+
+  if (!state.ownedLicenses.length) {
+    container.innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg>
+        <strong>Belum ada lisensi</strong>
+        <span>Lisensi yang terhubung dengan akunmu akan tampil di sini.</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = state.ownedLicenses.map(license => {
+    const product = license.product || {};
+    const expired = isExpired(license.expires_at);
+    const active = license.is_active && !expired;
+    const productName = product.product_name || 'Product Not Assigned';
+
+    return `
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">LICENSE #${escapeHTML(license.id)}</div>
+            <h3>${escapeHTML(productName)}</h3>
+          </div>
+          <span class="badge ${active ? 'active' : 'inactive'}">
+            ${active ? 'Active' : expired ? 'Expired' : 'Inactive'}
+          </span>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <div class="muted small">License Key</div>
+            <div class="strong" style="margin-top:6px;word-break:break-all">
+              ${escapeHTML(license.license_key)}
+            </div>
+          </div>
+          <div>
+            <div class="muted small">Expiry Date</div>
+            <div class="strong" style="margin-top:6px">${escapeHTML(formatDate(license.expires_at))}</div>
+          </div>
+          <div>
+            <div class="muted small">Owner</div>
+            <div class="strong" style="margin-top:6px">${escapeHTML(license.owner_display_name || state.username)}</div>
+          </div>
+          <div>
+            <div class="muted small">Product Code</div>
+            <div class="strong" style="margin-top:6px">${escapeHTML(product.product_code || '-')}</div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-sm" onclick="copyText('${escapeHTML(license.license_key)}')">
+            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>
+            Copy Key
+          </button>
+          ${
+            active && product.download_url
+              ? `<button class="btn btn-primary btn-sm" onclick="getProductFile('${escapeHTML(product.id)}','download')">Download</button>`
+              : ''
+          }
+          ${
+            active && product.image_url
+              ? `<button class="btn btn-sm" onclick="getProductFile('${escapeHTML(product.id)}','image')">Product Image</button>`
+              : ''
+          }
         </div>
       </div>
-    </div>`).join('') || '<p class="muted text-xs text-center py-2">Katalog produk masih kosong.</p>';
+    `;
+  }).join('');
 }
 
-function renderLicenseChoices() {
-  const choices = $('licenseProductChoices');
-  if(!choices) return;
-  choices.innerHTML = products.filter(p => p.is_active).map(p => `<label class="checkrow flex items-center gap-3 rounded-2xl p-3.5 cursor-pointer"><input type="radio" name="licenseProduct" value="${p.id}" class="accent-amber-400"><span><b class="block text-xs font-bold text-white">${safe(p.product_name)}</b><span class="muted text-[10px]">${safe(p.product_code)}</span></span></label>`).join('') || '<p class="muted text-xs">Tambahkan dan aktifkan produk terlebih dahulu.</p>';
+async function getProductFile(productId, kind) {
+  if (state.role !== 'client' || !state.licenseKey) {
+    toast('Sesi pengguna tidak tersedia. Login ulang.', 'error');
+    return;
+  }
+
+  try {
+    const result = await api('/api/file-ticket', {
+      method:'POST',
+      body:JSON.stringify({
+        owner_name:state.username,
+        license_key:state.licenseKey,
+        product_id:String(productId),
+        kind
+      })
+    });
+
+    const url = safeURL(result.url);
+
+    if (!url) throw new Error('URL file tidak valid.');
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    toast(error.message, 'error');
+  }
 }
 
-function renderProductFilterDropdown() {
-  const select = $('productFilterSelect');
-  if(!select) return;
-  const currentVal = select.value;
-  select.innerHTML = `<option value="all">Semua Produk (All)</option>` + products.map(p => `<option value="${p.id}">${safe(p.product_name)} (${safe(p.product_code)})</option>`).join('');
-  select.value = currentVal;
+/* ============================================================
+   ADMIN - PRODUCTS
+   ============================================================ */
+
+async function loadAdminProducts() {
+  if (state.role !== 'admin') return;
+
+  const container = $('adminProductTable');
+  container.innerHTML = '<div class="skeleton"></div>';
+
+  try {
+    const result = await api('/api/products');
+    state.adminProducts = Array.isArray(result.products) ? result.products : [];
+
+    renderAdminProducts();
+    updateDashboard();
+  } catch (error) {
+    container.innerHTML = `<div class="empty"><strong>Gagal memuat produk</strong><span>${escapeHTML(error.message)}</span></div>`;
+    toast(error.message, 'error');
+  }
 }
+
+function renderAdminProducts() {
+  const container = $('adminProductTable');
+
+  if (!state.adminProducts.length) {
+    container.innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/></svg>
+        <strong>Database produk masih kosong</strong>
+        <span>Produk tidak dibuat otomatis. Gunakan Add Product jika ingin menambahkan produk baru.</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>PRODUCT</th>
+            <th>CODE</th>
+            <th>PRICE</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${state.adminProducts.map(product => `
+            <tr>
+              <td>
+                <strong>${escapeHTML(product.product_name)}</strong>
+                <div class="muted small" style="margin-top:4px">ID: ${escapeHTML(product.id)}</div>
+              </td>
+              <td>${escapeHTML(product.product_code || '-')}</td>
+              <td>${escapeHTML(product.price || '-')}</td>
+              <td><span class="badge ${product.is_active ? 'active' : 'inactive'}">${product.is_active ? 'Active' : 'Inactive'}</span></td>
+              <td>
+                <div class="action-row">
+                  <button class="btn btn-sm" onclick="editProduct('${escapeHTML(product.id)}')">Edit</button>
+                  <button class="btn btn-sm ${product.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleProduct('${escapeHTML(product.id)}',${!product.is_active})">
+                    ${product.is_active ? 'Disable' : 'Enable'}
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteProduct('${escapeHTML(product.id)}')">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function openProductModal(product = null) {
+  $('productForm').reset();
+  $('productEditId').value = product ? product.id : '';
+  $('productModalTitle').textContent = product ? 'Edit Product' : 'Add Product';
+
+  if (product) {
+    $('productName').value = product.product_name || '';
+    $('productCode').value = product.product_code || '';
+    $('productPrice').value = product.price || '';
+    $('productImage').value = product.image_url || '';
+    $('productDownload').value = product.download_url || '';
+    $('productDescription').value = product.description || '';
+  }
+
+  $('productModal').classList.add('open');
+}
+
+function editProduct(id) {
+  const product = state.adminProducts.find(item => String(item.id) === String(id));
+  if (!product) return toast('Produk tidak ditemukan.', 'error');
+  openProductModal(product);
+}
+
+$('productForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (state.busy) return;
+
+  const id = $('productEditId').value;
+
+  const payload = {
+    product_name:$('productName').value.trim(),
+    product_code:$('productCode').value.trim(),
+    description:$('productDescription').value.trim(),
+    price:$('productPrice').value.trim(),
+    image_url:$('productImage').value.trim(),
+    download_url:$('productDownload').value.trim()
+  };
+
+  if (!payload.product_name) {
+    return toast('Nama produk wajib diisi.', 'error');
+  }
+
+  state.busy = true;
+  $('saveProductButton').disabled = true;
+
+  try {
+    const endpoint = id
+      ? `/api/products/${encodeURIComponent(id)}`
+      : '/api/products';
+
+    await api(endpoint, {
+      method:id ? 'PUT' : 'POST',
+      body:JSON.stringify(payload)
+    });
+
+    closeModal('productModal');
+    toast(id ? 'Produk berhasil diperbarui.' : 'Produk berhasil dibuat.', 'success');
+
+    await loadAdminProducts();
+  } catch (error) {
+    toast(error.message, 'error');
+  } finally {
+    state.busy = false;
+    $('saveProductButton').disabled = false;
+  }
+});
 
 async function toggleProduct(id, active) {
-  try { await api('/api/products/' + id, { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); await loadAdmin(); toast('Status produk diperbarui.'); }
-  catch(e) { toast(e.message); }
+  const confirmed = confirm(
+    active
+      ? 'Aktifkan produk ini?'
+      : 'Nonaktifkan produk ini?'
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await api(`/api/products/${encodeURIComponent(id)}`, {
+      method:'PATCH',
+      body:JSON.stringify({is_active:active})
+    });
+
+    toast('Status produk berhasil diperbarui.', 'success');
+    await loadAdminProducts();
+  } catch (error) {
+    toast(error.message, 'error');
+  }
 }
 
 async function deleteProduct(id) {
-  const p = products.find(x => String(x.id) === String(id));
-  if(!confirm(`Hapus produk “${p?.product_name || id}”?`)) return;
-  try { await api('/api/products/' + id, { method: 'DELETE' }); addLog(`Produk ID ${id} dihapus.`); await loadAdmin(); toast('Produk dihapus.'); }
-  catch(e) { toast(e.message); }
-}
+  if (!confirm('Hapus produk ini secara permanen?')) return;
 
-async function createLicense() {
-  const selected = document.querySelector('input[name="licenseProduct"]:checked');
-  if(!selected) return toast('Pilih tepat satu produk.');
-  const keyInput = $('newKey'), expInput = $('newExpires'), ownerInput = $('newOwner'), groupInput = $('newGroup');
-  const body = { license_key: keyInput ? keyInput.value.trim() : '', product_ids: [Number(selected.value)], expires_at: expInput ? expInput.value || null : null };
-  if(mode === 'personal') body.owner_name = ownerInput ? ownerInput.value.trim() : '';
-  else body.group_id = groupInput ? groupInput.value.trim() : '';
   try {
-    const d = await api('/api/licenses/create', { method: 'POST', body: JSON.stringify(body) });
-    addLog(`Lisensi baru dibuat untuk produk ID ${selected.value}`);
-    toast(d.message || 'Lisensi dibuat.');
-    if(keyInput) keyInput.value = '';
-    if(expInput) expInput.value = '';
-    if(ownerInput) ownerInput.value = '';
-    if(groupInput) groupInput.value = '';
-    document.querySelectorAll('input[name="licenseProduct"]').forEach(x => x.checked = false);
-    await loadAdmin();
-  } catch(e) { toast(e.message); }
+    await api(`/api/products/${encodeURIComponent(id)}`, {
+      method:'DELETE'
+    });
+
+    toast('Produk berhasil dihapus.', 'success');
+    await loadAdminProducts();
+  } catch (error) {
+    toast(error.message, 'error');
+  }
 }
 
-function renderLicenses() {
-  const searchInput = $('licenseSearch'), select = $('productFilterSelect'), rowsContainer = $('licenseRows');
-  if(!rowsContainer) return;
-  const q = (searchInput ? searchInput.value : '').toLowerCase();
-  const selectedProdId = select ? select.value : 'all';
+/* ============================================================
+   ADMIN - LICENSES
+   ============================================================ */
 
-  const filtered = licenses.filter(l => {
-    const pList = l.products || [];
-    const matchProd = selectedProdId === 'all' || pList.some(p => String(p.id) === String(selectedProdId));
-    if(!matchProd) return false;
-    const searchString = JSON.stringify([l.license_key, l.owner_name, l.owner_display_name, l.group_id, l.owner_user_id, ...pList.map(p => p.product_name)]).toLowerCase();
-    return searchString.includes(q);
-  });
+async function loadAdminLicenses() {
+  if (state.role !== 'admin') return;
 
-  rowsContainer.innerHTML = filtered.map(l => {
-    const p = (l.products || [])[0], active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date());
-    const owner = l.owner_display_name || l.owner_name || 'Pemilik tidak terdeteksi', avatar = l.owner_avatar_url || '';
-    return `<tr class="hover:bg-white/[0.03] transition-colors"><td class="py-4 pr-4"><div class="font-bold text-white">${safe(p?.product_name||l.product_name||'-')}</div><div class="muted mt-0.5 text-[11px]">${safe(p?.product_code||'-')}</div></td><td class="py-4 pr-4"><div class="flex items-center gap-3 min-w-0"><img src="${safe(avatar)}" alt="" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" onerror="this.style.display='none'"><div class="min-w-0"><div class="font-semibold text-white break-words">${safe(owner)}</div><div class="muted mt-0.5 text-[10px] font-mono break-all">${l.group_id?'Grup ID: '+safe(l.group_id):'User ID: '+safe(l.owner_user_id||'-')}</div></div></div></td><td class="py-4 pr-4 font-mono text-[11px] text-amber-200/90 break-all">${safe(l.license_key)}</td><td class="py-4 pr-4"><span class="font-semibold text-[11px] px-3 py-1 rounded-full ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'Aktif':'Expired'}</span></td><td class="py-4 pr-4 text-gray-300 font-medium">${fmtDate(l.expires_at)}</td><td class="py-4"><div class="flex gap-2"><button type="button" onclick="toggleLicense(${l.id},${!l.is_active})" class="btn border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-white/5 cursor-pointer">${l.is_active?'Nonaktifkan':'Aktifkan'}</button><button type="button" onclick="deleteLicense(${l.id})" class="btn text-red-300 border border-red-500/20 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-red-500/5 cursor-pointer">Delete</button></div></td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="py-8 muted text-center font-medium">Tidak ada data lisensi ditemukan untuk produk ini.</td></tr>';
+  const container = $('adminLicenseTable');
+  container.innerHTML = '<div class="skeleton"></div>';
+
+  try {
+    const result = await api('/api/licenses');
+    state.adminLicenses = Array.isArray(result.licenses) ? result.licenses : [];
+
+    renderAdminLicenses();
+    updateDashboard();
+  } catch (error) {
+    container.innerHTML = `<div class="empty"><strong>Gagal memuat lisensi</strong><span>${escapeHTML(error.message)}</span></div>`;
+    toast(error.message, 'error');
+  }
 }
+
+function renderAdminLicenses() {
+  const container = $('adminLicenseTable');
+
+  if (!state.adminLicenses.length) {
+    container.innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg>
+        <strong>Belum ada lisensi</strong>
+        <span>Lisensi yang dibuat melalui panel admin akan muncul di sini.</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>OWNER</th>
+            <th>LICENSE KEY</th>
+            <th>PRODUCT</th>
+            <th>EXPIRY</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${state.adminLicenses.map(license => {
+            const products = Array.isArray(license.products) ? license.products : [];
+            const productNames = products.map(item => item.product_name).filter(Boolean).join(', ') || license.product_name || '-';
+            const active = license.is_active && !isExpired(license.expires_at);
+
+            return `
+              <tr>
+                <td>
+                  <strong>${escapeHTML(license.owner_display_name || license.owner_name || '-')}</strong>
+                  <div class="muted small">${license.owner_type === 'group' ? 'Group' : 'User'} · ID ${escapeHTML(license.owner_user_id || license.group_id || '-')}</div>
+                </td>
+                <td style="max-width:170px;word-break:break-all">${escapeHTML(license.license_key)}</td>
+                <td>${escapeHTML(productNames)}</td>
+                <td>${escapeHTML(formatDate(license.expires_at))}</td>
+                <td><span class="badge ${active ? 'active' : 'inactive'}">${active ? 'Active' : 'Inactive'}</span></td>
+                <td>
+                  <div class="action-row">
+                    <button class="btn btn-sm ${license.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleLicense('${escapeHTML(license.id)}',${!license.is_active})">
+                      ${license.is_active ? 'Disable' : 'Enable'}
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteLicense('${escapeHTML(license.id)}')">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function openLicenseModal() {
+  $('licenseForm').reset();
+  $('licenseProduct').innerHTML = '<option value="">Loading products...</option>';
+  $('licenseModal').classList.add('open');
+
+  try {
+    // Endpoint admin hanya menampilkan produk dari database.
+    const result = await api('/api/products');
+    state.adminProducts = Array.isArray(result.products) ? result.products : [];
+
+    const activeProducts = state.adminProducts.filter(product => product.is_active);
+
+    $('licenseProduct').innerHTML = activeProducts.length
+      ? activeProducts.map(product =>
+          `<option value="${escapeHTML(product.id)}">${escapeHTML(product.product_name)} · ${escapeHTML(product.product_code)}</option>`
+        ).join('')
+      : '<option value="">Tidak ada produk aktif</option>';
+
+    if (!activeProducts.length) {
+      toast('Buat produk terlebih dahulu sebelum membuat lisensi.', 'error');
+    }
+  } catch (error) {
+    $('licenseProduct').innerHTML = '<option value="">Gagal memuat produk</option>';
+    toast(error.message, 'error');
+  }
+}
+
+$('licenseForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (state.busy) return;
+
+  const owner = $('licenseOwner').value.trim();
+  const group = $('licenseGroup').value.trim();
+
+  if ((!owner && !group) || (owner && group)) {
+    return toast('Isi Username Roblox atau Group ID saja.', 'error');
+  }
+
+  const productId = $('licenseProduct').value;
+
+  if (!productId) {
+    return toast('Pilih produk yang tersedia.', 'error');
+  }
+
+  const expiryInput = $('licenseExpiry').value;
+  let expiresAt = null;
+
+  if (expiryInput) {
+    const date = new Date(expiryInput);
+    if (Number.isNaN(date.getTime())) {
+      return toast('Tanggal kedaluwarsa tidak valid.', 'error');
+    }
+    expiresAt = date.toISOString();
+  }
+
+  const payload = {
+    license_key:$('licenseKey').value.trim(),
+    owner_name:owner,
+    group_id:group || null,
+    product_ids:[productId],
+    expires_at:expiresAt,
+    image_url:$('licenseImage').value.trim(),
+    download_url:$('licenseDownload').value.trim()
+  };
+
+  state.busy = true;
+  $('createLicenseButton').disabled = true;
+
+  try {
+    const result = await api('/api/licenses/create', {
+      method:'POST',
+      body:JSON.stringify(payload)
+    });
+
+    closeModal('licenseModal');
+    toast(result.message || 'Lisensi berhasil dibuat.', 'success');
+    await loadAdminLicenses();
+  } catch (error) {
+    toast(error.message, 'error');
+  } finally {
+    state.busy = false;
+    $('createLicenseButton').disabled = false;
+  }
+});
 
 async function toggleLicense(id, active) {
-  try { await api('/api/licenses/' + id + '/status', { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); addLog(`Status lisensi ID ${id} diubah ke ${active}`); await loadAdmin(); toast('Status lisensi diperbarui.'); }
-  catch(e) { toast(e.message); }
+  if (!confirm(active ? 'Aktifkan lisensi ini?' : 'Nonaktifkan lisensi ini?')) return;
+
+  try {
+    await api(`/api/licenses/${encodeURIComponent(id)}/status`, {
+      method:'PATCH',
+      body:JSON.stringify({is_active:active})
+    });
+
+    toast('Status lisensi berhasil diperbarui.', 'success');
+    await loadAdminLicenses();
+  } catch (error) {
+    toast(error.message, 'error');
+  }
 }
 
 async function deleteLicense(id) {
-  if(!confirm('Hapus lisensi ini secara permanen?')) return;
-  try { await api('/api/licenses/' + id, { method: 'DELETE' }); addLog(`Lisensi ID ${id} dihapus.`); await loadAdmin(); toast('Lisensi dihapus.'); }
-  catch(e) { toast(e.message); }
+  if (!confirm('Hapus lisensi ini secara permanen?')) return;
+
+  try {
+    await api(`/api/licenses/${encodeURIComponent(id)}`, {
+      method:'DELETE'
+    });
+
+    toast('Lisensi berhasil dihapus.', 'success');
+    await loadAdminLicenses();
+  } catch (error) {
+    toast(error.message, 'error');
+  }
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  renderAdminProjects();
+/* ============================================================
+   PROJECT EXPERIENCES
+   ============================================================ */
+
+async function loadProjects() {
+  if (state.role !== 'admin') return;
+
+  const container = $('projectTable');
+  container.innerHTML = '<div class="skeleton"></div>';
+
   try {
-    const s = await api('/api/admin-session');
-    if(s.authenticated) { await openAdmin(); return; }
-  } catch {}
-  clientUser = sessionStorage.getItem('dss_user') || '';
-  clientKey = sessionStorage.getItem('dss_key') || '';
-  if(clientUser && clientKey) {
-    try {
-      const d = await api('/api/client-login', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: clientKey }) });
-      await showClient(d);
-    } catch { logoutClient(); }
+    const result = await api('/api/auto-projects');
+    state.projects = Array.isArray(result.projects) ? result.projects : [];
+
+    renderProjects();
+  } catch (error) {
+    container.innerHTML = `<div class="empty"><strong>Gagal memuat project</strong><span>${escapeHTML(error.message)}</span></div>`;
+    toast(error.message, 'error');
   }
+}
+
+async function getGameDetails(placeId) {
+  try {
+    return await api('/api/game-details', {
+      method:'POST',
+      body:JSON.stringify({place_id:String(placeId)})
+    });
+  } catch {
+    return {
+      name:`Experience #${placeId}`,
+      icon:''
+    };
+  }
+}
+
+async function renderProjects() {
+  const container = $('projectTable');
+
+  if (!state.projects.length) {
+    container.innerHTML = `
+      <div class="empty">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg>
+        <strong>Belum ada verified experience</strong>
+        <span>Project akan tercatat setelah loader berhasil memverifikasi lisensi.</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '<div class="skeleton"></div>';
+
+  const details = await Promise.all(
+    state.projects.map(async placeId => ({
+      placeId,
+      details:await getGameDetails(placeId)
+    }))
+  );
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>EXPERIENCE</th>
+            <th>PLACE ID</th>
+            <th>CREATOR</th>
+            <th>VISITS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${details.map(item => `
+            <tr>
+              <td>
+                <strong>${escapeHTML(item.details.name || `Experience #${item.placeId}`)}</strong>
+                <div class="muted small">Verified Experience</div>
+              </td>
+              <td>${escapeHTML(item.placeId)}</td>
+              <td>${escapeHTML(item.details.creatorName || '-')}</td>
+              <td>${Number(item.details.visits || 0).toLocaleString('id-ID')}</td>
+              <td>
+                <div class="action-row">
+                  <button class="btn btn-sm" onclick="copyText('${escapeHTML(item.placeId)}')">Copy ID</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteProject('${escapeHTML(item.placeId)}')">Remove</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function deleteProject(placeId) {
+  if (!confirm(`Hapus catatan project ${placeId}?`)) return;
+
+  try {
+    await api(`/api/auto-projects/${encodeURIComponent(placeId)}`, {
+      method:'DELETE'
+    });
+
+    toast('Catatan project berhasil dihapus.', 'success');
+    await loadProjects();
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+async function copyText(value) {
+  try {
+    await navigator.clipboard.writeText(String(value));
+    toast('Berhasil disalin.', 'success');
+  } catch {
+    toast('Tidak dapat menyalin teks pada browser ini.', 'error');
+  }
+}
+
+function closeModal(id) {
+  $(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+  backdrop.addEventListener('click', event => {
+    if (event.target === backdrop) {
+      backdrop.classList.remove('open');
+    }
+  });
 });
+
+/* ============================================================
+   STARTUP
+   ============================================================ */
+
+$('year').textContent = new Date().getFullYear();
+
+(async function init() {
+  await checkServer();
+  await restoreAdminSession();
+
+  setInterval(checkServer, 45000);
+})();
+
+/* ============================================================
+   OPTIONAL LOGOUT ACCESS
+   Run logout() from browser console or add a logout button.
+   ============================================================ */
 </script>
 </body>
 </html>
