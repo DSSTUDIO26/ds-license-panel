@@ -12,6 +12,7 @@
 // ENVIRONMENT VARIABLES:
 // DATABASE_URL
 // API_SECRET
+// LOADER_SECRET (minimal 32 karakter, sama dengan DSSLicenseLoader)
 // OWNER_ROBLOX_USER_ID
 // ============================================================
 
@@ -92,6 +93,9 @@ function rateLimit({ windowMs = 60_000, max = 30 } = {}) {
 
 const PORT = Number(process.env.PORT || 3000);
 const API_SECRET = process.env.API_SECRET || '';
+// Secret khusus komunikasi ServerScriptService -> backend.
+// Isi sama persis dengan LOADER_SECRET di DSSLicenseLoader.
+const LOADER_SECRET = process.env.LOADER_SECRET || '';
 
 const OWNER_ROBLOX_USER_ID = String(
     process.env.OWNER_ROBLOX_USER_ID || '9262435668'
@@ -111,6 +115,10 @@ if (API_SECRET.length < 32) {
     if (require.main === module) {
         process.exit(1);
     }
+}
+
+if (LOADER_SECRET.length < 32) {
+    console.error('WARNING: LOADER_SECRET belum diatur atau kurang dari 32 karakter. Endpoint game-verify akan menolak verifikasi.');
 }
 
 if (!DATABASE_URL) {
@@ -1269,78 +1277,122 @@ app.post(
 );
 
 // ============================================================
-// GAME VERIFY V4 — CREATOR ROOT
+// GAME VERIFY V5 — CREATOR ROOT + SERVER IDENTITY
 //
-// CREATOR ID UTAMA:
-// - Selalu User ID pemilik akun.
+// Request wajib dari ServerScriptService:
+// place_id, universe_id, creator_id, creator_type, product_name
+// Header: x-dss-loader-key
 //
-// PERSONAL EXPERIENCE:
-// - Creator Type = User
-// - Creator ID harus sama dengan Creator ID lisensi.
-//
-// COMMUNITY EXPERIENCE:
-// - Creator Type = Group
-// - Server mengambil Group Owner User ID langsung dari Roblox.
-// - Group Owner User ID harus sama dengan Creator ID lisensi.
-//
-// CLIENT TIDAK BOLEH MENENTUKAN CREATOR ID SENDIRI.
-//
-// REQUEST:
-// {
-//   "place_id": "123456",
-//   "product_name": "DSS-SYSTEM"
-// }
+// Untuk experience publik, identitas server dicocokkan dengan Roblox API.
+// Jika Roblox API tidak dapat membaca experience private/unlisted, identitas
+// engine dari server Roblox dipakai setelah LOADER_SECRET tervalidasi.
+// Creator Group selalu dipetakan ke UserId pemilik Group.
 // ============================================================
 
 app.post(
     '/api/game-verify',
     rateLimit({ windowMs: 60_000, max: 60 }),
     async (req, res) => {
-        const placeId = validNumericId(
-            req.body?.place_id,
-            20
-        );
+        if (!LOADER_SECRET || LOADER_SECRET.length < 32) {
+            return sendError(
+                res,
+                503,
+                'Verifikasi loader belum dikonfigurasi.',
+                { authorized: false }
+            );
+        }
 
-        const requestedProductName = cleanText(
-            req.body?.product_name,
-            120
-        );
+        const suppliedSecret = String(req.get('x-dss-loader-key') || '');
 
-        if (!placeId) {
+        if (!safeEqual(suppliedSecret, LOADER_SECRET)) {
+            return sendError(
+                res,
+                401,
+                'Loader authentication gagal.',
+                { authorized: false }
+            );
+        }
+
+        const placeId = validNumericId(req.body?.place_id, 20);
+        const universeId = validNumericId(req.body?.universe_id, 20);
+        const runtimeCreatorId = validNumericId(req.body?.creator_id, 20);
+        const runtimeCreatorType = cleanText(req.body?.creator_type, 10);
+        const requestedProductName = cleanText(req.body?.product_name, 120);
+
+        if (
+            !placeId || placeId === '0' ||
+            !universeId || universeId === '0' ||
+            !runtimeCreatorId || runtimeCreatorId === '0' ||
+            !['User', 'Group'].includes(runtimeCreatorType) ||
+            !requestedProductName
+        ) {
             return sendError(
                 res,
                 400,
-                'Place ID tidak valid.',
+                'Identitas experience tidak lengkap atau tidak valid.',
                 { authorized: false }
             );
         }
 
         try {
-            // Ambil creator asli dari Roblox.
-            // Jangan mempercayai creator_id dari request client.
-            const creator = await getPlaceCreator(placeId);
+            let creator = {
+                placeId,
+                universeId,
+                creatorType: runtimeCreatorType,
+                creatorId: runtimeCreatorId,
+                creatorName: '',
+                experienceName: `Experience #${placeId}`,
+                visits: 0
+            };
 
-            const creatorId = validNumericId(
-                creator.creatorId,
-                32
-            );
+            let robloxLookup = 'runtime';
 
+            // Jika API Roblox berhasil membaca place, hasilnya wajib cocok
+            // dengan identitas engine yang dikirim server Roblox.
+            try {
+                const publicCreator = await getPlaceCreator(placeId);
+
+                const matches =
+                    String(publicCreator.universeId) === universeId &&
+                    String(publicCreator.creatorId) === runtimeCreatorId &&
+                    String(publicCreator.creatorType) === runtimeCreatorType;
+
+                if (!matches) {
+                    return res.json({
+                        success: true,
+                        authorized: false,
+                        place_id: placeId,
+                        universe_id: universeId,
+                        message: 'Identitas experience tidak cocok dengan data Roblox.'
+                    });
+                }
+
+                creator = publicCreator;
+                robloxLookup = 'roblox-api';
+            } catch {
+                // Roblox API terkadang tidak mengembalikan data experience
+                // private/unlisted. Fallback hanya boleh terjadi setelah
+                // shared loader secret lolos dan data engine valid.
+            }
+
+            const creatorId = validNumericId(creator.creatorId, 20);
             const creatorType = creator.creatorType;
 
             if (
                 !creatorId ||
-                !['User', 'Group'].includes(creatorType)
+                !['User', 'Group'].includes(creatorType) ||
+                creatorId !== runtimeCreatorId ||
+                creatorType !== runtimeCreatorType ||
+                String(creator.universeId) !== universeId
             ) {
                 return res.json({
                     success: true,
                     authorized: false,
                     place_id: placeId,
-                    message:
-                        'Creator Experience tidak dapat diverifikasi.'
+                    message: 'Identitas Creator dari server tidak valid.'
                 });
             }
 
-            // Creator ID utama selalu berupa User ID.
             let canonicalCreatorUserId = null;
             let groupInfo = null;
 
@@ -1361,26 +1413,10 @@ app.post(
                         place_id: placeId,
                         creator_id: creatorId,
                         creator_type: creatorType,
-                        message:
-                            'Pemilik komunitas tidak dapat diverifikasi dari Roblox.'
+                        message: 'Pemilik komunitas tidak dapat diverifikasi dari Roblox.'
                     });
                 }
             }
-
-            const productFilter = requestedProductName
-                ? 'AND LOWER(p.product_name) = LOWER($1)'
-                : '';
-
-            const params = requestedProductName
-                ? [
-                    requestedProductName,
-                    canonicalCreatorUserId
-                ]
-                : [
-                    canonicalCreatorUserId
-                ];
-
-            const creatorParameter = `$${params.length}`;
 
             const { rows } = await pool.query(`
                 SELECT
@@ -1391,72 +1427,59 @@ app.post(
                     l.creator_user_id,
                     l.is_active,
                     l.expires_at
-
                 FROM licenses l
-
                 INNER JOIN license_products lp
                     ON lp.license_id = l.id
-
                 INNER JOIN products p
                     ON p.id = lp.product_id
-
-                WHERE l.is_active = TRUE
+                WHERE
+                    l.is_active = TRUE
                     AND p.is_active = TRUE
-                    ${productFilter}
-
+                    AND LOWER(p.product_name) = LOWER($1)
                     AND (
                         l.expires_at IS NULL
                         OR l.expires_at > NOW()
                     )
-
                     AND (
-                        l.creator_user_id = ${creatorParameter}
-
+                        l.creator_user_id = $2
                         OR (
                             l.creator_user_id IS NULL
-                            AND l.owner_user_id = ${creatorParameter}
+                            AND l.owner_user_id = $2
                         )
-
                         OR (
                             l.creator_user_id IS NULL
                             AND l.group_id IS NOT NULL
                         )
                     )
-
                 ORDER BY l.created_at DESC
-            `, params);
+            `, [
+                requestedProductName,
+                canonicalCreatorUserId
+            ]);
 
             let authorizedProduct = null;
 
             for (const candidate of rows) {
-                // Lisensi baru yang sudah memiliki Creator ID.
                 if (
                     candidate.creator_user_id &&
-                    String(candidate.creator_user_id) ===
-                        canonicalCreatorUserId
+                    String(candidate.creator_user_id) === canonicalCreatorUserId
                 ) {
                     authorizedProduct = candidate;
                     break;
                 }
 
-                // Lisensi lama milik akun User.
                 if (
                     candidate.owner_user_id &&
-                    String(candidate.owner_user_id) ===
-                        canonicalCreatorUserId
+                    String(candidate.owner_user_id) === canonicalCreatorUserId
                 ) {
                     authorizedProduct = candidate;
                     break;
                 }
 
-                // Kompatibilitas lisensi Group lama.
-                if (
-                    !candidate.creator_user_id &&
-                    candidate.group_id
-                ) {
-                    const oldGroup = await getRobloxGroupInfo(
-                        candidate.group_id
-                    );
+                // Migrasi aman untuk lisensi Group lama:
+                // hanya lolos jika Roblox mengonfirmasi pemilik Group.
+                if (!candidate.creator_user_id && candidate.group_id) {
+                    const oldGroup = await getRobloxGroupInfo(candidate.group_id);
 
                     if (
                         String(oldGroup?.ownerUserId || '') ===
@@ -1484,13 +1507,12 @@ app.post(
                     success: true,
                     authorized: false,
                     place_id: placeId,
+                    universe_id: universeId,
                     creator_id: creatorId,
                     creator_type: creatorType,
                     creator_user_id: canonicalCreatorUserId,
-                    product_name:
-                        requestedProductName || null,
-                    message:
-                        'Tidak ditemukan lisensi aktif untuk Creator ID ini atau komunitas yang dimilikinya.'
+                    product_name: requestedProductName,
+                    message: 'Tidak ditemukan lisensi aktif untuk Creator ID ini.'
                 });
             }
 
@@ -1501,8 +1523,7 @@ app.post(
                     `https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${encodeURIComponent(placeId)}&size=512x512&format=Png&isCircular=false`
                 );
 
-                iconUrl =
-                    thumbnail?.data?.[0]?.imageUrl || null;
+                iconUrl = thumbnail?.data?.[0]?.imageUrl || null;
             } catch {}
 
             await pool.query(`
@@ -1518,11 +1539,7 @@ app.post(
                     visits,
                     last_ping
                 )
-
-                VALUES(
-                    $1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()
-                )
-
+                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
                 ON CONFLICT(place_id) DO UPDATE SET
                     product_name = EXCLUDED.product_name,
                     owner_id = EXCLUDED.owner_id,
@@ -1542,50 +1559,34 @@ app.post(
                 creatorId,
                 authorizedProduct.license_id,
                 creatorType,
-                creator.universeId,
+                universeId,
                 creator.experienceName,
                 iconUrl,
-                creator.visits
+                Number(creator.visits || 0)
             ]);
 
             return res.json({
                 success: true,
                 authorized: true,
-
-                product_name:
-                    authorizedProduct.product_name,
-
+                product_name: authorizedProduct.product_name,
                 place_id: placeId,
-                universe_id: creator.universeId,
+                universe_id: universeId,
                 experience_name: creator.experienceName,
-
                 creator_id: creatorId,
                 creator_type: creatorType,
-
-                creator_user_id:
-                    canonicalCreatorUserId,
-
-                group_id:
-                    creatorType === 'Group'
-                        ? creatorId
-                        : null,
-
-                group_name:
-                    groupInfo?.groupName || null,
-
-                message:
-                    'Experience terverifikasi melalui Creator ID utama dan tersinkron otomatis.'
+                creator_user_id: canonicalCreatorUserId,
+                group_id: creatorType === 'Group' ? creatorId : null,
+                group_name: groupInfo?.groupName || null,
+                identity_source: robloxLookup,
+                message: 'Experience terverifikasi melalui Creator ID utama.'
             });
         } catch (error) {
             console.error('[GAME VERIFY]', error.message);
 
-            return res.status(
-                error.statusCode || 502
-            ).json({
+            return res.status(error.statusCode || 502).json({
                 success: false,
                 authorized: false,
-                message:
-                    'Verifikasi Roblox gagal. Coba lagi.'
+                message: 'Verifikasi lisensi gagal sementara. Coba lagi.'
             });
         }
     }
