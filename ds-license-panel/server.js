@@ -1,10 +1,10 @@
 // ============================================================
-// DSS STUDIO LICENSE PRO V3
+// DSS STUDIO LICENSE PRO V4 CREATOR ROOT
 // DRAGON STELL STUDIO
 //
 // Node.js 20+
 // PostgreSQL
-// Strict Product + Creator Verification
+// Creator ID Root Verification
 //
 // COMPATIBLE:
 // DSS Roblox Server Loader
@@ -48,7 +48,10 @@ function rateLimit({ windowMs = 60_000, max = 30 } = {}) {
         let bucket = rateBuckets.get(key);
 
         if (!bucket || bucket.resetAt <= now) {
-            bucket = { count: 0, resetAt: now + windowMs };
+            bucket = {
+                count: 0,
+                resetAt: now + windowMs
+            };
         }
 
         bucket.count += 1;
@@ -105,13 +108,17 @@ const DEFAULT_IMAGE =
 if (API_SECRET.length < 32) {
     console.error('FATAL: API_SECRET harus minimal 32 karakter.');
 
-    if (require.main === module) process.exit(1);
+    if (require.main === module) {
+        process.exit(1);
+    }
 }
 
 if (!DATABASE_URL) {
     console.error('FATAL: DATABASE_URL wajib diisi.');
 
-    if (require.main === module) process.exit(1);
+    if (require.main === module) {
+        process.exit(1);
+    }
 }
 
 // ============================================================
@@ -244,7 +251,9 @@ function readCookie(req, name) {
 
         if (index > -1 && part.slice(0, index).trim() === name) {
             try {
-                return decodeURIComponent(part.slice(index + 1).trim());
+                return decodeURIComponent(
+                    part.slice(index + 1).trim()
+                );
             } catch {
                 return '';
             }
@@ -279,7 +288,9 @@ function setAdminCookie(req, res) {
 
     res.cookie(COOKIE, `${exp}.${sessionSig(exp)}`, {
         httpOnly: true,
-        secure: req.secure || req.get('x-forwarded-proto') === 'https',
+        secure:
+            req.secure ||
+            req.get('x-forwarded-proto') === 'https',
         sameSite: 'strict',
         path: '/',
         maxAge: SESSION_MS
@@ -287,7 +298,6 @@ function setAdminCookie(req, res) {
 }
 
 function verifyAdmin(req, res, next) {
-
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
         const origin = req.get('origin');
         const host = req.get('host');
@@ -358,9 +368,11 @@ async function getRobloxUserInfo(username) {
         'https://users.roblox.com/v1/usernames/users',
         {
             method: 'POST',
+
             headers: {
                 'content-type': 'application/json'
             },
+
             body: JSON.stringify({
                 usernames: [username],
                 excludeBannedUsers: false
@@ -371,39 +383,34 @@ async function getRobloxUserInfo(username) {
     const user = result?.data?.[0];
 
     if (
-        !user
-        || user.name.toLowerCase() !== username.toLowerCase()
+        !user ||
+        user.name.toLowerCase() !== username.toLowerCase()
     ) {
         return null;
     }
 
     let avatarUrl = null;
-    let displayName = cleanText(user.displayName || '', 64);
-
-    // The username lookup normally includes displayName. Resolve the user
-    // profile as a fallback so the dashboard never substitutes a group name.
-    if (!displayName) {
-        try {
-            const profile = await robloxFetch(
-                `https://users.roblox.com/v1/users/${encodeURIComponent(user.id)}`
-            );
-
-            displayName = cleanText(profile?.displayName || '', 64);
-        } catch {}
-    }
+    let displayName = user.displayName || user.name;
 
     try {
-        const thumbnail = await robloxFetch(
-            `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${encodeURIComponent(user.id)}&size=150x150&format=Png&isCircular=false`
-        );
+        const [profile, thumbnail] = await Promise.all([
+            robloxFetch(
+                `https://users.roblox.com/v1/users/${encodeURIComponent(user.id)}`
+            ).catch(() => null),
 
+            robloxFetch(
+                `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=false`
+            ).catch(() => null)
+        ]);
+
+        displayName = profile?.displayName || displayName;
         avatarUrl = thumbnail?.data?.[0]?.imageUrl || null;
     } catch {}
 
     return {
         userId: String(user.id),
         exactUsername: user.name,
-        displayName: displayName || user.name,
+        displayName,
         avatarUrl
     };
 }
@@ -476,13 +483,13 @@ async function getRobloxGroupInfo(groupId) {
 }
 
 // ============================================================
-// ROBLOX COMMUNITIES OWNED BY PLAYER
+// OWNED ROBLOX COMMUNITIES
 // ============================================================
 
 const ownedCommunityCache = new Map();
 
 async function getOwnedRobloxCommunities(userId) {
-    const id = validNumericId(userId);
+    const id = validNumericId(userId, 20);
 
     if (!id) return [];
 
@@ -497,33 +504,25 @@ async function getOwnedRobloxCommunities(userId) {
             `https://groups.roblox.com/v2/users/${encodeURIComponent(id)}/groups/roles`
         );
 
-        const communities = (
-            Array.isArray(result?.data) ? result.data : []
-        )
-            .filter(entry => {
-                const group = entry?.group;
+        const candidates = (result?.data || []).filter(item => {
+            const groupId = String(item?.group?.id || '');
+            const rank = Number(item?.role?.rank || 0);
 
-                const rank = Number(
-                    entry?.role?.rank ?? entry?.role?.Rank ?? 0
-                );
+            return /^\d+$/.test(groupId) && (
+                rank === 255 ||
+                String(item?.group?.owner?.userId || '') === id
+            );
+        });
 
-                const ownerId =
-                    group?.owner?.userId ?? group?.owner?.userID;
-
-                return rank >= 255
-                    || (
-                        ownerId != null
-                        && String(ownerId) === id
-                    );
-            })
-            .map(entry => ({
-                group_id: String(entry.group.id),
-                name: cleanText(
-                    entry.group.name || 'Komunitas Roblox',
-                    100
-                )
-            }))
-            .filter(group => /^\d+$/.test(group.group_id));
+        const communities = candidates.map(item => ({
+            group_id: String(item.group.id),
+            name: String(
+                item.group.name ||
+                `Community ${item.group.id}`
+            ),
+            role_name: String(item.role?.name || 'Owner'),
+            rank: Number(item.role?.rank || 255)
+        }));
 
         ownedCommunityCache.set(id, {
             value: communities,
@@ -531,8 +530,8 @@ async function getOwnedRobloxCommunities(userId) {
         });
 
         return communities;
-    } catch {
-        // A Roblox groups API outage must not prevent a valid license login.
+    } catch (error) {
+        console.warn('[OWNED COMMUNITIES]', error.message);
         return cached?.value || [];
     }
 }
@@ -579,10 +578,6 @@ async function getPlaceCreator(placeId) {
         visits: Number(game?.data?.[0]?.visits || 0)
     };
 }
-
-// ============================================================
-// DATABASE INITIALIZATION
-
 // ============================================================
 // DATABASE INITIALIZATION
 // ============================================================
@@ -608,6 +603,7 @@ async function initDB() {
             owner_name VARCHAR(255) NOT NULL,
             owner_user_id VARCHAR(32),
             group_id VARCHAR(32),
+            creator_user_id VARCHAR(32),
             product_name VARCHAR(120) DEFAULT 'General Product',
             image_url TEXT,
             download_url TEXT,
@@ -621,6 +617,14 @@ async function initDB() {
                 (owner_user_id IS NULL AND group_id IS NOT NULL)
             )
         );
+
+        ALTER TABLE licenses
+            ADD COLUMN IF NOT EXISTS creator_user_id VARCHAR(32);
+
+        UPDATE licenses
+        SET creator_user_id = owner_user_id
+        WHERE creator_user_id IS NULL
+            AND owner_user_id IS NOT NULL;
 
         ALTER TABLE products
             ADD COLUMN IF NOT EXISTS price VARCHAR(64);
@@ -673,7 +677,6 @@ async function initDB() {
         ALTER TABLE project_experiences
             ADD COLUMN IF NOT EXISTS visits BIGINT NOT NULL DEFAULT 0;
 
-        -- Backfill project rows created by the previous server version.
         UPDATE project_experiences pe
         SET license_id = matched.license_id
         FROM (
@@ -721,6 +724,9 @@ async function initDB() {
 
         CREATE INDEX IF NOT EXISTS idx_licenses_group
             ON licenses(group_id);
+
+        CREATE INDEX IF NOT EXISTS idx_licenses_creator_user
+            ON licenses(creator_user_id);
 
         CREATE INDEX IF NOT EXISTS idx_license_products_product
             ON license_products(product_id);
@@ -774,6 +780,7 @@ async function listOwnedPortalLicenses(user) {
         FROM licenses l
         WHERE
             l.owner_user_id = $1
+            OR l.creator_user_id = $1
             OR l.group_id IS NOT NULL
         ORDER BY l.created_at DESC
     `, [user.userId]);
@@ -787,8 +794,8 @@ async function listOwnedPortalLicenses(user) {
             group = await getRobloxGroupInfo(license.group_id);
 
             if (
-                !group?.ownerUserId
-                || String(group.ownerUserId) !== String(user.userId)
+                !group?.ownerUserId ||
+                String(group.ownerUserId) !== String(user.userId)
             ) {
                 continue;
             }
@@ -809,16 +816,21 @@ async function listOwnedPortalLicenses(user) {
 
             owner_type: group ? 'group' : 'user',
 
-            // Account identity must always represent the Roblox player.
-            // Group identity is kept separately as license metadata.
             owner_display_name:
                 user.displayName || user.exactUsername,
 
             owner_username: user.exactUsername,
             owner_avatar_url: user.avatarUrl,
 
-            group_id: license.group_id || null,
+            creator_user_id:
+                license.creator_user_id ||
+                license.owner_user_id ||
+                group?.ownerUserId ||
+                null,
+
             group_name: group?.groupName || null,
+            group_icon_url: group?.groupIconUrl || null,
+            group_id: license.group_id || null,
 
             product: product ? {
                 id: product.id,
@@ -853,33 +865,28 @@ async function findValidPortalLicense(username, key) {
     const { rows } = await pool.query(`
         SELECT l.*
         FROM licenses l
-
         WHERE
             l.license_key = $1
             AND l.is_active = TRUE
-
             AND (
                 l.expires_at IS NULL
                 OR l.expires_at > NOW()
             )
-
             AND (
                 l.owner_user_id = $2
+                OR l.creator_user_id = $2
                 OR l.group_id IS NOT NULL
             )
-
         ORDER BY
             CASE
                 WHEN l.owner_user_id = $2 THEN 0
                 ELSE 1
             END
-
         LIMIT 1
     `, [key, user.userId]);
 
     if (!rows.length) {
-
-            return {
+        return {
             error: 'Key salah, tidak aktif, atau kedaluwarsa.',
             status: 401
         };
@@ -899,7 +906,7 @@ async function findValidPortalLicense(username, key) {
 
         if (String(group.ownerUserId) !== String(user.userId)) {
             return {
-                error: 'Lisensi ini milik komunitas Roblox. Login dengan akun pemilik komunitas tersebut.',
+                error: 'Lisensi ini bukan milik Creator ID akun Roblox tersebut.',
                 status: 403
             };
         }
@@ -911,9 +918,12 @@ async function findValidPortalLicense(username, key) {
         };
     }
 
-    if (String(license.owner_user_id) !== String(user.userId)) {
+    if (
+        String(license.owner_user_id) !== String(user.userId) &&
+        String(license.creator_user_id) !== String(user.userId)
+    ) {
         return {
-            error: 'Lisensi ini bukan milik akun Roblox tersebut.',
+            error: 'Lisensi ini bukan milik Creator ID akun Roblox tersebut.',
             status: 401
         };
     }
@@ -942,7 +952,10 @@ async function clientLoginHandler(req, res) {
     }
 
     try {
-        const verification = await findValidPortalLicense(username, key);
+        const verification = await findValidPortalLicense(
+            username,
+            key
+        );
 
         if (verification.error) {
             return sendError(
@@ -952,7 +965,11 @@ async function clientLoginHandler(req, res) {
             );
         }
 
-        const [catalog, ownedLicenses] = await Promise.all([
+        const [
+            catalog,
+            ownedLicenses,
+            ownedCommunities
+        ] = await Promise.all([
             pool.query(`
                 SELECT
                     id,
@@ -963,36 +980,21 @@ async function clientLoginHandler(req, res) {
                     image_url,
                     download_url,
                     is_active
-
                 FROM products
-
                 WHERE is_active = TRUE
-
                 ORDER BY created_at DESC, product_name ASC
             `),
 
-            listOwnedPortalLicenses(verification.user)
+            listOwnedPortalLicenses(verification.user),
+
+            getOwnedRobloxCommunities(
+                verification.user.userId
+            )
         ]);
 
         const displayName =
-            verification.user.displayName
-            || verification.user.exactUsername;
-
-        const discoveredCommunities = await getOwnedRobloxCommunities(
-            verification.user.userId
-        );
-
-        const licensedCommunities = ownedLicenses
-            .filter(item => item.group_id && item.group_name)
-            .map(item => ({
-                group_id: String(item.group_id),
-                name: item.group_name
-            }));
-
-        const ownedCommunities = [...new Map(
-            [...discoveredCommunities, ...licensedCommunities]
-                .map(group => [String(group.group_id), group])
-        ).values()];
+            verification.user.displayName ||
+            verification.user.exactUsername;
 
         const ownedLicenseIds = ownedLicenses.map(
             item => String(item.id)
@@ -1012,19 +1014,15 @@ async function clientLoginHandler(req, res) {
                     pe.icon_url,
                     pe.visits,
                     pe.last_ping
-
                 FROM project_experiences pe
-
                 INNER JOIN licenses active_license
                     ON active_license.id = pe.license_id
-
                 WHERE pe.license_id = ANY($1::bigint[])
                     AND active_license.is_active = TRUE
                     AND (
                         active_license.expires_at IS NULL
                         OR active_license.expires_at > NOW()
                     )
-
                 ORDER BY pe.last_ping DESC
             `, [ownedLicenseIds]);
 
@@ -1034,14 +1032,18 @@ async function clientLoginHandler(req, res) {
         return res.json({
             success: true,
 
-            // Profile header: always the verified Roblox player.
             avatar_url: verification.user.avatarUrl,
+
             owner_name: verification.user.exactUsername,
             owner_username: verification.user.exactUsername,
             owner_display_name: displayName,
             owner_user_id: verification.user.userId,
+
             owner_type: 'user',
-            license_owner_type: verification.group ? 'group' : 'user',
+
+            license_owner_type:
+                verification.group ? 'group' : 'user',
+
             owned_communities: ownedCommunities,
 
             license: {
@@ -1049,7 +1051,12 @@ async function clientLoginHandler(req, res) {
                 license_key: verification.license.license_key,
                 expires_at: verification.license.expires_at,
                 is_active: verification.license.is_active,
-                group_id: verification.license.group_id || null
+                group_id: verification.license.group_id || null,
+                creator_user_id:
+                    verification.license.creator_user_id ||
+                    verification.license.owner_user_id ||
+                    verification.group?.ownerUserId ||
+                    null
             },
 
             data: catalog.rows.map(product => ({
@@ -1087,7 +1094,6 @@ app.post(
     rateLimit({ windowMs: 60_000, max: 20 }),
     clientLoginHandler
 );
-
 // ============================================================
 // PORTAL LOGIN
 // ============================================================
@@ -1111,10 +1117,7 @@ app.post(
             try {
                 const user = await getRobloxUserInfo(username);
 
-                if (
-                    !user
-                    || user.userId !== OWNER_ROBLOX_USER_ID
-                ) {
+                if (!user || user.userId !== OWNER_ROBLOX_USER_ID) {
                     return sendError(
                         res,
                         401,
@@ -1163,7 +1166,9 @@ app.get('/api/admin-session', (req, res) => {
 app.post('/api/admin-logout', (req, res) => {
     res.clearCookie(COOKIE, {
         httpOnly: true,
-        secure: req.secure || req.get('x-forwarded-proto') === 'https',
+        secure:
+            req.secure ||
+            req.get('x-forwarded-proto') === 'https',
         sameSite: 'strict',
         path: '/'
     });
@@ -1193,12 +1198,17 @@ app.post(
             let icon = DEFAULT_IMAGE;
             let creatorName = 'Unknown Creator';
             let visits = 0;
+            let universeId = null;
+            let creatorId = null;
+            let creatorType = null;
 
             const universe = await robloxFetch(
                 `https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`
             );
 
-            const universeId = universe?.universeId;
+            universeId = universe?.universeId
+                ? String(universe.universeId)
+                : null;
 
             if (universeId) {
                 const game = await robloxFetch(
@@ -1209,7 +1219,15 @@ app.post(
 
                 if (data?.name) name = data.name;
                 if (data?.creator?.name) creatorName = data.creator.name;
-                if (data?.visits !== undefined) visits = data.visits;
+                if (data?.creator?.id != null) {
+                    creatorId = String(data.creator.id);
+                }
+                if (data?.creator?.type) {
+                    creatorType = data.creator.type;
+                }
+                if (data?.visits !== undefined) {
+                    visits = data.visits;
+                }
             }
 
             try {
@@ -1225,9 +1243,12 @@ app.post(
             return res.json({
                 success: true,
                 place_id: placeId,
+                universe_id: universeId,
                 name,
                 icon,
                 creatorName,
+                creator_id: creatorId,
+                creator_type: creatorType,
                 visits
             });
         } catch (error) {
@@ -1239,6 +1260,8 @@ app.post(
                 name: `Experience #${placeId}`,
                 icon: DEFAULT_IMAGE,
                 creatorName: 'Unknown Creator',
+                creator_id: null,
+                creator_type: null,
                 visits: 0
             });
         }
@@ -1246,197 +1269,327 @@ app.post(
 );
 
 // ============================================================
-// GAME VERIFY V3
+// GAME VERIFY V4 — CREATOR ROOT
 //
-// STRICT MATCH:
-// - Product Name
-// - Creator Type
-// - Creator ID
-// - Active License
-// - Active Product
-// - License Expiry
+// CREATOR ID UTAMA:
+// - Selalu User ID pemilik akun.
+//
+// PERSONAL EXPERIENCE:
+// - Creator Type = User
+// - Creator ID harus sama dengan Creator ID lisensi.
+//
+// COMMUNITY EXPERIENCE:
+// - Creator Type = Group
+// - Server mengambil Group Owner User ID langsung dari Roblox.
+// - Group Owner User ID harus sama dengan Creator ID lisensi.
+//
+// CLIENT TIDAK BOLEH MENENTUKAN CREATOR ID SENDIRI.
 //
 // REQUEST:
 // {
-//   place_id: "123",
-//   product_name: "DSS-SYSTEM",
-//   creator_id: "123456",
-//   creator_type: "User"
+//   "place_id": "123456",
+//   "product_name": "DSS-SYSTEM"
 // }
-//
-// creator_type:
-// User / Group
 // ============================================================
 
-app.post('/api/game-verify', async (req, res) => {
-    const placeId = validNumericId(req.body?.place_id, 20);
-
-    const requestedProductName = cleanText(
-        req.body?.product_name,
-        120
-    );
-
-    if (!placeId) {
-        return sendError(
-            res,
-            400,
-            'Place ID tidak valid.',
-            { authorized: false }
+app.post(
+    '/api/game-verify',
+    rateLimit({ windowMs: 60_000, max: 60 }),
+    async (req, res) => {
+        const placeId = validNumericId(
+            req.body?.place_id,
+            20
         );
-    }
 
-    try {
-        // Creator is always resolved from Roblox, never trusted from client payload.
-        const creator = await getPlaceCreator(placeId);
+        const requestedProductName = cleanText(
+            req.body?.product_name,
+            120
+        );
 
-        const creatorId = validNumericId(creator.creatorId, 32);
-        const creatorType = creator.creatorType;
-
-        if (
-            !creatorId
-            || !['User', 'Group'].includes(creatorType)
-        ) {
-            return res.json({
-                success: true,
-                authorized: false,
-                place_id: placeId,
-                message: 'Creator experience tidak dapat diverifikasi.'
-            });
+        if (!placeId) {
+            return sendError(
+                res,
+                400,
+                'Place ID tidak valid.',
+                { authorized: false }
+            );
         }
-
-        const { rows } = await pool.query(`
-            SELECT
-                p.product_name,
-                l.id AS license_id,
-                l.owner_user_id,
-                l.group_id
-
-            FROM licenses l
-
-            INNER JOIN license_products lp
-                ON lp.license_id = l.id
-
-            INNER JOIN products p
-                ON p.id = lp.product_id
-
-            WHERE l.is_active = TRUE
-                AND p.is_active = TRUE
-
-                AND (
-                    $1::text = ''
-                    OR LOWER(p.product_name) = LOWER($1)
-                )
-
-                AND (
-                    l.expires_at IS NULL
-                    OR l.expires_at > NOW()
-                )
-
-                AND (
-                    (
-                        $2 = 'User'
-                        AND l.owner_user_id = $3
-                    )
-                    OR (
-                        $2 = 'Group'
-                        AND l.group_id = $3
-                    )
-                )
-
-            ORDER BY l.created_at DESC
-            LIMIT 1
-        `, [
-            requestedProductName,
-            creatorType,
-            creatorId
-        ]);
-
-        if (!rows.length) {
-            return res.json({
-                success: true,
-                authorized: false,
-                place_id: placeId,
-                creator_id: creatorId,
-                creator_type: creatorType,
-                product_name: requestedProductName || null,
-                message: 'Tidak ditemukan lisensi aktif yang cocok dengan pemilik experience.'
-            });
-        }
-
-        const authorizedProduct = rows[0];
-
-        let iconUrl = null;
 
         try {
-            const thumbnail = await robloxFetch(
-                `https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${encodeURIComponent(placeId)}&size=512x512&format=Png&isCircular=false`
+            // Ambil creator asli dari Roblox.
+            // Jangan mempercayai creator_id dari request client.
+            const creator = await getPlaceCreator(placeId);
+
+            const creatorId = validNumericId(
+                creator.creatorId,
+                32
             );
 
-            iconUrl = thumbnail?.data?.[0]?.imageUrl || null;
-        } catch {}
+            const creatorType = creator.creatorType;
 
-        await pool.query(`
-            INSERT INTO project_experiences(
-                place_id,
-                product_name,
-                owner_id,
-                license_id,
-                creator_type,
-                universe_id,
-                experience_name,
-                icon_url,
-                visits,
-                last_ping
-            )
+            if (
+                !creatorId ||
+                !['User', 'Group'].includes(creatorType)
+            ) {
+                return res.json({
+                    success: true,
+                    authorized: false,
+                    place_id: placeId,
+                    message:
+                        'Creator Experience tidak dapat diverifikasi.'
+                });
+            }
 
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+            // Creator ID utama selalu berupa User ID.
+            let canonicalCreatorUserId = null;
+            let groupInfo = null;
 
-            ON CONFLICT(place_id) DO UPDATE SET
-                product_name = EXCLUDED.product_name,
-                owner_id = EXCLUDED.owner_id,
-                license_id = EXCLUDED.license_id,
-                creator_type = EXCLUDED.creator_type,
-                universe_id = EXCLUDED.universe_id,
-                experience_name = EXCLUDED.experience_name,
-                icon_url = COALESCE(
-                    EXCLUDED.icon_url,
-                    project_experiences.icon_url
-                ),
-                visits = EXCLUDED.visits,
-                last_ping = NOW()
-        `, [
-            placeId,
-            authorizedProduct.product_name,
-            creatorId,
-            authorizedProduct.license_id,
-            creatorType,
-            creator.universeId,
-            creator.experienceName,
-            iconUrl,
-            creator.visits
-        ]);
+            if (creatorType === 'User') {
+                canonicalCreatorUserId = creatorId;
+            } else {
+                groupInfo = await getRobloxGroupInfo(creatorId);
 
-        return res.json({
-            success: true,
-            authorized: true,
-            product_name: authorizedProduct.product_name,
-            place_id: placeId,
-            universe_id: creator.universeId,
-            experience_name: creator.experienceName,
-            creator_id: creatorId,
-            creator_type: creatorType,
-            message: 'Experience terverifikasi dan tersinkron otomatis.'
-        });
-    } catch (error) {
-        console.error('[GAME VERIFY]', error.message);
+                canonicalCreatorUserId = validNumericId(
+                    groupInfo?.ownerUserId,
+                    20
+                );
 
-        return res.status(error.statusCode || 502).json({
-            success: false,
-            authorized: false,
-            message: 'Verifikasi Roblox gagal. Coba lagi.'
-        });
+                if (!canonicalCreatorUserId) {
+                    return res.json({
+                        success: true,
+                        authorized: false,
+                        place_id: placeId,
+                        creator_id: creatorId,
+                        creator_type: creatorType,
+                        message:
+                            'Pemilik komunitas tidak dapat diverifikasi dari Roblox.'
+                    });
+                }
+            }
+
+            const productFilter = requestedProductName
+                ? 'AND LOWER(p.product_name) = LOWER($1)'
+                : '';
+
+            const params = requestedProductName
+                ? [
+                    requestedProductName,
+                    canonicalCreatorUserId
+                ]
+                : [
+                    canonicalCreatorUserId
+                ];
+
+            const creatorParameter = `$${params.length}`;
+
+            const { rows } = await pool.query(`
+                SELECT
+                    p.product_name,
+                    l.id AS license_id,
+                    l.owner_user_id,
+                    l.group_id,
+                    l.creator_user_id,
+                    l.is_active,
+                    l.expires_at
+
+                FROM licenses l
+
+                INNER JOIN license_products lp
+                    ON lp.license_id = l.id
+
+                INNER JOIN products p
+                    ON p.id = lp.product_id
+
+                WHERE l.is_active = TRUE
+                    AND p.is_active = TRUE
+                    ${productFilter}
+
+                    AND (
+                        l.expires_at IS NULL
+                        OR l.expires_at > NOW()
+                    )
+
+                    AND (
+                        l.creator_user_id = ${creatorParameter}
+
+                        OR (
+                            l.creator_user_id IS NULL
+                            AND l.owner_user_id = ${creatorParameter}
+                        )
+
+                        OR (
+                            l.creator_user_id IS NULL
+                            AND l.group_id IS NOT NULL
+                        )
+                    )
+
+                ORDER BY l.created_at DESC
+            `, params);
+
+            let authorizedProduct = null;
+
+            for (const candidate of rows) {
+                // Lisensi baru yang sudah memiliki Creator ID.
+                if (
+                    candidate.creator_user_id &&
+                    String(candidate.creator_user_id) ===
+                        canonicalCreatorUserId
+                ) {
+                    authorizedProduct = candidate;
+                    break;
+                }
+
+                // Lisensi lama milik akun User.
+                if (
+                    candidate.owner_user_id &&
+                    String(candidate.owner_user_id) ===
+                        canonicalCreatorUserId
+                ) {
+                    authorizedProduct = candidate;
+                    break;
+                }
+
+                // Kompatibilitas lisensi Group lama.
+                if (
+                    !candidate.creator_user_id &&
+                    candidate.group_id
+                ) {
+                    const oldGroup = await getRobloxGroupInfo(
+                        candidate.group_id
+                    );
+
+                    if (
+                        String(oldGroup?.ownerUserId || '') ===
+                        canonicalCreatorUserId
+                    ) {
+                        authorizedProduct = candidate;
+
+                        await pool.query(`
+                            UPDATE licenses
+                            SET creator_user_id = $1
+                            WHERE id = $2
+                                AND creator_user_id IS NULL
+                        `, [
+                            canonicalCreatorUserId,
+                            candidate.license_id
+                        ]);
+
+                        break;
+                    }
+                }
+            }
+
+            if (!authorizedProduct) {
+                return res.json({
+                    success: true,
+                    authorized: false,
+                    place_id: placeId,
+                    creator_id: creatorId,
+                    creator_type: creatorType,
+                    creator_user_id: canonicalCreatorUserId,
+                    product_name:
+                        requestedProductName || null,
+                    message:
+                        'Tidak ditemukan lisensi aktif untuk Creator ID ini atau komunitas yang dimilikinya.'
+                });
+            }
+
+            let iconUrl = null;
+
+            try {
+                const thumbnail = await robloxFetch(
+                    `https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${encodeURIComponent(placeId)}&size=512x512&format=Png&isCircular=false`
+                );
+
+                iconUrl =
+                    thumbnail?.data?.[0]?.imageUrl || null;
+            } catch {}
+
+            await pool.query(`
+                INSERT INTO project_experiences(
+                    place_id,
+                    product_name,
+                    owner_id,
+                    license_id,
+                    creator_type,
+                    universe_id,
+                    experience_name,
+                    icon_url,
+                    visits,
+                    last_ping
+                )
+
+                VALUES(
+                    $1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()
+                )
+
+                ON CONFLICT(place_id) DO UPDATE SET
+                    product_name = EXCLUDED.product_name,
+                    owner_id = EXCLUDED.owner_id,
+                    license_id = EXCLUDED.license_id,
+                    creator_type = EXCLUDED.creator_type,
+                    universe_id = EXCLUDED.universe_id,
+                    experience_name = EXCLUDED.experience_name,
+                    icon_url = COALESCE(
+                        EXCLUDED.icon_url,
+                        project_experiences.icon_url
+                    ),
+                    visits = EXCLUDED.visits,
+                    last_ping = NOW()
+            `, [
+                placeId,
+                authorizedProduct.product_name,
+                creatorId,
+                authorizedProduct.license_id,
+                creatorType,
+                creator.universeId,
+                creator.experienceName,
+                iconUrl,
+                creator.visits
+            ]);
+
+            return res.json({
+                success: true,
+                authorized: true,
+
+                product_name:
+                    authorizedProduct.product_name,
+
+                place_id: placeId,
+                universe_id: creator.universeId,
+                experience_name: creator.experienceName,
+
+                creator_id: creatorId,
+                creator_type: creatorType,
+
+                creator_user_id:
+                    canonicalCreatorUserId,
+
+                group_id:
+                    creatorType === 'Group'
+                        ? creatorId
+                        : null,
+
+                group_name:
+                    groupInfo?.groupName || null,
+
+                message:
+                    'Experience terverifikasi melalui Creator ID utama dan tersinkron otomatis.'
+            });
+        } catch (error) {
+            console.error('[GAME VERIFY]', error.message);
+
+            return res.status(
+                error.statusCode || 502
+            ).json({
+                success: false,
+                authorized: false,
+                message:
+                    'Verifikasi Roblox gagal. Coba lagi.'
+            });
+        }
     }
-});
+);
 
 // ============================================================
 // AUTO PROJECTS
@@ -1456,9 +1609,11 @@ app.get('/api/auto-projects', verifyAdmin, async (_req, res) => {
                 pe.icon_url,
                 pe.visits,
                 pe.last_ping,
+
                 l.owner_name,
                 l.owner_user_id,
                 l.group_id,
+                l.creator_user_id,
                 l.is_active AS license_active,
                 l.expires_at
 
@@ -1496,10 +1651,17 @@ app.delete(
     '/api/auto-projects/:pid',
     verifyAdmin,
     async (req, res) => {
-        const placeId = validNumericId(req.params.pid, 20);
+        const placeId = validNumericId(
+            req.params.pid,
+            20
+        );
 
         if (!placeId) {
-            return sendError(res, 400, 'Place ID tidak valid.');
+            return sendError(
+                res,
+                400,
+                'Place ID tidak valid.'
+            );
         }
 
         try {
@@ -1523,7 +1685,6 @@ app.delete(
         }
     }
 );
-
 // ============================================================
 // PRODUCTS - GET
 // ============================================================
@@ -1542,7 +1703,6 @@ app.get('/api/products', verifyAdmin, async (_req, res) => {
                 is_active,
                 created_at,
                 updated_at
-
             FROM products
             ORDER BY product_name
         `);
@@ -1552,8 +1712,7 @@ app.get('/api/products', verifyAdmin, async (_req, res) => {
             products: rows
         });
     } catch (error) {
-
-            console.error('[PRODUCTS GET]', error.message);
+        console.error('[PRODUCTS GET]', error.message);
 
         return sendError(
             res,
@@ -1576,11 +1735,19 @@ app.post('/api/products', verifyAdmin, async (req, res) => {
     const download = validHttpUrl(req.body?.download_url);
 
     if (!name) {
-        return sendError(res, 400, 'Nama produk wajib diisi.');
+        return sendError(
+            res,
+            400,
+            'Nama produk wajib diisi.'
+        );
     }
 
     if (image === undefined || download === undefined) {
-        return sendError(res, 400, 'URL tidak valid.');
+        return sendError(
+            res,
+            400,
+            'URL tidak valid.'
+        );
     }
 
     const code = cleanText(
@@ -1593,7 +1760,11 @@ app.post('/api/products', verifyAdmin, async (req, res) => {
         .slice(0, 70);
 
     if (!code) {
-        return sendError(res, 400, 'Kode produk tidak valid.');
+        return sendError(
+            res,
+            400,
+            'Kode produk tidak valid.'
+        );
     }
 
     try {
@@ -1663,7 +1834,11 @@ app.put('/api/products/:id', verifyAdmin, async (req, res) => {
     }
 
     if (image === undefined || download === undefined) {
-        return sendError(res, 400, 'URL tidak valid.');
+        return sendError(
+            res,
+            400,
+            'URL tidak valid.'
+        );
     }
 
     const code = cleanText(
@@ -1814,7 +1989,7 @@ app.delete('/api/products/:id', verifyAdmin, async (req, res) => {
         if (used.rows.length) {
             await connection.query('ROLLBACK');
 
-                    return sendError(
+            return sendError(
                 res,
                 409,
                 'Produk masih terikat lisensi. Cabut lisensi terlebih dahulu.'
@@ -1878,7 +2053,6 @@ app.get('/api/licenses', verifyAdmin, async (_req, res) => {
                 ON p.id = lp.product_id
 
             GROUP BY l.id
-
             ORDER BY l.created_at DESC
         `);
 
@@ -1891,23 +2065,42 @@ app.get('/api/licenses', verifyAdmin, async (_req, res) => {
 
                     return {
                         ...license,
+
                         owner_type: 'group',
+
                         owner_display_name:
-                            group.groupName
-                            || `Grup Roblox ${license.group_id}`,
+                            group.groupName ||
+                            `Grup Roblox ${license.group_id}`,
+
                         owner_avatar_url: group.groupIconUrl,
                         group_name: group.groupName,
-                        group_icon_url: group.groupIconUrl
+                        group_icon_url: group.groupIconUrl,
+
+                        creator_user_id:
+                            license.creator_user_id ||
+                            group.ownerUserId ||
+                            null
                     };
                 }
 
                 let avatar = null;
+                let displayName = license.owner_name;
 
                 if (license.owner_user_id) {
                     try {
-                        const thumbnail = await robloxFetch(
-                            `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${encodeURIComponent(license.owner_user_id)}&size=150x150&format=Png&isCircular=false`
-                        );
+                        const [profile, thumbnail] =
+                            await Promise.all([
+                                robloxFetch(
+                                    `https://users.roblox.com/v1/users/${encodeURIComponent(license.owner_user_id)}`
+                                ).catch(() => null),
+
+                                robloxFetch(
+                                    `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${encodeURIComponent(license.owner_user_id)}&size=150x150&format=Png&isCircular=false`
+                                ).catch(() => null)
+                            ]);
+
+                        displayName =
+                            profile?.displayName || displayName;
 
                         avatar =
                             thumbnail?.data?.[0]?.imageUrl || null;
@@ -1916,9 +2109,15 @@ app.get('/api/licenses', verifyAdmin, async (_req, res) => {
 
                 return {
                     ...license,
+
                     owner_type: 'user',
-                    owner_display_name: license.owner_name,
-                    owner_avatar_url: avatar
+                    owner_display_name: displayName,
+                    owner_avatar_url: avatar,
+
+                    creator_user_id:
+                        license.creator_user_id ||
+                        license.owner_user_id ||
+                        null
                 };
             })
         );
@@ -1960,12 +2159,16 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
     const download = validHttpUrl(req.body?.download_url);
 
     if (!key) {
-        return sendError(res, 400, 'License key wajib diisi.');
+        return sendError(
+            res,
+            400,
+            'License key wajib diisi.'
+        );
     }
 
     if (
-        ids.length !== 1
-        || !/^\d+$/.test(String(ids[0]))
+        ids.length !== 1 ||
+        !/^\d+$/.test(String(ids[0]))
     ) {
         return sendError(
             res,
@@ -1975,9 +2178,9 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
     }
 
     if (
-        expires === undefined
-        || image === undefined
-        || download === undefined
+        expires === undefined ||
+        image === undefined ||
+        download === undefined
     ) {
         return sendError(
             res,
@@ -2034,11 +2237,11 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
     } else {
         group = await getRobloxGroupInfo(groupId);
 
-        if (!group?.groupName) {
+        if (!group?.groupName || !group?.ownerUserId) {
             return sendError(
                 res,
                 400,
-                'Group ID tidak ditemukan atau Roblox API tidak tersedia.'
+                'Group ID atau pemilik komunitas tidak dapat diverifikasi.'
             );
         }
     }
@@ -2067,20 +2270,37 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
 
         const product = productResult.rows[0];
 
+        // Creator ID utama:
+        // - Lisensi User: User ID akun tersebut.
+        // - Lisensi Group: User ID pemilik Group yang diverifikasi Roblox.
+        const canonicalCreatorUserId = groupId
+            ? validNumericId(group.ownerUserId, 20)
+            : user.userId;
+
+        if (!canonicalCreatorUserId) {
+            await connection.query('ROLLBACK');
+
+            return sendError(
+                res,
+                400,
+                'Creator ID utama tidak dapat diverifikasi dari Roblox.'
+            );
+        }
+
         const inserted = await connection.query(`
             INSERT INTO licenses(
                 license_key,
                 owner_name,
                 owner_user_id,
                 group_id,
-
-                                product_name,
+                creator_user_id,
+                product_name,
                 image_url,
                 download_url,
                 expires_at
             )
 
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
 
             RETURNING id
         `, [
@@ -2088,6 +2308,7 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
             groupId ? group.groupName : user.exactUsername,
             groupId ? null : user.userId,
             groupId,
+            canonicalCreatorUserId,
             product.product_name,
             image,
             download,
@@ -2095,8 +2316,14 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
         ]);
 
         await connection.query(
-            'INSERT INTO license_products(license_id,product_id) VALUES($1,$2)',
-            [inserted.rows[0].id, product.id]
+            `INSERT INTO license_products(
+                license_id,
+                product_id
+            ) VALUES($1,$2)`,
+            [
+                inserted.rows[0].id,
+                product.id
+            ]
         );
 
         await connection.query('COMMIT');
@@ -2106,7 +2333,8 @@ app.post('/api/licenses/create', verifyAdmin, async (req, res) => {
             message: 'Lisensi berhasil dibuat.',
             id: inserted.rows[0].id,
             product_count: 1,
-            product_name: product.product_name
+            product_name: product.product_name,
+            creator_user_id: canonicalCreatorUserId
         });
     } catch (error) {
         await connection.query('ROLLBACK').catch(() => {});
@@ -2266,17 +2494,13 @@ app.post(
 
             const { rows } = await pool.query(`
                 SELECT p.*
-
                 FROM license_products lp
-
                 JOIN products p
                     ON p.id = lp.product_id
-
                 WHERE
                     lp.license_id = $1
                     AND p.id = $2
                     AND p.is_active = TRUE
-
                 LIMIT 1
             `, [
                 verification.license.id,
@@ -2331,14 +2555,14 @@ app.get('/health', async (_req, res) => {
 
         return res.json({
             ok: true,
-            service: 'DSS STUDIO LICENSE PRO V3',
+            service: 'DSS STUDIO LICENSE PRO V4 CREATOR ROOT',
             database: 'connected',
             uptime_seconds: Math.floor(process.uptime())
         });
     } catch {
         return res.status(503).json({
             ok: false,
-            service: 'DSS STUDIO LICENSE PRO V3',
+            service: 'DSS STUDIO LICENSE PRO V4 CREATOR ROOT',
             database: 'disconnected'
         });
     }
@@ -2354,12 +2578,13 @@ if (require.main === module) {
     server = app.listen(PORT, '0.0.0.0', () => {
         console.log('============================================');
         console.log('DRAGON STELL STUDIO');
-        console.log('DSS STUDIO LICENSE PRO V3');
+        console.log('DSS STUDIO LICENSE PRO V4 CREATOR ROOT');
         console.log('============================================');
         console.log(`Listening on port ${PORT}`);
         console.log('PostgreSQL: ENABLED');
-        console.log('Strict Product Verification: ENABLED');
-        console.log('Creator ID Verification: ENABLED');
+        console.log('Creator ID Root Verification: ENABLED');
+        console.log('Personal Experience Verification: ENABLED');
+        console.log('Owned Community Verification: ENABLED');
         console.log('License Expiry Check: ENABLED');
         console.log('Admin Session: ENABLED');
         console.log('Auto Project Tracking: ENABLED');
