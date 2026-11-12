@@ -1,5 +1,5 @@
 // ============================================================
-// DSS STUDIO LICENSE PRO V4 CREATOR ROOT
+// DSS STUDIO LICENSE PRO V5 CREATOR ROOT
 // DRAGON STELL STUDIO
 //
 // Node.js 20+
@@ -1357,18 +1357,22 @@ app.post(
                     String(publicCreator.creatorId) === runtimeCreatorId &&
                     String(publicCreator.creatorType) === runtimeCreatorType;
 
-                if (!matches) {
-                    return res.json({
-                        success: true,
-                        authorized: false,
-                        place_id: placeId,
-                        universe_id: universeId,
-                        message: 'Identitas experience tidak cocok dengan data Roblox.'
-                    });
+                if (matches) {
+                    // Gunakan metadata publik hanya jika seluruh identitas cocok.
+                    // Identitas runtime Roblox tetap menjadi sumber utama.
+                    creator = publicCreator;
+                    robloxLookup = 'roblox-api';
+                } else {
+                    // Data publik yang berbeda/tidak sinkron tidak boleh
+                    // menggantikan identitas runtime yang dikirim Roblox.
+                    // Lisensi tetap divalidasi terhadap runtime Creator dan
+                    // pemilik Group yang diverifikasi langsung dari Roblox.
+                    robloxLookup = 'runtime-public-mismatch';
+                    console.warn(
+                        '[GAME VERIFY] Public metadata mismatch; using runtime identity.',
+                        { placeId, universeId, runtimeCreatorId, runtimeCreatorType }
+                    );
                 }
-
-                creator = publicCreator;
-                robloxLookup = 'roblox-api';
             } catch {
                 // Roblox API terkadang tidak mengembalikan data experience
                 // private/unlisted. Fallback hanya boleh terjadi setelah
@@ -1441,64 +1445,83 @@ app.post(
                         OR l.expires_at > NOW()
                     )
                     AND (
-                        l.creator_user_id = $2
-                        OR (
-                            l.creator_user_id IS NULL
-                            AND l.owner_user_id = $2
+                        (
+                            $3 = 'Group'
+                            AND l.group_id = $4
                         )
                         OR (
-                            l.creator_user_id IS NULL
-                            AND l.group_id IS NOT NULL
+                            $3 = 'User'
+                            AND l.group_id IS NULL
+                            AND (
+                                l.creator_user_id = $2
+                                OR l.owner_user_id = $2
+                            )
                         )
                     )
                 ORDER BY l.created_at DESC
             `, [
                 requestedProductName,
-                canonicalCreatorUserId
+                canonicalCreatorUserId,
+                creatorType,
+                creatorType === 'Group' ? creatorId : null
             ]);
 
             let authorizedProduct = null;
 
             for (const candidate of rows) {
-                if (
-                    candidate.creator_user_id &&
-                    String(candidate.creator_user_id) === canonicalCreatorUserId
-                ) {
-                    authorizedProduct = candidate;
-                    break;
-                }
-
-                if (
-                    candidate.owner_user_id &&
-                    String(candidate.owner_user_id) === canonicalCreatorUserId
-                ) {
-                    authorizedProduct = candidate;
-                    break;
-                }
-
-                // Migrasi aman untuk lisensi Group lama:
-                // hanya lolos jika Roblox mengonfirmasi pemilik Group.
-                if (!candidate.creator_user_id && candidate.group_id) {
-                    const oldGroup = await getRobloxGroupInfo(candidate.group_id);
-
+                if (creatorType === 'Group') {
+                    // Group license wajib menunjuk ke Group ID experience ini,
+                    // bukan sekadar Group lain yang kebetulan punya owner sama.
                     if (
-                        String(oldGroup?.ownerUserId || '') ===
+                        String(candidate.group_id || '') !== creatorId
+                    ) {
+                        continue;
+                    }
+
+                    const verifiedGroup = await getRobloxGroupInfo(creatorId);
+                    if (
+                        String(verifiedGroup?.ownerUserId || '') !==
                         canonicalCreatorUserId
                     ) {
-                        authorizedProduct = candidate;
+                        continue;
+                    }
 
+                    if (
+                        candidate.creator_user_id &&
+                        String(candidate.creator_user_id) !== canonicalCreatorUserId
+                    ) {
+                        continue;
+                    }
+
+                    authorizedProduct = candidate;
+
+                    if (!candidate.creator_user_id) {
                         await pool.query(`
                             UPDATE licenses
                             SET creator_user_id = $1
                             WHERE id = $2
                                 AND creator_user_id IS NULL
+                                AND group_id = $3
                         `, [
                             canonicalCreatorUserId,
-                            candidate.license_id
+                            candidate.license_id,
+                            creatorId
                         ]);
-
-                        break;
                     }
+
+                    break;
+                }
+
+                if (
+                    creatorType === 'User' &&
+                    !candidate.group_id &&
+                    (
+                        String(candidate.creator_user_id || '') === canonicalCreatorUserId ||
+                        String(candidate.owner_user_id || '') === canonicalCreatorUserId
+                    )
+                ) {
+                    authorizedProduct = candidate;
+                    break;
                 }
             }
 
@@ -2556,14 +2579,14 @@ app.get('/health', async (_req, res) => {
 
         return res.json({
             ok: true,
-            service: 'DSS STUDIO LICENSE PRO V4 CREATOR ROOT',
+            service: 'DSS STUDIO LICENSE PRO V5 CREATOR ROOT',
             database: 'connected',
             uptime_seconds: Math.floor(process.uptime())
         });
     } catch {
         return res.status(503).json({
             ok: false,
-            service: 'DSS STUDIO LICENSE PRO V4 CREATOR ROOT',
+            service: 'DSS STUDIO LICENSE PRO V5 CREATOR ROOT',
             database: 'disconnected'
         });
     }
@@ -2579,7 +2602,7 @@ if (require.main === module) {
     server = app.listen(PORT, '0.0.0.0', () => {
         console.log('============================================');
         console.log('DRAGON STELL STUDIO');
-        console.log('DSS STUDIO LICENSE PRO V4 CREATOR ROOT');
+        console.log('DSS STUDIO LICENSE PRO V5 CREATOR ROOT');
         console.log('============================================');
         console.log(`Listening on port ${PORT}`);
         console.log('PostgreSQL: ENABLED');
