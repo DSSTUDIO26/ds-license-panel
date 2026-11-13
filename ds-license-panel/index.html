@@ -723,7 +723,7 @@ button,.btn,a{transition:background .2s ease,border-color .2s ease,color .2s eas
         </div>
         <section class="glass-card audio-workspace rounded-3xl p-5 sm:p-8 space-y-6">
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <div><p class="audio-eyebrow">DSS AUDIO ENGINE</p><h3 class="font-extrabold text-lg sm:text-xl mt-1">Sumber & Pengaturan Audio</h3><p class="muted text-xs mt-1">Upload file, tempel link media langsung, atau masukkan link Share YouTube/TikTok untuk membuka unduhan resmi jika tersedia. Maksimum 50 MB.</p></div>
+            <div><p class="audio-eyebrow">DSS AUDIO ENGINE</p><h3 class="font-extrabold text-lg sm:text-xl mt-1">Sumber & Pengaturan Audio</h3><p class="muted text-xs mt-1">Upload file atau tempel link media. Link YouTube/TikTok akan dikirim ke server untuk diperiksa; konversi hanya berjalan bila sumber menyediakan akses unduh yang sah. Maksimum 50 MB.</p></div>
             <span class="audio-format-chip">OUTPUT · OGG</span>
           </div>
           <div class="grid lg:grid-cols-2 gap-4">
@@ -735,12 +735,12 @@ button,.btn,a{transition:background .2s ease,border-color .2s ease,color .2s eas
             <div class="audio-source-card space-y-2">
               <label class="audio-label" for="audioSourceUrl">02 · Link media / YouTube / TikTok</label>
               <input id="audioSourceUrl" type="text" inputmode="url" autocomplete="url" placeholder="https://youtu.be/... atau https://www.tiktok.com/@.../video/... atau link file media" class="field w-full rounded-xl p-3 text-xs">
-              <p class="muted text-[10px]">Link Share YouTube/TikTok dikenali otomatis. Jika tombol Download resmi tersedia, unduh videonya lalu upload file ke kolom kiri untuk dikonversi. Link file langsung tetap mengikuti allowlist server.</p>
+              <p class="muted text-[10px]">Link media langsung diproses oleh server. Link halaman YouTube/TikTok akan diperiksa server dan tidak akan membuka tab atau berpindah halaman. Jika platform tidak mengizinkan pengunduhan, gunakan file yang diunduh melalui fitur resmi kreator.</p>
             </div>
           </div>
           <div class="audio-notice">
             <span class="audio-notice-icon">i</span>
-            <p><b>YouTube / TikTok:</b> tempel link Share lalu tekan Convert. DSS akan membuka halaman video resmi. Jika kreator mengaktifkan Download dan tombol unduh tersedia untuk akun/wilayah Anda, unduh melalui aplikasi atau situs resmi, kemudian upload file hasil unduhan ke DSS untuk konversi OGG. DSS tidak mengambil stream tersembunyi, tidak melewati DRM, login, atau pembatasan unduhan. Link file media langsung hanya diterima dari domain yang diizinkan admin.</p>
+            <p><b>YouTube / TikTok:</b> tempel link Share lalu tekan Convert. Link akan dikirim langsung ke server tanpa membuka halaman baru. Server hanya dapat mengonversi sumber yang memang menyediakan akses unduh yang sah; DSS tidak mengambil stream tersembunyi, melewati DRM, login, atau pembatasan unduhan. Jika sumber ditolak, unduh melalui fitur resmi kreator lalu upload file ke DSS.</p>
           </div>
           <div class="audio-settings-panel space-y-5">
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -750,10 +750,10 @@ button,.btn,a{transition:background .2s ease,border-color .2s ease,color .2s eas
             <div class="space-y-2.5">
               <label class="audio-label">Preset kombinasi</label>
               <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                <button type="button" class="audio-preset" data-audio-preset="2.1,-8" onclick="setAudioPreset(2.1,-8)"><b>2.1x</b><span>-8 dB</span></button>
-                <button type="button" class="audio-preset" data-audio-preset="2.3,-10" onclick="setAudioPreset(2.3,-10)"><b>2.3x</b><span>-10 dB</span></button>
-                <button type="button" class="audio-preset" data-audio-preset="2.5,-12" onclick="setAudioPreset(2.5,-12)"><b>2.5x</b><span>-12 dB</span></button>
-                <button type="button" class="audio-preset" data-audio-preset="2.7,-14" onclick="setAudioPreset(2.7,-14)"><b>2.7x</b><span>-14 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.1,-6" onclick="setAudioPreset(2.1,-6)"><b>2.1x</b><span>-6 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.3,-8" onclick="setAudioPreset(2.3,-8)"><b>2.3x</b><span>-8 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.5,-10" onclick="setAudioPreset(2.5,-10)"><b>2.5x</b><span>-10 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.7,-12" onclick="setAudioPreset(2.7,-12)"><b>2.7x</b><span>-12 dB</span></button>
                 <button type="button" class="audio-preset" data-audio-preset="2.9,-14" onclick="setAudioPreset(2.9,-14)"><b>2.9x</b><span>-14 dB</span></button>
               </div>
             </div>
@@ -1555,21 +1555,6 @@ async function convertAudio() {
   if (!file && !sourceUrl) return toast('Pilih file, link Share YouTube/TikTok, atau tautan file media.');
   if (file && file.size > 50 * 1024 * 1024) return toast('Ukuran file maksimal 50 MB.');
 
-  // Share URL platform adalah halaman video, bukan URL file media.
-  // Buka halaman resmi agar pengguna dapat memakai tombol Download
-  // yang memang disediakan oleh kreator/platform, lalu upload hasilnya.
-  if (!file && sourceUrl) {
-    const platformUrl = getSupportedPlatformPage(sourceUrl);
-    if (platformUrl) {
-      const opened = window.open(platformUrl, '_blank', 'noopener,noreferrer');
-      const message = 'Link video dikenali. Jika tombol Download resmi tersedia, unduh videonya dari YouTube/TikTok, lalu upload file tersebut ke DSS untuk konversi OGG. DSS tidak melewati pembatasan unduhan platform.';
-      $('audioConvertStatus').textContent = message;
-      if (!opened) toast('Browser memblokir tab baru. Izinkan pop-up atau buka link video secara manual.');
-      else toast('Halaman video resmi dibuka. Unduh hanya jika opsi Download tersedia.');
-      return;
-    }
-  }
-
   const btn = $('audioConvertBtn'), status = $('audioConvertStatus');
   const form = new FormData();
   form.append('username', clientUser);
@@ -1586,7 +1571,7 @@ async function convertAudio() {
 
   btn.disabled = true;
   btn.textContent = 'MEMPROSES MEDIA...';
-  status.textContent = 'Memvalidasi sumber dan mengonversi audio. Mohon tunggu.';
+  status.textContent = sourceUrl && getSupportedPlatformPage(sourceUrl) ? 'Mengirim link video ke server untuk pemeriksaan akses unduh yang sah. Mohon tunggu.' : 'Memvalidasi sumber dan mengonversi audio. Mohon tunggu.';
   try {
     const r = await fetch(endpoint, { method: 'POST', body: form, credentials: 'same-origin' });
     if (!r.ok) {
@@ -1651,7 +1636,11 @@ async function grantAudioCredits() {
 
 
 window.addEventListener('DOMContentLoaded', async () => {
+  // Default sound controls: normal speed and neutral amplifier.
+  if ($('audioSpeed')) $('audioSpeed').value = '1';
+  if ($('audioGain')) $('audioGain').value = '0';
   updateAudioSpeedLabel();
+  updateAudioGainLabel();
   renderAdminProjects();
   try {
     const s = await api('/api/admin-session');
