@@ -2634,10 +2634,10 @@ app.post(
 
 // ============================================================
 // DSS AUDIO CONVERT — AUTHORIZED FILE + DIRECT MEDIA URL CONVERSION
-// YouTube/TikTok share URLs are recognized by the frontend for official
-// manual download guidance. Backend never extracts platform streams or
-// bypasses creator/platform restrictions. Accept uploads and allowlisted
-// direct media URLs only. Requires FFmpeg + multer.
+// Accepts user uploads and HTTPS direct-media files from admin-allowlisted
+// domains. Platform webpage URLs (including YouTube/TikTok) are deliberately
+// rejected: this service does not extract streams or bypass access controls.
+// Requires FFmpeg + multer.
 // ============================================================
 
 const audioUpload = multer({
@@ -2975,7 +2975,7 @@ app.post('/api/audio/convert-url',
                 return res.status(409).json({
                     success: false,
                     code: 'PLATFORM_DOWNLOAD_REQUIRED',
-                    message: 'Ini adalah link halaman video, bukan file media langsung. Buka video di aplikasi/situs resmi YouTube atau TikTok. Jika tombol Download resmi tersedia untuk video tersebut, unduh melalui platform lalu upload file ke DSS untuk konversi. Jika Download tidak tersedia, DSS tidak dapat melewati pembatasan kreator/platform.'
+                    message: 'Link ini adalah halaman platform, bukan file media langsung. DSS hanya menerima file milik Anda atau tautan HTTPS langsung ke file audio/video dari domain yang telah diizinkan admin. Gunakan fitur unduh resmi yang disediakan pemilik/platform bila tersedia, lalu upload file tersebut ke DSS. DSS tidak mengambil stream tersembunyi atau melewati DRM maupun pembatasan unduhan.'
                 });
             }
             const downloaded = await requestAllowedMedia(sourceUrl);
