@@ -579,6 +579,8 @@ button,a,input{ -webkit-tap-highlight-color:transparent }
           <div class="pt-3 flex flex-wrap gap-3.5 relative z-10">
             <button type="button" onclick="showClientTab('showcase')" class="btn gold rounded-2xl px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg">Jelajahi Showcase Produk</button>
             <button type="button" onclick="showClientTab('projects')" class="btn border border-white/10 rounded-2xl px-6 py-3.5 text-xs font-bold text-white bg-white/5 hover:bg-white/10">Buka Project Experience</button>
+            <button type="button" onclick="showClientTab('audio')" class="btn border border-white/15 rounded-2xl px-6 py-3.5 text-xs font-extrabold text-white bg-white/10 hover:bg-white/15">♫ Audio Convert</button>
+            <button type="button" onclick="showClientTab('subscription')" class="btn border border-white/15 rounded-2xl px-6 py-3.5 text-xs font-extrabold text-white bg-white/5 hover:bg-white/10">✦ Langganan</button>
           </div>
         </div>
       </div>
@@ -611,6 +613,43 @@ button,a,input{ -webkit-tap-highlight-color:transparent }
           <p class="muted text-xs sm:text-sm mt-1">Daftar experience Roblox terverifikasi lengkap dengan statistik pengunjung, produk terdeteksi, dan tautan langsung.</p>
         </div>
         <div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      </div>
+
+      <div id="client-audio" class="client-page hidden space-y-6 animate-fade">
+        <div class="flex flex-wrap justify-between gap-3 items-end">
+          <div><h2 class="text-xl sm:text-2xl font-extrabold">DSS Audio Convert</h2><p class="muted text-xs mt-1">Konversi cepat ke OGG dengan kontrol audio profesional.</p></div>
+          <button class="btn border border-white/15 rounded-xl px-4 py-2 text-xs" onclick="loadAudioStatus()">Refresh Statistik</button>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Kredit Tersedia</p><b id="audioCredits" class="text-3xl block mt-2">—</b></div>
+          <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Gratis Hari Ini</p><b id="audioDaily" class="text-3xl block mt-2">—</b></div>
+          <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Total Berhasil Convert</p><b id="audioTotal" class="text-3xl block mt-2">0</b></div>
+        </div>
+        <section class="glass-card rounded-3xl p-6 sm:p-8 space-y-5">
+          <div><h3 class="font-bold text-lg">Sumber Audio / Video</h3><p class="muted text-xs mt-1">Upload file dari perangkat atau gunakan direct-download URL dari host yang telah diizinkan admin. Maksimum 50 MB.</p></div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="space-y-2"><label class="muted text-[10px] uppercase font-bold block">Upload dari perangkat</label><input id="audioFile" type="file" accept=".mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.opus,.mp4,.webm,.mov,.mkv,audio/*,video/*" class="field w-full rounded-xl p-3 text-xs"><p class="muted text-[10px]">Audio: MP3, WAV, M4A, AAC, FLAC, OPUS, OGG. Video: MP4, WEBM, MOV, MKV.</p></div>
+            <div class="space-y-2"><label class="muted text-[10px] uppercase font-bold block">Direct media URL (opsional)</label><input id="audioSourceUrl" type="url" inputmode="url" placeholder="https://media.domain-anda.com/file.mp4" class="field w-full rounded-xl p-3 text-xs"><p class="muted text-[10px]">URL harus mengarah langsung ke file media dan domainnya harus diizinkan admin.</p></div>
+          </div>
+          <div class="rounded-xl border border-white/10 bg-black/25 p-3 text-[11px] muted">Link halaman YouTube/TikTok bukan direct media file. DSS tidak mengambil stream dari halaman platform atau melewati proteksi unduhan. Untuk konten milik Anda, gunakan unduhan resmi yang tersedia lalu upload file, atau gunakan direct URL dari penyimpanan Anda sendiri.</div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div><label class="muted text-[10px] uppercase font-bold block mb-2">Kecepatan <span id="audioSpeedLabel">1.00x · Normal</span></label><input id="audioSpeed" type="range" min="0.5" max="3" step="0.05" value="1" class="w-full" oninput="updateAudioSpeedLabel()"><button type="button" onclick="setAudioSpeedNormal()" class="mt-2 btn border border-white/15 rounded-lg px-3 py-1.5 text-[10px]">NORMAL 1.0x</button></div>
+            <div><label class="muted text-[10px] uppercase font-bold block mb-2">Amplifier <span id="audioGainLabel">0 dB</span></label><input id="audioGain" type="range" min="-24" max="12" step="1" value="0" class="w-full" oninput="$('audioGainLabel').textContent=this.value+' dB'"></div>
+          </div>
+          <p class="muted text-[10px]">Speed 0.5x–3.0x · Normal 1.0x · Amplifier -24 dB sampai +12 dB. Gunakan hanya konten yang Anda miliki atau berhak konversi.</p>
+          <button id="audioConvertBtn" type="button" onclick="convertAudio()" class="btn gold rounded-xl px-6 py-3.5 w-full text-xs font-extrabold">CONVERT & DOWNLOAD OGG</button>
+          <p id="audioConvertStatus" class="muted text-xs text-center" aria-live="polite"></p>
+        </section>
+        <section class="glass-card rounded-3xl p-6 space-y-4"><h3 class="font-bold">Riwayat Konversi</h3><div id="audioHistory" class="space-y-2"><p class="muted text-xs">Belum ada riwayat.</p></div></section>
+      </div>
+
+      <div id="client-subscription" class="client-page hidden space-y-6 animate-fade">
+        <div><h2 class="text-xl sm:text-2xl font-extrabold">Langganan & Kredit Audio</h2><p class="muted text-xs mt-1">Pemilik lisensi aktif mendapat hingga 2 konversi gratis per hari. Kredit tambahan diaktifkan setelah konfirmasi pembayaran melalui Discord.</p></div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="glass-card rounded-3xl p-6 space-y-3"><p class="muted text-[10px] uppercase font-bold">Paket 7 Hari</p><h3 id="audioPrice7" class="text-2xl font-extrabold">—</h3><p id="audioCredit7" class="muted text-xs">— kredit</p><button onclick="requestAudioPackage('7d')" class="btn gold rounded-xl w-full py-3 text-xs font-bold">Hubungi Discord</button></div>
+          <div class="glass-card rounded-3xl p-6 space-y-3"><p class="muted text-[10px] uppercase font-bold">Paket 1 Bulan</p><h3 id="audioPrice30" class="text-2xl font-extrabold">—</h3><p id="audioCredit30" class="muted text-xs">— kredit</p><button onclick="requestAudioPackage('30d')" class="btn gold rounded-xl w-full py-3 text-xs font-bold">Hubungi Discord</button></div>
+        </div>
+        <p class="muted text-xs">Akun tanpa lisensi aktif tidak dapat menggunakan layanan Audio Convert. Owner website mendapatkan akses tanpa batas.</p>
       </div>
 
     </div>
@@ -696,6 +735,30 @@ button,a,input{ -webkit-tap-highlight-color:transparent }
         </div>
       </div>
 
+
+      <section class="glass-card rounded-3xl p-6 sm:p-8 space-y-5">
+        <div><h2 class="font-bold text-lg">Audio Convert — Pengaturan Admin</h2><p class="muted text-xs mt-1">Atur harga paket, kredit paket, kontak Discord, dan berikan kredit langsung ke username Roblox.</p></div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <input id="audioAdminPrice7" class="field rounded-xl p-3 text-xs" placeholder="Harga 7 hari">
+          <input id="audioAdminPrice30" class="field rounded-xl p-3 text-xs" placeholder="Harga 1 bulan">
+          <input id="audioAdminCredits7" type="number" min="1" class="field rounded-xl p-3 text-xs" placeholder="Kredit paket 7 hari">
+          <input id="audioAdminCredits30" type="number" min="1" class="field rounded-xl p-3 text-xs" placeholder="Kredit paket 1 bulan">
+          <input id="audioAdminDiscord" class="field rounded-xl p-3 text-xs sm:col-span-2" placeholder="Discord URL">
+        </div>
+        <button onclick="saveAudioAdminSettings()" class="btn gold rounded-xl px-5 py-3 text-xs font-bold">Simpan Harga & Pengaturan</button>
+        <div class="border-t border-white/10 pt-5 space-y-3">
+          <h3 class="font-bold text-sm">Berikan Kredit / Akses</h3>
+          <div class="grid sm:grid-cols-3 gap-3">
+            <input id="audioGrantUsername" class="field rounded-xl p-3 text-xs" placeholder="Username Roblox tujuan">
+            <input id="audioGrantCredits" type="number" min="0" class="field rounded-xl p-3 text-xs" placeholder="Jumlah kredit">
+            <input id="audioGrantDays" type="number" min="0" class="field rounded-xl p-3 text-xs" placeholder="Masa aktif (hari)">
+          </div>
+          <button onclick="grantAudioCredits()" class="btn border border-white/20 rounded-xl px-5 py-3 text-xs font-bold">Berikan Kredit / Akses</button>
+        </div>
+        <div><h3 class="font-bold text-sm mb-2">Akun Audio Terbaru</h3><div id="audioAdminUsers" class="overflow-x-auto text-xs muted">Belum dimuat.</div></div>
+        <div><h3 class="font-bold text-sm mb-2">Permintaan Paket</h3><div id="audioAdminRequests" class="overflow-x-auto text-xs muted">Belum dimuat.</div></div>
+      </section>
+
       <!-- Database Lisensi & Logs Sistem -->
       <div class="space-y-8">
         <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
@@ -778,7 +841,7 @@ function showMainTab(tabName) {
 
 function showClientTab(tab) {
   showMainTab('client');
-  for(const t of ['home', 'showcase', 'licenses', 'projects']) {
+  for(const t of ['home', 'showcase', 'licenses', 'projects', 'audio', 'subscription']) {
     const page = $('client-' + t), btn = $('nav-' + t);
     if(page) page.classList.toggle('hidden', t !== tab);
     if(btn) {
@@ -928,6 +991,7 @@ async function showClient(d) {
     }).join('') || '<div class="glass-card rounded-2xl p-8 muted text-xs text-center">Belum ada produk di katalog.</div>';
   }
   showClientTab('home');
+  loadAudioStatus().catch(()=>{});
 }
 
 async function fetchExperienceDetails(placeId, projectMeta = null) {
@@ -1117,6 +1181,7 @@ async function loadAdmin() {
   renderProductFilterDropdown();
   renderLicenses();
   renderAdminProjects();
+  loadAudioAdmin().catch(()=>{});
 }
 
 async function saveProduct() {
@@ -1275,7 +1340,121 @@ async function deleteLicense(id) {
   catch(e) { toast(e.message); }
 }
 
+
+async function loadAudioStatus() {
+  if(!clientUser || !clientKey) return;
+  try {
+    const q=new URLSearchParams({username:clientUser,key:clientKey});
+    const d=await api('/api/audio/status?'+q.toString());
+    $('audioCredits').textContent=d.account.owner?'UNLIMITED':d.account.balance;
+    $('audioDaily').textContent=d.account.owner?'Unlimited':`${Math.max(0,d.account.dailyRemaining)} / 2`;
+    $('audioTotal').textContent=Number(d.account.totalConverted||0).toLocaleString('id-ID');
+    $('audioPrice7').textContent=d.packages.days7.price;
+    $('audioPrice30').textContent=d.packages.days30.price;
+    $('audioCredit7').textContent=d.packages.days7.credits+' kredit · aktif 7 hari';
+    $('audioCredit30').textContent=d.packages.days30.credits+' kredit · aktif 30 hari';
+    $('audioHistory').innerHTML=d.history.map(x=>`<div class="flex flex-wrap justify-between gap-2 p-3 rounded-xl bg-black/30 border border-white/5"><span>${safe(x.source_name)} → <b>${safe(x.output_name)}</b></span><span class="muted">${safe(x.speed)}x · ${safe(x.gain_db)} dB · ${new Date(x.created_at).toLocaleString('id-ID')}</span></div>`).join('')||'<p class="muted text-xs">Belum ada riwayat konversi.</p>';
+  } catch(e) { toast(e.message); }
+}
+
+function updateAudioSpeedLabel() {
+  const value = Number($('audioSpeed')?.value || 1);
+  $('audioSpeedLabel').textContent = value.toFixed(2) + 'x' + (Math.abs(value - 1) < 0.001 ? ' · Normal' : '');
+}
+function setAudioSpeedNormal() {
+  $('audioSpeed').value = '1';
+  updateAudioSpeedLabel();
+}
+
+async function convertAudio() {
+  const file = $('audioFile').files[0];
+  const sourceUrl = ($('audioSourceUrl')?.value || '').trim();
+  if (file && sourceUrl) return toast('Pilih upload file atau URL saja, jangan keduanya.');
+  if (!file && !sourceUrl) return toast('Pilih file atau masukkan direct media URL.');
+  if (file && file.size > 50 * 1024 * 1024) return toast('Ukuran file maksimal 50 MB.');
+
+  const btn = $('audioConvertBtn'), status = $('audioConvertStatus');
+  const form = new FormData();
+  form.append('username', clientUser);
+  form.append('key', clientKey);
+  form.append('speed', $('audioSpeed').value);
+  form.append('gainDb', $('audioGain').value);
+
+  let endpoint = API + '/api/audio/convert';
+  if (file) form.append('audio', file);
+  else {
+    endpoint = API + '/api/audio/convert-url';
+    form.append('sourceUrl', sourceUrl);
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'MEMPROSES MEDIA...';
+  status.textContent = 'Memvalidasi sumber dan mengonversi audio. Mohon tunggu.';
+  try {
+    const r = await fetch(endpoint, { method: 'POST', body: form, credentials: 'same-origin' });
+    if (!r.ok) {
+      let d = {};
+      try { d = await r.json(); } catch {}
+      throw new Error(d.message || 'Konversi gagal.');
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const disposition = r.headers.get('content-disposition') || '';
+    const match = disposition.match(/filename="([^"]+)"/);
+    a.download = match ? match[1] : 'DSS_Audio_Converted.ogg';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    status.textContent = 'Berhasil. File OGG telah diunduh.';
+    $('audioFile').value = '';
+    $('audioSourceUrl').value = '';
+    await loadAudioStatus();
+  } catch (e) {
+    status.textContent = e.message;
+    toast(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'CONVERT & DOWNLOAD OGG';
+  }
+}
+
+async function loadAudioAdmin() {
+  const d=await api('/api/admin/audio');
+  const s=d.settings||{};
+  $('audioAdminPrice7').value=s.price_7d||'';
+  $('audioAdminPrice30').value=s.price_30d||'';
+  $('audioAdminCredits7').value=s.credits_7d||30;
+  $('audioAdminCredits30').value=s.credits_30d||150;
+  $('audioAdminDiscord').value=s.discord_url||'';
+  $('audioAdminUsers').innerHTML=`<table class="w-full min-w-[600px]"><tr><th class="text-left p-2">Username</th><th>Kredit</th><th>Expiry</th><th>Total Convert</th></tr>${d.users.map(u=>`<tr><td class="p-2">${safe(u.username)}</td><td>${u.credit_balance}</td><td>${u.credit_expires_at?fmtDate(u.credit_expires_at):'—'}</td><td>${u.total_converted}</td></tr>`).join('')}</table>`;
+  $('audioAdminRequests').innerHTML=d.requests.map(x=>`<div class="p-2 border-b border-white/5">@${safe(x.username)} · ${safe(x.package_code)} · ${safe(x.status)} · ${fmtDate(x.created_at)}</div>`).join('')||'Belum ada permintaan.';
+}
+async function saveAudioAdminSettings() {
+  try {
+    await api('/api/admin/audio/settings',{method:'PUT',body:JSON.stringify({
+      price_7d:$('audioAdminPrice7').value,price_30d:$('audioAdminPrice30').value,
+      credits_7d:$('audioAdminCredits7').value,credits_30d:$('audioAdminCredits30').value,
+      discord_url:$('audioAdminDiscord').value
+    })});
+    toast('Pengaturan Audio Convert disimpan.'); await loadAudioAdmin();
+  } catch(e){toast(e.message);}
+}
+async function grantAudioCredits() {
+  try {
+    const d=await api('/api/admin/audio/grant',{method:'POST',body:JSON.stringify({
+      username:$('audioGrantUsername').value,credits:$('audioGrantCredits').value,days:$('audioGrantDays').value
+    })});
+    toast(d.message); addLog(d.message); $('audioGrantUsername').value=''; $('audioGrantCredits').value=''; $('audioGrantDays').value='';
+    await loadAudioAdmin();
+  } catch(e){toast(e.message);}
+}
+
+
 window.addEventListener('DOMContentLoaded', async () => {
+  updateAudioSpeedLabel();
   renderAdminProjects();
   try {
     const s = await api('/api/admin-session');
