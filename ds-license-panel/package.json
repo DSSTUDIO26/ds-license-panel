@@ -1,20 +1,14 @@
-
 {
   "name": "dss-studio-license",
   "version": "5.2.0",
   "private": true,
   "description": "DSS STUDIO LICENSE API - Dragon Stell Studio",
   "main": "server.js",
-  "engines": {
-    "node": ">=20"
-  },
-  "scripts": {
-    "start": "node server.js"
-  },
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js" },
   "dependencies": {
     "@vercel/blob": "^2.0.0",
     "express": "^4.21.2",
-    "pg": "^8.13.1",
-    "multer": "^2.0.2"
+    "pg": "^8.13.1"
   }
 }
