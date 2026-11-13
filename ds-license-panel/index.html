@@ -1052,4 +1052,244 @@ function renderAdminProjects() {
   `).join('');
   const manualHtml = customProjects.map(pid => `
     <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-black/40 border border-white/5">
-      <span class="font-mono text-xs t
+      <span class="font-mono text-xs text-gray-200">Manual Place ID: ${safe(pid)}</span>
+      <button type="button" onclick="removeProjectExperience('${safe(pid)}', false)" class="btn text-red-300 hover:text-red-200 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
+    </div>
+  `).join('');
+  list.innerHTML = autoHtml + manualHtml || '<p class="muted text-xs">Belum ada project terverifikasi. Project akan muncul setelah Roblox Loader berhasil memverifikasi lisensi.</p>';
+}
+
+async function downloadOwnedProduct(id, key) {
+  try {
+    const d = await api('/api/file-ticket', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: key, product_id: id, kind: 'download' }) });
+    addLog(`Klien mengunduh produk ID ${id}`);
+    window.location.href = d.url;
+  } catch(e) { toast(e.message); }
+}
+
+async function refreshClient() {
+  try {
+    const d = await api('/api/client-refresh', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: clientKey }) });
+    await showClient(d);
+    toast('Data lisensi diperbarui.');
+  } catch(e) { toast(e.message); logoutClient(); }
+}
+
+function logoutClient() {
+  clientUser = ''; clientKey = ''; clientData = null;
+  sessionStorage.removeItem('dss_user'); sessionStorage.removeItem('dss_key');
+  const loginBox = $('clientLoginBox'), dash = $('clientDashboard');
+  if(loginBox) loginBox.classList.remove('hidden');
+  if(dash) dash.classList.add('hidden');
+  showClientTab('home');
+}
+
+async function openAdmin() {
+  showMainTab('admin');
+  try { await loadAdmin(); }
+  catch(e) {
+    await api('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => {});
+    showClientTab('home');
+    throw e;
+  }
+}
+
+async function logoutAdmin() {
+  await api('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => {});
+  const loginKey = $('loginKey');
+  if(loginKey) loginKey.value = '';
+  addLog('Admin logout.');
+  toast('Sesi Admin ditutup.');
+  showClientTab('home');
+}
+
+async function loadAdmin() {
+  const [p, l, projects] = await Promise.all([
+    api('/api/products'),
+    api('/api/licenses'),
+    api('/api/auto-projects')
+  ]);
+  products = p.products || [];
+  licenses = l.licenses || [];
+  autoProjects = projects.data || [];
+  renderProducts();
+  renderLicenseChoices();
+  renderProductFilterDropdown();
+  renderLicenses();
+  renderAdminProjects();
+}
+
+async function saveProduct() {
+  const editId = $('editProductId').value, name = $('productName').value.trim(), code = $('productCode').value.trim(), price = $('productPrice').value.trim(), description = $('productDescription').value.trim(), image_url = $('productImageUrl').value.trim(), download_url = $('productDownloadUrl').value.trim();
+  if(!name) return toast('Nama produk wajib diisi.');
+  
+  const btn = $('saveProductBtn');
+  if(btn) { btn.disabled = true; btn.textContent = 'MENYIMPAN...'; }
+
+  try {
+    const payload = { product_name: name, product_code: code, price: price, description: description, image_url: image_url, download_url: download_url };
+    if(editId) {
+      await api('/api/products/' + editId, { method: 'PUT', body: JSON.stringify(payload) });
+      addLog(`Produk ${name} diperbarui.`);
+      toast('Produk berhasil diperbarui.');
+    } else {
+      await api('/api/products', { method: 'POST', body: JSON.stringify(payload) });
+      addLog(`Produk baru ${name} ditambahkan.`);
+      toast('Produk berhasil ditambahkan.');
+    }
+    resetProductForm();
+    await loadAdmin();
+  } catch(e) {
+    toast('Gagal: ' + e.message);
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = editId ? 'Simpan Perubahan' : '+ Tambah Produk'; }
+  }
+}
+
+function editProduct(id) {
+  const p = products.find(x => String(x.id) === String(id));
+  if(!p) return;
+  $('editProductId').value = p.id;
+  $('productName').value = p.product_name || '';
+  $('productCode').value = p.product_code || '';
+  $('productPrice').value = p.price || '';
+  $('productDescription').value = p.description || '';
+  $('productImageUrl').value = p.image_url || '';
+  $('productDownloadUrl').value = p.download_url || '';
+  $('formTitle').textContent = 'Edit Produk: ' + p.product_name;
+  $('saveProductBtn').textContent = 'Simpan Perubahan';
+  $('cancelEditBtn').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetProductForm() {
+  $('editProductId').value = '';
+  $('productName').value = '';
+  $('productCode').value = '';
+  $('productPrice').value = '';
+  $('productDescription').value = '';
+  $('productImageUrl').value = '';
+  $('productDownloadUrl').value = '';
+  $('formTitle').textContent = 'Tambah Produk Baru';
+  $('saveProductBtn').textContent = '+ Tambah Produk';
+  $('cancelEditBtn').classList.add('hidden');
+}
+
+function renderProducts() {
+  const catalog = $('productCatalog');
+  if(!catalog) return;
+  catalog.innerHTML = products.map(p => `
+    <div class="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2 hover:border-white/15 transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <b class="text-xs font-bold text-white block truncate">${safe(p.product_name)}</b>
+            ${p.price ? `<span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">${safe(p.price)}</span>` : ''}
+          </div>
+          <p class="muted text-[10px] mt-1">${safe(p.product_code)} · ${p.image_url ? '<span class="text-emerald-400 font-semibold">Gambar OK</span>' : '<span class="text-amber-400">Tanpa Gambar</span>'} · ${p.download_url ? '<span class="text-emerald-400 font-semibold">File OK</span>' : '<span class="text-amber-400">Tanpa File</span>'}</p>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border border-amber-500/30 text-amber-200 bg-amber-500/10 hover:bg-amber-500/25 cursor-pointer" onclick="editProduct(${p.id})">Edit</button>
+          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border ${p.is_active ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-white/10 muted'} cursor-pointer" onclick="toggleProduct(${p.id},${!p.is_active})">${p.is_active ? 'Aktif' : 'Nonaktif'}</button>
+          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border border-red-500/30 text-red-300 bg-red-500/10 hover:bg-red-500/20 cursor-pointer" onclick="deleteProduct(${p.id})">Delete</button>
+        </div>
+      </div>
+    </div>`).join('') || '<p class="muted text-xs text-center py-2">Katalog produk masih kosong.</p>';
+}
+
+function renderLicenseChoices() {
+  const choices = $('licenseProductChoices');
+  if(!choices) return;
+  choices.innerHTML = products.filter(p => p.is_active).map(p => `<label class="checkrow flex items-center gap-3 rounded-2xl p-3.5 cursor-pointer"><input type="radio" name="licenseProduct" value="${p.id}" class="accent-amber-400"><span><b class="block text-xs font-bold text-white">${safe(p.product_name)}</b><span class="muted text-[10px]">${safe(p.product_code)}</span></span></label>`).join('') || '<p class="muted text-xs">Tambahkan dan aktifkan produk terlebih dahulu.</p>';
+}
+
+function renderProductFilterDropdown() {
+  const select = $('productFilterSelect');
+  if(!select) return;
+  const currentVal = select.value;
+  select.innerHTML = `<option value="all">Semua Produk (All)</option>` + products.map(p => `<option value="${p.id}">${safe(p.product_name)} (${safe(p.product_code)})</option>`).join('');
+  select.value = currentVal;
+}
+
+async function toggleProduct(id, active) {
+  try { await api('/api/products/' + id, { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); await loadAdmin(); toast('Status produk diperbarui.'); }
+  catch(e) { toast(e.message); }
+}
+
+async function deleteProduct(id) {
+  const p = products.find(x => String(x.id) === String(id));
+  if(!confirm(`Hapus produk “${p?.product_name || id}”?`)) return;
+  try { await api('/api/products/' + id, { method: 'DELETE' }); addLog(`Produk ID ${id} dihapus.`); await loadAdmin(); toast('Produk dihapus.'); }
+  catch(e) { toast(e.message); }
+}
+
+async function createLicense() {
+  const selected = document.querySelector('input[name="licenseProduct"]:checked');
+  if(!selected) return toast('Pilih tepat satu produk.');
+  const keyInput = $('newKey'), expInput = $('newExpires'), ownerInput = $('newOwner'), groupInput = $('newGroup');
+  const body = { license_key: keyInput ? keyInput.value.trim() : '', product_ids: [Number(selected.value)], expires_at: expInput ? expInput.value || null : null };
+  if(mode === 'personal') body.owner_name = ownerInput ? ownerInput.value.trim() : '';
+  else body.group_id = groupInput ? groupInput.value.trim() : '';
+  try {
+    const d = await api('/api/licenses/create', { method: 'POST', body: JSON.stringify(body) });
+    addLog(`Lisensi baru dibuat untuk produk ID ${selected.value}`);
+    toast(d.message || 'Lisensi dibuat.');
+    if(keyInput) keyInput.value = '';
+    if(expInput) expInput.value = '';
+    if(ownerInput) ownerInput.value = '';
+    if(groupInput) groupInput.value = '';
+    document.querySelectorAll('input[name="licenseProduct"]').forEach(x => x.checked = false);
+    await loadAdmin();
+  } catch(e) { toast(e.message); }
+}
+
+function renderLicenses() {
+  const searchInput = $('licenseSearch'), select = $('productFilterSelect'), rowsContainer = $('licenseRows');
+  if(!rowsContainer) return;
+  const q = (searchInput ? searchInput.value : '').toLowerCase();
+  const selectedProdId = select ? select.value : 'all';
+
+  const filtered = licenses.filter(l => {
+    const pList = l.products || [];
+    const matchProd = selectedProdId === 'all' || pList.some(p => String(p.id) === String(selectedProdId));
+    if(!matchProd) return false;
+    const searchString = JSON.stringify([l.license_key, l.owner_name, l.owner_display_name, l.group_id, l.owner_user_id, ...pList.map(p => p.product_name)]).toLowerCase();
+    return searchString.includes(q);
+  });
+
+  rowsContainer.innerHTML = filtered.map(l => {
+    const p = (l.products || [])[0], active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date());
+    const owner = l.owner_display_name || l.owner_name || 'Pemilik tidak terdeteksi', avatar = l.owner_avatar_url || '';
+    return `<tr class="hover:bg-white/[0.03] transition-colors"><td class="py-4 pr-4"><div class="font-bold text-white">${safe(p?.product_name||l.product_name||'-')}</div><div class="muted mt-0.5 text-[11px]">${safe(p?.product_code||'-')}</div></td><td class="py-4 pr-4"><div class="flex items-center gap-3 min-w-0"><img src="${safe(avatar)}" alt="" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" onerror="this.style.display='none'"><div class="min-w-0"><div class="font-semibold text-white break-words">${safe(owner)}</div><div class="muted mt-0.5 text-[10px] font-mono break-all">${l.group_id?'Grup ID: '+safe(l.group_id):'User ID: '+safe(l.owner_user_id||'-')}</div></div></div></td><td class="py-4 pr-4 font-mono text-[11px] text-amber-200/90 break-all">${safe(l.license_key)}</td><td class="py-4 pr-4"><span class="font-semibold text-[11px] px-3 py-1 rounded-full ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'Aktif':'Expired'}</span></td><td class="py-4 pr-4 text-gray-300 font-medium">${fmtDate(l.expires_at)}</td><td class="py-4"><div class="flex gap-2"><button type="button" onclick="toggleLicense(${l.id},${!l.is_active})" class="btn border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-white/5 cursor-pointer">${l.is_active?'Nonaktifkan':'Aktifkan'}</button><button type="button" onclick="deleteLicense(${l.id})" class="btn text-red-300 border border-red-500/20 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-red-500/5 cursor-pointer">Delete</button></div></td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="py-8 muted text-center font-medium">Tidak ada data lisensi ditemukan untuk produk ini.</td></tr>';
+}
+
+async function toggleLicense(id, active) {
+  try { await api('/api/licenses/' + id + '/status', { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); addLog(`Status lisensi ID ${id} diubah ke ${active}`); await loadAdmin(); toast('Status lisensi diperbarui.'); }
+  catch(e) { toast(e.message); }
+}
+
+async function deleteLicense(id) {
+  if(!confirm('Hapus lisensi ini secara permanen?')) return;
+  try { await api('/api/licenses/' + id, { method: 'DELETE' }); addLog(`Lisensi ID ${id} dihapus.`); await loadAdmin(); toast('Lisensi dihapus.'); }
+  catch(e) { toast(e.message); }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  renderAdminProjects();
+  try {
+    const s = await api('/api/admin-session');
+    if(s.authenticated) { await openAdmin(); return; }
+  } catch {}
+  clientUser = sessionStorage.getItem('dss_user') || '';
+  clientKey = sessionStorage.getItem('dss_key') || '';
+  if(clientUser && clientKey) {
+    try {
+      const d = await api('/api/client-login', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: clientKey }) });
+      await showClient(d);
+    } catch { logoutClient(); }
+  }
+});
+</script>
+</body>
+</html>
