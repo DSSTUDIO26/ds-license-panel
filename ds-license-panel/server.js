@@ -2633,12 +2633,11 @@ app.post(
 
 
 // ============================================================
-// DSS AUDIO CONVERT — AUTHORIZED FILE + DIRECT MEDIA URL CONVERSION
-// Accepts user uploads and HTTPS direct-media files from admin-allowlisted
-// domains. Platform webpage URLs (including YouTube/TikTok) are deliberately
-// rejected: this service does not extract streams or bypass access controls.
-// Requires FFmpeg + multer.
+// DSS AUDIO CONVERT — FILE + DIRECT MEDIA + YOUTUBE/TIKTOK TO OGG
+// Maksimal durasi media: 7 menit (420 detik).
 // ============================================================
+
+const AUDIO_MAX_DURATION_SECONDS = 420; // 7 menit
 
 const audioUpload = multer({
     storage: multer.memoryStorage(),
@@ -2717,6 +2716,156 @@ const AUDIO_PLATFORM_HOSTS = new Set([
     'tiktok.com','www.tiktok.com','m.tiktok.com','vm.tiktok.com','vt.tiktok.com'
 ]);
 
+function getPlatformPageType(rawUrl) {
+    try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol !== 'https:') return null;
+        const host = parsed.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+        if (host === 'youtube.com' || host === 'youtu.be' || host.endsWith('.youtube.com') || host === 'youtube-nocookie.com' || host.endsWith('.youtube-nocookie.com')) {
+            return 'YouTube';
+        }
+        if (host === 'tiktok.com' || host.endsWith('.tiktok.com')) {
+            return 'TikTok';
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
+async function fetchPlatformPageMetadata(pageUrl) {
+    const platform = getPlatformPageType(pageUrl);
+    if (!platform) throw new Error('URL bukan halaman YouTube atau TikTok yang valid.');
+
+    // Ambil metadata judul melalui oEmbed publik atau yt-dlp --dump-single-json
+    let title = '';
+    let duration = 0;
+
+    try {
+        const oembedEndpoint = platform === 'YouTube'
+            ? `https://www.youtube.com/oembed?url=${encodeURIComponent(pageUrl)}&format=json`
+            : `https://www.tiktok.com/oembed?url=${encodeURIComponent(pageUrl)}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 7000);
+        try {
+            const resp = await fetch(oembedEndpoint, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DSS-AudioConvert/1.0)' },
+                signal: controller.signal
+            });
+            if (resp.ok) {
+                const json = await resp.json();
+                if (json?.title) title = String(json.title).trim();
+            }
+        } finally {
+            clearTimeout(timer);
+        }
+    } catch {}
+
+    // Jika yt-dlp tersedia, verifikasi durasi & ambil judul akurat
+    try {
+        const info = await new Promise((resolve, reject) => {
+            const ytdlp = spawn(process.env.YTDLP_PATH || 'yt-dlp', [
+                '--no-playlist',
+                '--skip-download',
+                '--dump-single-json',
+                '--no-warnings',
+                pageUrl
+            ], { stdio: ['ignore', 'pipe', 'pipe'] });
+            let out = '';
+            let err = '';
+            const timer = setTimeout(() => { ytdlp.kill('SIGKILL'); reject(new Error('Timeout membaca info media.')); }, 15000);
+            ytdlp.stdout.on('data', d => { if (out.length < 250000) out += d.toString(); });
+            ytdlp.stderr.on('data', d => { if (err.length < 4000) err += d.toString(); });
+            ytdlp.on('error', e => { clearTimeout(timer); reject(e); });
+            ytdlp.on('close', code => {
+                clearTimeout(timer);
+                if (code === 0 && out) {
+                    try { resolve(JSON.parse(out)); } catch (e) { reject(e); }
+                } else {
+                    reject(new Error(err || 'yt-dlp gagal membaca metadata.'));
+                }
+            });
+        });
+
+        if (info?.title) title = String(info.title).trim();
+        if (Number.isFinite(Number(info?.duration))) duration = Number(info.duration);
+    } catch {}
+
+    if (duration > AUDIO_MAX_DURATION_SECONDS) {
+        const mins = Math.ceil(duration / 60);
+        throw new Error(`Durasi media sekitar ${mins} menit. Maksimal yang dapat dikonversi adalah 7 menit.`);
+    }
+
+    return {
+        platform,
+        title: title || `${platform} Audio`,
+        duration
+    };
+}
+
+function downloadPlatformAudioToTemp(pageUrl, tempDir) {
+    return new Promise((resolve, reject) => {
+        const outTemplate = path.join(tempDir, 'platform_source.%(ext)s');
+        const ytdlp = spawn(process.env.YTDLP_PATH || 'yt-dlp', [
+            '--no-playlist',
+            '--no-warnings',
+            '--max-filesize', '50M',
+            '--match-filter', `duration <= ${AUDIO_MAX_DURATION_SECONDS}`,
+            '-f', 'bestaudio/best',
+            '-o', outTemplate,
+            pageUrl
+        ], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+        let err = '';
+        const timer = setTimeout(() => {
+            ytdlp.kill('SIGKILL');
+            reject(new Error('Proses unduh dari link halaman melewati batas waktu 90 detik.'));
+        }, 90000);
+
+        ytdlp.stderr.on('data', d => { if (err.length < 4000) err += d.toString(); });
+        ytdlp.on('error', e => {
+            clearTimeout(timer);
+            reject(new Error('Engine ekstraksi tautan (yt-dlp) belum terpasang di server: ' + e.message));
+        });
+        ytdlp.on('close', async code => {
+            clearTimeout(timer);
+            try {
+                const files = await fs.promises.readdir(tempDir);
+                const mediaFile = files.find(f => f.startsWith('platform_source.') && !f.endsWith('.part'));
+                if (code !== 0 || !mediaFile) {
+                    if (err.includes('does not pass filter') || err.includes('duration')) {
+                        return reject(new Error('Durasi video melebihi batas maksimal 7 menit.'));
+                    }
+                    return reject(new Error(err || 'Gagal mengunduh audio dari link halaman tersebut.'));
+                }
+                resolve(path.join(tempDir, mediaFile));
+            } catch (fsErr) {
+                reject(fsErr);
+            }
+        });
+    });
+}
+
+function getMediaDurationSeconds(filePath) {
+    return new Promise(resolve => {
+        const ffprobe = spawn(process.env.FFPROBE_PATH || 'ffprobe', [
+            '-v', 'error',
+            '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1',
+            filePath
+        ], { stdio: ['ignore', 'pipe', 'ignore'] });
+        let out = '';
+        const timer = setTimeout(() => { ffprobe.kill('SIGKILL'); resolve(0); }, 8000);
+        ffprobe.stdout.on('data', d => { out += d.toString(); });
+        ffprobe.on('error', () => { clearTimeout(timer); resolve(0); });
+        ffprobe.on('close', () => {
+            clearTimeout(timer);
+            const sec = parseFloat(out.trim());
+            resolve(Number.isFinite(sec) ? sec : 0);
+        });
+    });
+}
+
 function isPublicAddress(address) {
     const family = net.isIP(address);
     if (family === 4) {
@@ -2772,7 +2921,7 @@ function requestAllowedMedia(url, redirects = 0) {
             if (parsed.protocol !== 'https:' || parsed.username || parsed.password ||
                 (parsed.port && parsed.port !== '443') ||
                 !allowedAudioSourceHost(parsed.hostname)) {
-                throw new Error('URL harus HTTPS dan domain harus masuk allowlist admin. Link halaman YouTube/TikTok tidak didukung.');
+                throw new Error('URL harus HTTPS dari domain yang diizinkan admin, atau gunakan link halaman YouTube / TikTok.');
             }
             if (redirects > 2) throw new Error('Terlalu banyak pengalihan URL.');
             const record = await resolvePublicHost(parsed.hostname);
@@ -2837,18 +2986,46 @@ function requestAllowedMedia(url, redirects = 0) {
     });
 }
 
+// Endpoint pratinjau judul halaman YouTube / TikTok
+app.post('/api/audio/url-info',
+    rateLimit({ windowMs: 60000, max: 20 }),
+    async (req, res) => {
+        try {
+            const username = cleanText(req.body?.username, 64);
+            const key = cleanText(req.body?.key, 255);
+            const sourceUrl = String(req.body?.sourceUrl || '').trim();
+            if (!sourceUrl || sourceUrl.length > 2048) {
+                return sendError(res, 400, 'Tautan tidak valid.');
+            }
+            await verifyAudioUser(username, key);
+            const meta = await fetchPlatformPageMetadata(sourceUrl);
+            return res.json({
+                success: true,
+                platform: meta.platform,
+                title: meta.title,
+                duration: meta.duration
+            });
+        } catch (error) {
+            return sendError(res, error.statusCode || 400, error.message || 'Gagal membaca judul halaman.');
+        }
+    }
+);
+
 async function handleAudioConversion(req, res) {
-    let tempDir;
+    let tempDir = req._dssTempDir || null;
     try {
         const username = cleanText(req.body?.username, 64);
         const key = cleanText(req.body?.key, 255);
-        if (!req.file?.buffer?.length) return sendError(res, 400, 'Pilih file atau direct media URL terlebih dahulu.');
+        const hasBuffer = Boolean(req.file?.buffer?.length);
+        const hasFilePath = Boolean(req.file?.path);
+        if (!hasBuffer && !hasFilePath) return sendError(res, 400, 'Pilih file atau masukkan tautan terlebih dahulu.');
+
         const user = await verifyAudioUser(username, key);
         const speed = Number(req.body?.speed ?? 1);
         const gain = Number(req.body?.gainDb ?? 0);
         if (!Number.isFinite(speed) || speed < 0.5 || speed > 3) return sendError(res, 400, 'Speed harus antara 0.5x sampai 3.0x.');
         if (!Number.isFinite(gain) || gain < -24 || gain > 12) return sendError(res, 400, 'Amplifier harus antara -24 dB sampai +12 dB.');
-        if (req.file.buffer.length > AUDIO_MAX_BYTES) return sendError(res, 413, 'Ukuran file maksimal 50 MB.');
+        if (hasBuffer && req.file.buffer.length > AUDIO_MAX_BYTES) return sendError(res, 413, 'Ukuran file maksimal 50 MB.');
 
         const account = await getAudioAccount(user);
         const hasPaidCredit = account.balance > 0 && (!account.expiresAt || new Date(account.expiresAt) > new Date());
@@ -2858,12 +3035,27 @@ async function handleAudioConversion(req, res) {
         }
 
         const originalName = path.basename(String(req.file.originalname || 'audio.mp4')).slice(0, 180);
-        const ext = path.extname(originalName).toLowerCase();
-        if (!AUDIO_ALLOWED_EXTENSIONS.has(ext)) return sendError(res, 400, 'Format media tidak didukung.');
-        tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'dss-audio-'));
-        const inputPath = path.join(tempDir, 'input' + ext);
+        const displayTitle = cleanText(req.file.mediaTitle || path.basename(originalName, path.extname(originalName)), 200);
+        const ext = path.extname(originalName).toLowerCase() || path.extname(String(req.file.path || '')).toLowerCase() || '.mp4';
+
+        if (!tempDir) {
+            tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'dss-audio-'));
+        }
+
+        let inputPath = req.file.path;
+        if (!inputPath) {
+            if (!AUDIO_ALLOWED_EXTENSIONS.has(ext)) return sendError(res, 400, 'Format media tidak didukung.');
+            inputPath = path.join(tempDir, 'input' + ext);
+            await fs.promises.writeFile(inputPath, req.file.buffer, { mode: 0o600 });
+        }
+
+        // Validasi durasi maksimal 7 menit (420 detik)
+        const durationSec = await getMediaDurationSeconds(inputPath);
+        if (durationSec > AUDIO_MAX_DURATION_SECONDS + 1) {
+            return sendError(res, 400, 'Durasi audio/video melebihi batas maksimal 7 menit (420 detik).');
+        }
+
         const outputPath = path.join(tempDir, 'output.ogg');
-        await fs.promises.writeFile(inputPath, req.file.buffer, { mode: 0o600 });
 
         const atempo = [];
         let remaining = speed;
@@ -2875,7 +3067,7 @@ async function handleAudioConversion(req, res) {
         await new Promise((resolve, reject) => {
             const ff = spawn(process.env.FFMPEG_PATH || 'ffmpeg', [
                 '-nostdin','-hide_banner','-loglevel','error','-y',
-                '-i',inputPath,'-t','600','-vn','-map_metadata','-1',
+                '-i',inputPath,'-t',String(AUDIO_MAX_DURATION_SECONDS),'-vn','-map_metadata','-1',
                 '-threads','2','-af',filter,'-c:a','libvorbis','-q:a','5',outputPath
             ], { stdio: ['ignore','ignore','pipe'] });
             let err = '';
@@ -2894,228 +3086,233 @@ async function handleAudioConversion(req, res) {
 
         const output = await fs.promises.readFile(outputPath);
         if (!output.length || output.length > 100 * 1024 * 1024) throw new Error('Hasil konversi kosong atau melebihi batas ukuran.');
-        const safeBase = path.basename(originalName, ext).replace(/[^a-z0-9_-]/gi, '_').slice(0, 80) || 'audio';
-        const outputName = safeBase + '.ogg';
+        const safeBase = (displayTitle || path.basename(originalName, ext)).replace(/[^a-z0-9 _-]/gi, '').trim().replace(/\s+/g, '_').slice(0, 80) || 'audio';
+        const outName = `${safeBase}.ogg`;
 
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            const latest = await client.query(`
-                SELECT credit_balance,credit_expires_at,daily_date,daily_used,
-                       (daily_date = CURRENT_DATE) AS daily_current
-                FROM audio_accounts WHERE user_id=$1 FOR UPDATE
-            `, [user.userId]);
-            const a = latest.rows[0];
-            const creditValid = Number(a.credit_balance) > 0 && (!a.credit_expires_at || new Date(a.credit_expires_at) > new Date());
-            const dailyCount = a.daily_current ? Number(a.daily_used || 0) : 0;
-            if (!account.owner) {
-                if (creditValid) {
-                    await client.query(`UPDATE audio_accounts SET credit_balance=GREATEST(0,credit_balance-1),updated_at=NOW() WHERE user_id=$1`, [user.userId]);
-                } else if (dailyCount < 2) {
-                    await client.query(`UPDATE audio_accounts SET daily_date=CURRENT_DATE,daily_used=$2,updated_at=NOW() WHERE user_id=$1`, [user.userId, dailyCount + 1]);
-                } else {
-                    throw new Error('Kredit tidak tersedia. Muat ulang status akun lalu coba lagi.');
-                }
+        if (!account.owner) {
+            if (hasPaidCredit) {
+                await pool.query(`
+                    UPDATE audio_accounts
+                    SET credit_balance=GREATEST(0,credit_balance-1), total_converted=total_converted+1, updated_at=NOW()
+                    WHERE user_id=$1
+                `, [user.userId]);
+            } else {
+                await pool.query(`
+                    UPDATE audio_accounts
+                    SET daily_date=CURRENT_DATE,
+                        daily_used=CASE WHEN daily_date=CURRENT_DATE THEN daily_used+1 ELSE 1 END,
+                        total_converted=total_converted+1, updated_at=NOW()
+                    WHERE user_id=$1
+                `, [user.userId]);
             }
-            await client.query(`UPDATE audio_accounts SET total_converted=total_converted+1,updated_at=NOW() WHERE user_id=$1`, [user.userId]);
-            await client.query(`
-                INSERT INTO audio_jobs(user_id,username,source_name,output_name,speed,gain_db,output_bytes)
-                VALUES($1,$2,$3,$4,$5,$6,$7)
-            `, [user.userId, user.exactUsername, originalName, outputName, speed, gain, output.length]);
-            await client.query('COMMIT');
-        } catch (error) {
-            await client.query('ROLLBACK').catch(() => {});
-            throw error;
-        } finally {
-            client.release();
+        } else {
+            await pool.query(`
+                UPDATE audio_accounts SET total_converted=total_converted+1, updated_at=NOW() WHERE user_id=$1
+            `, [user.userId]);
         }
 
+        await pool.query(`
+            INSERT INTO audio_jobs(user_id,username,source_name,output_name,speed,gain_db,output_bytes)
+            VALUES($1,$2,$3,$4,$5,$6,$7)
+        `, [user.userId, user.exactUsername, displayTitle || originalName, outName, speed, gain, output.length]);
+
         res.setHeader('Content-Type', 'audio/ogg');
-        res.setHeader('Content-Disposition', `attachment; filename="${outputName}"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${outName}"`);
         res.setHeader('X-DSS-Converted', '1');
+        res.setHeader('X-DSS-Media-Title', encodeURIComponent(displayTitle || safeBase));
         return res.send(output);
     } catch (error) {
         console.error('[AUDIO CONVERT]', error.message);
-        return sendError(res, error.statusCode || 400, error.message || 'Konversi gagal. Pastikan FFmpeg tersedia.');
+        return sendError(res, error.statusCode || 500, error.message || 'Konversi audio gagal.');
     } finally {
         if (tempDir) await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => {});
     }
 }
 
 app.post('/api/audio/convert',
-    rateLimit({ windowMs: 60000, max: 10 }),
-    (req, res, next) => audioUpload.single('audio')(req, res, error => {
-        if (error) return sendError(res, 400, error.message || 'Upload gagal.');
-        next();
-    }),
+    rateLimit({windowMs:60000,max:8}),
+    audioUpload.single('audio'),
     handleAudioConversion
 );
 
 app.post('/api/audio/convert-url',
-    rateLimit({ windowMs: 60000, max: 5 }),
-    (req, res, next) => audioUpload.none()(req, res, error => {
-        if (error) return sendError(res, 400, error.message || 'Form URL tidak valid.');
-        next();
-    }),
-    async (req, res) => {
+    rateLimit({windowMs:60000,max:8}),
+    multer().none(),
+    async (req, res, next) => {
         try {
-            const sourceUrl = String(req.body?.sourceUrl || '').trim();
-            if (!sourceUrl || sourceUrl.length > 2048) return sendError(res, 400, 'Tautan HTTPS wajib diisi dan maksimal 2048 karakter.');
-            let submittedUrl;
-            try { submittedUrl = new URL(sourceUrl); }
-            catch { return sendError(res, 400, 'Format tautan tidak valid. Masukkan URL HTTPS yang benar.'); }
-            const submittedHost = submittedUrl.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
-            const isPlatformPage = submittedUrl.protocol === 'https:' && (
-                submittedHost === 'youtube.com' || submittedHost === 'youtu.be' ||
-                submittedHost.endsWith('.youtube.com') || submittedHost === 'youtube-nocookie.com' ||
-                submittedHost.endsWith('.youtube-nocookie.com') || submittedHost === 'tiktok.com' ||
-                submittedHost.endsWith('.tiktok.com')
-            );
-            if (isPlatformPage) {
-                return res.status(409).json({
-                    success: false,
-                    code: 'PLATFORM_DOWNLOAD_REQUIRED',
-                    message: 'Link ini adalah halaman platform, bukan file media langsung. DSS hanya menerima file milik Anda atau tautan HTTPS langsung ke file audio/video dari domain yang telah diizinkan admin. Gunakan fitur unduh resmi yang disediakan pemilik/platform bila tersedia, lalu upload file tersebut ke DSS. DSS tidak mengambil stream tersembunyi atau melewati DRM maupun pembatasan unduhan.'
-                });
+            const username = cleanText(req.body?.username, 64);
+            const key = cleanText(req.body?.key, 255);
+            const rawUrl = String(req.body?.sourceUrl || '').trim();
+            if (!rawUrl || rawUrl.length > 2048) return sendError(res, 400, 'Tautan media tidak valid.');
+
+            await verifyAudioUser(username, key);
+
+            const platform = getPlatformPageType(rawUrl);
+            if (platform) {
+                const meta = await fetchPlatformPageMetadata(rawUrl);
+                const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'dss-audio-'));
+                req._dssTempDir = tempDir;
+                const downloadedPath = await downloadPlatformAudioToTemp(rawUrl, tempDir);
+                req.file = {
+                    path: downloadedPath,
+                    originalname: `${meta.title}${path.extname(downloadedPath) || '.webm'}`,
+                    mediaTitle: meta.title
+                };
+                return next();
             }
-            const downloaded = await requestAllowedMedia(sourceUrl);
+
+            const downloaded = await requestAllowedMedia(rawUrl);
             const parsed = new URL(downloaded.finalUrl);
-            let ext = path.extname(parsed.pathname).toLowerCase();
-            const allowedVideoExt = new Set(['.mp4','.m4v','.webm','.mov','.mkv']);
+            let ext = path.extname(parsed.pathname || '').toLowerCase();
             if (!AUDIO_ALLOWED_EXTENSIONS.has(ext)) {
-                if (downloaded.contentType.startsWith('audio/')) {
-                    const map = { 'audio/mpeg':'.mp3','audio/wav':'.wav','audio/ogg':'.ogg','audio/mp4':'.m4a','audio/aac':'.aac','audio/flac':'.flac','audio/opus':'.opus' };
-                    ext = map[downloaded.contentType] || '.mp3';
-                } else if (downloaded.contentType.startsWith('video/')) {
-                    ext = downloaded.contentType.includes('webm') ? '.webm' : '.mp4';
-                } else {
-                    return sendError(res, 400, 'Ekstensi atau format media dari URL tidak dikenali.');
-                }
+                const typeMap = {
+                    'audio/mpeg': '.mp3', 'audio/mp3': '.mp3',
+                    'audio/wav': '.wav', 'audio/x-wav': '.wav',
+                    'audio/ogg': '.ogg', 'audio/opus': '.opus',
+                    'audio/mp4': '.m4a', 'audio/x-m4a': '.m4a',
+                    'audio/aac': '.aac', 'audio/flac': '.flac',
+                    'video/mp4': '.mp4', 'video/webm': '.webm',
+                    'video/quicktime': '.mov', 'video/x-matroska': '.mkv'
+                };
+                ext = typeMap[downloaded.contentType] || '';
             }
-            if (!AUDIO_ALLOWED_EXTENSIONS.has(ext)) return sendError(res, 400, 'Ekstensi media tidak didukung.');
-            const baseName = path.basename(parsed.pathname, path.extname(parsed.pathname))
-                .replace(/[^a-z0-9_-]/gi, '_').slice(0, 80) || 'remote_media';
-            req.file = { buffer: downloaded.buffer, originalname: baseName + ext };
-            return handleAudioConversion(req, res);
+            if (!AUDIO_ALLOWED_EXTENSIONS.has(ext)) {
+                return sendError(res, 400, 'Tipe media dari URL tidak didukung.');
+            }
+            const base = path.basename(parsed.pathname || '', path.extname(parsed.pathname || '')) || 'url_media';
+            req.file = {
+                buffer: downloaded.buffer,
+                originalname: `${base.slice(0, 120)}${ext}`,
+                mediaTitle: base.slice(0, 120)
+            };
+            return next();
         } catch (error) {
-            console.error('[AUDIO URL]', error.message);
-            return sendError(res, 400, error.message || 'Gagal mengambil direct media URL.');
+            if (req._dssTempDir) {
+                await fs.promises.rm(req._dssTempDir, { recursive: true, force: true }).catch(() => {});
+            }
+            return sendError(res, error.statusCode || 400, error.message || 'Gagal mengunduh media dari tautan.');
         }
-    }
+    },
+    handleAudioConversion
 );
 
-app.post('/api/audio/request-package', rateLimit({windowMs:60000,max:5}), async(req,res)=>{
+app.post('/api/audio/request-package', rateLimit({windowMs:60000,max:10}), async (req,res) => {
     try {
-        const user=await verifyAudioUser(cleanText(req.body?.username,64),cleanText(req.body?.key,255));
-        const code=req.body?.package_code;
-        if(!['7d','30d'].includes(code)) return sendError(res,400,'Paket tidak valid.');
-        await pool.query(`INSERT INTO audio_subscription_requests(user_id,username,package_code) VALUES($1,$2,$3)`,[user.userId,user.exactUsername,code]);
-        const {rows}=await pool.query(`SELECT setting_value FROM audio_settings WHERE setting_key='discord_url'`);
-        return res.json({success:true,discordUrl:rows[0]?.setting_value||'https://discord.gg/XkuKuv23bH',message:'Permintaan paket dicatat. Hubungi Discord untuk pembayaran dan aktivasi.'});
-    } catch(e) { return sendError(res,e.statusCode||401,e.message||'Permintaan gagal.'); }
-});
-
-app.get('/api/admin/audio', verifyAdmin, async(_req,res)=>{
-    const settings=await pool.query(`SELECT setting_key,setting_value FROM audio_settings`);
-    const users=await pool.query(`SELECT user_id,username,credit_balance,credit_expires_at,daily_used,total_converted FROM audio_accounts ORDER BY updated_at DESC LIMIT 100`);
-    const requests=await pool.query(`SELECT * FROM audio_subscription_requests ORDER BY created_at DESC LIMIT 50`);
-    return res.json({success:true,settings:Object.fromEntries(settings.rows.map(x=>[x.setting_key,x.setting_value])),users:users.rows,requests:requests.rows});
-});
-
-app.put('/api/admin/audio/settings', verifyAdmin, async(req,res)=>{
-    const fields={price_7d:cleanText(req.body?.price_7d,64),price_30d:cleanText(req.body?.price_30d,64),
-        credits_7d:String(Math.max(1,Math.min(100000,Number(req.body?.credits_7d)||30))),
-        credits_30d:String(Math.max(1,Math.min(100000,Number(req.body?.credits_30d)||150))),
-        discord_url:validHttpUrl(req.body?.discord_url)};
-    if(!fields.price_7d || !fields.price_30d || !fields.discord_url) return sendError(res,400,'Harga dan URL Discord wajib valid.');
-    for(const [k,v] of Object.entries(fields)) await pool.query(`INSERT INTO audio_settings(setting_key,setting_value) VALUES($1,$2) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,updated_at=NOW()`,[k,v]);
-    return res.json({success:true,message:'Pengaturan Audio Convert disimpan.'});
-});
-
-app.post('/api/admin/audio/grant', verifyAdmin, async(req,res)=>{
-    try {
-        const username=cleanText(req.body?.username,64);
-        const credits=Math.max(0,Math.min(100000,Math.floor(Number(req.body?.credits)||0)));
-        const days=Math.max(0,Math.min(3650,Math.floor(Number(req.body?.days)||0)));
-        if(!username || (!credits && !days)) return sendError(res,400,'Username dan kredit atau masa aktif wajib diisi.');
-        const user=await getRobloxUserInfo(username);
-        if(!user) return sendError(res,404,'Username Roblox tidak ditemukan.');
+        const username = cleanText(req.body?.username,64);
+        const key = cleanText(req.body?.key,255);
+        const code = req.body?.package_code === '30d' ? '30d' : '7d';
+        const user = await verifyAudioUser(username,key);
         await pool.query(`
-            INSERT INTO audio_accounts(user_id,username,credit_balance,credit_expires_at)
-            VALUES($1,$2,$3,CASE WHEN $4>0 THEN NOW()+($4||' days')::interval ELSE NULL END)
-            ON CONFLICT(user_id) DO UPDATE SET
-                username=EXCLUDED.username,
-                credit_balance=audio_accounts.credit_balance+EXCLUDED.credit_balance,
-                credit_expires_at=CASE WHEN $4>0 THEN GREATEST(COALESCE(audio_accounts.credit_expires_at,NOW()),NOW())+($4||' days')::interval ELSE audio_accounts.credit_expires_at END,
-                updated_at=NOW()
-        `,[user.userId,user.exactUsername,credits,days]);
-        return res.json({success:true,message:`Akses Audio Convert diperbarui untuk @${user.exactUsername}.`,user_id:user.userId});
-    } catch(e) { return sendError(res,500,e.message||'Gagal memberikan kredit.'); }
+            INSERT INTO audio_subscription_requests(user_id,username,package_code)
+            VALUES($1,$2,$3)
+        `,[user.userId,user.exactUsername,code]);
+        const s = await pool.query(`SELECT setting_value FROM audio_settings WHERE setting_key='discord_url'`);
+        return res.json({success:true,discordUrl:s.rows[0]?.setting_value || 'https://discord.gg/XkuKuv23bH',message:'Permintaan dicatat. Silakan hubungi admin Discord DSS.'});
+    } catch(e) { return sendError(res,e.statusCode||401,e.message); }
 });
 
+app.get('/api/admin/audio', verifyAdmin, async (_req,res) => {
+    try {
+        const [settings,users,requests] = await Promise.all([
+            pool.query(`SELECT setting_key,setting_value FROM audio_settings`),
+            pool.query(`SELECT user_id,username,credit_balance,credit_expires_at,daily_date,daily_used,total_converted FROM audio_accounts ORDER BY updated_at DESC LIMIT 100`),
+            pool.query(`SELECT id,user_id,username,package_code,status,created_at FROM audio_subscription_requests ORDER BY created_at DESC LIMIT 50`)
+        ]);
+        return res.json({success:true,settings:Object.fromEntries(settings.rows.map(x=>[x.setting_key,x.setting_value])),users:users.rows,requests:requests.rows});
+    } catch(e) { return sendError(res,500,'Gagal memuat data Audio Convert.'); }
+});
+
+app.put('/api/admin/audio/settings', verifyAdmin, async (req,res) => {
+    const updates = [
+        ['price_7d',cleanText(req.body?.price_7d,40)],
+        ['price_30d',cleanText(req.body?.price_30d,40)],
+        ['credits_7d',String(Math.max(1,Math.min(10000,Number(req.body?.credits_7d||30))))],
+        ['credits_30d',String(Math.max(1,Math.min(10000,Number(req.body?.credits_30d||150))))],
+        ['discord_url',validHttpUrl(req.body?.discord_url) || 'https://discord.gg/XkuKuv23bH']
+    ];
+    try {
+        for (const [k,v] of updates) {
+            if (!v) continue;
+            await pool.query(`INSERT INTO audio_settings(setting_key,setting_value,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(setting_key) DO UPDATE SET setting_value=$2,updated_at=NOW()`,[k,v]);
+        }
+        return res.json({success:true,message:'Pengaturan paket Audio Convert disimpan.'});
+    } catch(e) { return sendError(res,500,'Gagal menyimpan pengaturan.'); }
+});
+
+app.post('/api/admin/audio/grant', verifyAdmin, async (req,res) => {
+    const username = cleanText(req.body?.username,64);
+    const credits = Number(req.body?.credits || 0);
+    const days = Number(req.body?.days || 0);
+    if (!username || credits < 0 || days < 0) return sendError(res,400,'Data pemberian kredit tidak valid.');
+    try {
+        const user = await getRobloxUserInfo(username);
+        if (!user) return sendError(res,404,'Username Roblox tidak ditemukan.');
+        const expires = days > 0 ? new Date(Date.now() + days * 86400000).toISOString() : null;
+        await pool.query(`
+            INSERT INTO audio_accounts(user_id,username,credit_balance,credit_expires_at,updated_at)
+            VALUES($1,$2,$3,$4,NOW())
+            ON CONFLICT(user_id) DO UPDATE SET
+                username=$2,
+                credit_balance=audio_accounts.credit_balance + $3,
+                credit_expires_at=COALESCE($4,audio_accounts.credit_expires_at),
+                updated_at=NOW()
+        `,[user.userId,user.exactUsername,Math.floor(credits),expires]);
+        return res.json({success:true,message:`Kredit ditambahkan ke @${user.exactUsername}.`});
+    } catch(e) { return sendError(res,500,'Gagal menambahkan kredit.'); }
+});
 
 // ============================================================
 // HEALTH CHECK
 // ============================================================
 
-app.get('/health', async (_req, res) => {
+app.get('/api/health', async (_req, res) => {
     try {
         await pool.query('SELECT 1');
 
-        return res.json({
-            ok: true,
-            service: 'DSS STUDIO LICENSE PRO V5 CREATOR ROOT',
-            database: 'connected',
-            uptime_seconds: Math.floor(process.uptime())
+        res.json({
+            status: 'ONLINE',
+            version: '5.0.0-CREATOR-ROOT',
+            timestamp: new Date().toISOString()
         });
     } catch {
-        return res.status(503).json({
-            ok: false,
-            service: 'DSS STUDIO LICENSE PRO V5 CREATOR ROOT',
-            database: 'disconnected'
+        res.status(503).json({
+            status: 'DB_ERROR'
         });
     }
 });
 
 // ============================================================
-// SERVER START
+// ERROR HANDLER
 // ============================================================
 
-let server;
-
-if (require.main === module) {
-    server = app.listen(PORT, '0.0.0.0', () => {
-        console.log('============================================');
-        console.log('DRAGON STELL STUDIO');
-        console.log('DSS STUDIO LICENSE PRO V5 CREATOR ROOT');
-        console.log('============================================');
-        console.log(`Listening on port ${PORT}`);
-        console.log('PostgreSQL: ENABLED');
-        console.log('Creator ID Root Verification: ENABLED');
-        console.log('Personal Experience Verification: ENABLED');
-        console.log('Owned Community Verification: ENABLED');
-        console.log('License Expiry Check: ENABLED');
-        console.log('Admin Session: ENABLED');
-        console.log('Auto Project Tracking: ENABLED');
-        console.log('============================================');
-    });
-}
-
-// ============================================================
-// SHUTDOWN
-// ============================================================
-
-async function shutdown() {
-    if (server) {
-        await new Promise(resolve => server.close(resolve));
+app.use((err, _req, res, _next) => {
+    if (err instanceof multer.MulterError) {
+        return sendError(res, 400, err.code === 'LIMIT_FILE_SIZE' ? 'Ukuran file maksimal 50 MB.' : err.message);
     }
 
-    await pool.end().catch(() => {});
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return sendError(res, 400, 'Format JSON tidak valid.');
+    }
 
-    process.exit(0);
+    if (err?.message === 'Format file tidak didukung.') {
+        return sendError(res, 400, err.message);
+    }
+
+    console.error('[SERVER ERROR]', err);
+
+    return sendError(res, 500, 'Terjadi kesalahan server.');
+});
+
+// ============================================================
+// START SERVER
+// ============================================================
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(
+            `[DSS STUDIO] Creator Root Server active on port ${PORT}`
+        );
+    });
 }
-
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
 
 module.exports = app;
