@@ -437,6 +437,102 @@ button,a,input{ -webkit-tap-highlight-color:transparent }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 
+
+<style id="dss-audio-professional">
+.audio-workspace{border-color:rgba(220,230,242,.19)!important;background:linear-gradient(145deg,rgba(25,30,39,.96),rgba(8,11,16,.98))!important;box-shadow:0 24px 70px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.06)!important}
+.audio-eyebrow{font-size:9px;font-weight:800;letter-spacing:.19em;color:#aeb9c8;text-transform:uppercase}
+.audio-format-chip{display:inline-flex;align-items:center;padding:8px 11px;border-radius:10px;border:1px solid rgba(220,230,242,.19);background:rgba(255,255,255,.045);font-size:9px;font-weight:800;letter-spacing:.12em;color:#e3e9f1}
+.audio-source-card{min-width:0;padding:16px;border-radius:17px;border:1px solid rgba(220,230,242,.13);background:rgba(3,6,10,.42)}
+.audio-label{display:block;color:#dce3ed;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.audio-notice{display:flex;align-items:flex-start;gap:11px;padding:13px 15px;border-radius:14px;border:1px solid rgba(220,230,242,.13);background:rgba(255,255,255,.035);color:#aeb8c6;font-size:11px;line-height:1.65}
+.audio-notice p{margin:0;min-width:0}
+.audio-notice b{color:#e8edf4;font-weight:700}
+.audio-notice-icon{display:grid;place-items:center;flex:0 0 19px;width:19px;height:19px;border-radius:50%;border:1px solid rgba(220,230,242,.32);color:#e8edf4;font-size:11px;font-weight:800}
+.audio-settings-panel{padding:17px;border-radius:18px;border:1px solid rgba(220,230,242,.13);background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(0,0,0,.17))}
+.audio-preset{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:66px;padding:10px 8px;border-radius:13px;border:1px solid rgba(220,230,242,.16);background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));color:#e8edf4;transition:all .2s ease}
+.audio-preset b{font-size:14px;font-weight:800;letter-spacing:-.02em}
+.audio-preset span{font-size:10px;color:#9ba7b7;font-weight:700}
+.audio-preset:hover{border-color:rgba(235,242,250,.42);background:rgba(220,230,242,.09);transform:translateY(-2px)}
+.audio-preset.is-active{border-color:rgba(245,248,252,.72);background:linear-gradient(145deg,rgba(225,233,243,.19),rgba(225,233,243,.07));box-shadow:0 0 0 2px rgba(220,230,242,.07),0 10px 24px rgba(0,0,0,.22)}
+.audio-preset.is-active span{color:#e8edf4}
+.audio-slider-block{padding:15px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid rgba(220,230,242,.10)}
+.audio-value{font-size:11px;font-weight:800;color:#f2f5f9;font-variant-numeric:tabular-nums}
+#audioSpeed,#audioGain{accent-color:#e1e7ef;min-height:22px;cursor:pointer}
+#audioConvertBtn{min-height:52px}
+@media(max-width:640px){
+ .audio-workspace{padding:17px!important;border-radius:22px!important}
+ .audio-settings-panel{padding:13px}
+ .audio-preset{min-height:60px}
+ .audio-source-card{padding:13px}
+}
+</style>
+
+
+
+<style id="dss-executive-platinum-v2">
+/* DSS AUDIO PRO — Executive Platinum UI refinement. Layout, IDs and application logic are preserved. */
+:root{color-scheme:dark;--dss-white:#f4f6f8;--dss-silver:#c5ced8;--dss-muted:#8f9baa;--dss-line:rgba(211,222,235,.13);--dss-panel:rgba(13,17,23,.88);--dss-accent:#d7e0e9}
+html{scroll-behavior:smooth;scroll-padding-top:92px}
+body{background-color:#05070a!important;color:var(--dss-white)!important;background-image:radial-gradient(ellipse at 12% 0%,rgba(166,183,204,.105),transparent 34%),radial-gradient(ellipse at 90% 24%,rgba(105,122,144,.075),transparent 34%),linear-gradient(180deg,#070a0e 0%,#05070a 55%,#080b10 100%)!important;background-attachment:fixed}
+body:before{opacity:.13!important;background-size:64px 64px!important}
+body:after{background:radial-gradient(circle,rgba(195,208,224,.07),transparent 68%)!important}
+.glass{background:rgba(8,11,16,.84)!important;border-color:var(--dss-line)!important;backdrop-filter:blur(24px) saturate(125%)!important}
+.glass-card,.product-card{background:linear-gradient(150deg,rgba(20,25,33,.94),rgba(9,12,17,.97))!important;border:1px solid var(--dss-line)!important;box-shadow:0 18px 55px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.035)!important}
+.glass-card{border-radius:25px!important}
+.product-card{border-radius:21px!important}
+.product-card:hover{border-color:rgba(211,224,239,.34)!important;transform:translateY(-4px)!important;box-shadow:0 22px 48px rgba(0,0,0,.36)!important}
+.gold{background:linear-gradient(135deg,#f0f3f6 0%,#cbd4de 48%,#9aa7b6 100%)!important;color:#10151c!important;box-shadow:0 9px 24px rgba(190,204,220,.12)!important}
+.animated-title{background:linear-gradient(270deg,#fff,#c6d0dc,#8e9baa,#fff)!important;background-size:300% 300%!important;-webkit-background-clip:text!important;background-clip:text!important}
+.muted{color:var(--dss-muted)!important}
+header.glass{background:rgba(5,8,12,.88)!important;border-bottom:1px solid rgba(210,222,237,.15)!important;box-shadow:0 12px 40px rgba(0,0,0,.28)!important}
+header .text-amber-400,header .text-amber-300{color:#d4dde7!important}
+header .bg-amber-500\/15,header .bg-amber-500\/10{background:rgba(211,223,237,.08)!important}
+header .border-amber-500\/30,header .border-amber-500\/25{border-color:rgba(211,223,237,.22)!important}
+.field{background:rgba(4,7,11,.78)!important;border:1px solid rgba(207,220,235,.17)!important;border-radius:14px!important;color:#f5f7fa!important;min-height:47px}
+.field:focus{border-color:rgba(220,231,243,.62)!important;box-shadow:0 0 0 3px rgba(207,220,235,.09)!important}
+button,.btn,a{transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease}
+.btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 25px rgba(0,0,0,.28)!important}
+.client-nav{border:1px solid transparent!important;border-radius:13px!important}
+.client-nav:not(.gold){color:#9ca8b6!important}
+.client-nav:not(.gold):hover{background:rgba(215,226,239,.065)!important;border-color:rgba(215,226,239,.14)!important;color:#fff!important}
+.client-nav.gold{color:#10151c!important}
+#clientTab{max-width:1240px!important}
+#clientDashboard{gap:22px}
+#clientDashboard nav{background:rgba(8,11,16,.82)!important;border-color:var(--dss-line)!important;box-shadow:0 12px 35px rgba(0,0,0,.2)!important}
+#clientAvatar{border-color:rgba(220,230,242,.55)!important}
+#clientName{color:#f6f8fb!important}
+#toast{background:rgba(10,14,19,.96)!important;border-color:rgba(211,223,237,.22)!important;box-shadow:0 18px 50px rgba(0,0,0,.5)!important}
+.audio-workspace{background:linear-gradient(145deg,rgba(19,25,33,.98),rgba(7,10,15,.99))!important;border:1px solid rgba(214,226,240,.22)!important;border-radius:26px!important;box-shadow:0 28px 80px rgba(0,0,0,.43),inset 0 1px 0 rgba(255,255,255,.06)!important}
+.audio-eyebrow{color:#c4ceda!important;letter-spacing:.22em!important}
+.audio-format-chip{background:rgba(220,230,242,.075)!important;border-color:rgba(220,230,242,.23)!important;color:#f0f4f8!important}
+.audio-source-card{background:linear-gradient(145deg,rgba(5,9,14,.72),rgba(12,17,24,.66))!important;border-color:rgba(211,223,237,.17)!important;border-radius:18px!important}
+.audio-label{color:#e2e8ef!important;letter-spacing:.11em!important}
+.audio-notice{background:rgba(211,223,237,.045)!important;border-color:rgba(211,223,237,.16)!important;color:#aeb9c7!important}
+.audio-notice-icon{border-color:rgba(220,230,242,.4)!important;color:#e9eef4!important}
+.audio-settings-panel{background:linear-gradient(145deg,rgba(220,230,242,.045),rgba(0,0,0,.2))!important;border-color:rgba(211,223,237,.16)!important}
+.audio-preset{background:linear-gradient(145deg,rgba(220,230,242,.075),rgba(255,255,255,.018))!important;border-color:rgba(211,223,237,.17)!important}
+.audio-preset:hover{border-color:rgba(230,238,247,.5)!important;background:rgba(220,230,242,.11)!important}
+.audio-preset.is-active{background:linear-gradient(145deg,rgba(222,232,243,.2),rgba(222,232,243,.075))!important;border-color:rgba(232,240,248,.72)!important}
+.audio-slider-block{background:rgba(0,0,0,.27)!important;border-color:rgba(211,223,237,.13)!important}
+#audioSpeed,#audioGain{accent-color:#dbe4ed!important}
+#audioConvertBtn{background:linear-gradient(135deg,#f0f3f6,#bfcbd8)!important;color:#10151c!important;letter-spacing:.1em!important;box-shadow:0 12px 30px rgba(190,205,222,.12)!important}
+#audioConvertBtn:hover{filter:brightness(1.07)!important;transform:translateY(-2px)!important}
+:focus-visible{outline:2px solid rgba(224,234,245,.8)!important;outline-offset:3px!important}
+::selection{background:rgba(200,214,230,.25);color:#fff}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#788696,#394553)!important}
+@media(max-width:640px){
+ body{background-attachment:scroll!important}
+ header .contact-me-btn{min-height:39px!important}
+ #clientDashboard .glass-card{border-radius:19px!important}
+ #clientDashboard nav{padding:8px!important}
+ .audio-workspace{padding:17px!important;border-radius:21px!important}
+ .audio-source-card{padding:13px!important}
+ .audio-settings-panel{padding:13px!important}
+ .client-nav{padding:10px 12px!important}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+
 </head>
 <body class="min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
 
@@ -538,6 +634,8 @@ button,a,input{ -webkit-tap-highlight-color:transparent }
         <button type="button" id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9"/></svg> Showcase Produk</button>
         <button type="button" id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="5"/><path d="m11.5 11.5 8-8 2 2-2 2 2 2-3 3-2-2-3.5 3.5"/></svg> Lisensi & Unduhan</button>
         <button type="button" id="nav-projects" onclick="showClientTab('projects')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h4m-2-2v4m7-1h.01M18 10h.01"/><path d="M7 6h10a4 4 0 0 1 3.8 2.8l1.1 4a3 3 0 0 1-4.8 3.1L15 14H9l-2.1 1.9a3 3 0 0 1-4.8-3.1l1.1-4A4 4 0 0 1 7 6Z"/></svg> Project Experience</button>
+        <button type="button" id="nav-audio" onclick="showClientTab('audio')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Audio Convert</button>
+        <button type="button" id="nav-subscription" onclick="showClientTab('subscription')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg> Langganan</button>
       </nav>
 
       <!-- Sub-Tab Beranda -->
@@ -579,8 +677,6 @@ button,a,input{ -webkit-tap-highlight-color:transparent }
           <div class="pt-3 flex flex-wrap gap-3.5 relative z-10">
             <button type="button" onclick="showClientTab('showcase')" class="btn gold rounded-2xl px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg">Jelajahi Showcase Produk</button>
             <button type="button" onclick="showClientTab('projects')" class="btn border border-white/10 rounded-2xl px-6 py-3.5 text-xs font-bold text-white bg-white/5 hover:bg-white/10">Buka Project Experience</button>
-            <button type="button" onclick="showClientTab('audio')" class="btn border border-white/15 rounded-2xl px-6 py-3.5 text-xs font-extrabold text-white bg-white/10 hover:bg-white/15">♫ Audio Convert</button>
-            <button type="button" onclick="showClientTab('subscription')" class="btn border border-white/15 rounded-2xl px-6 py-3.5 text-xs font-extrabold text-white bg-white/5 hover:bg-white/10">✦ Langganan</button>
           </div>
         </div>
       </div>
@@ -625,19 +721,60 @@ button,a,input{ -webkit-tap-highlight-color:transparent }
           <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Gratis Hari Ini</p><b id="audioDaily" class="text-3xl block mt-2">—</b></div>
           <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Total Berhasil Convert</p><b id="audioTotal" class="text-3xl block mt-2">0</b></div>
         </div>
-        <section class="glass-card rounded-3xl p-6 sm:p-8 space-y-5">
-          <div><h3 class="font-bold text-lg">Sumber Audio / Video</h3><p class="muted text-xs mt-1">Upload file dari perangkat atau gunakan direct-download URL dari host yang telah diizinkan admin. Maksimum 50 MB.</p></div>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <div class="space-y-2"><label class="muted text-[10px] uppercase font-bold block">Upload dari perangkat</label><input id="audioFile" type="file" accept=".mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.opus,.mp4,.webm,.mov,.mkv,audio/*,video/*" class="field w-full rounded-xl p-3 text-xs"><p class="muted text-[10px]">Audio: MP3, WAV, M4A, AAC, FLAC, OPUS, OGG. Video: MP4, WEBM, MOV, MKV.</p></div>
-            <div class="space-y-2"><label class="muted text-[10px] uppercase font-bold block">Direct media URL (opsional)</label><input id="audioSourceUrl" type="url" inputmode="url" placeholder="https://media.domain-anda.com/file.mp4" class="field w-full rounded-xl p-3 text-xs"><p class="muted text-[10px]">URL harus mengarah langsung ke file media dan domainnya harus diizinkan admin.</p></div>
+        <section class="glass-card audio-workspace rounded-3xl p-5 sm:p-8 space-y-6">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div><p class="audio-eyebrow">DSS AUDIO ENGINE</p><h3 class="font-extrabold text-lg sm:text-xl mt-1">Sumber & Pengaturan Audio</h3><p class="muted text-xs mt-1">Upload file, tempel link media langsung, atau masukkan link Share YouTube/TikTok untuk membuka unduhan resmi jika tersedia. Maksimum 50 MB.</p></div>
+            <span class="audio-format-chip">OUTPUT · OGG</span>
           </div>
-          <div class="rounded-xl border border-white/10 bg-black/25 p-3 text-[11px] muted">Link halaman YouTube/TikTok bukan direct media file. DSS tidak mengambil stream dari halaman platform atau melewati proteksi unduhan. Untuk konten milik Anda, gunakan unduhan resmi yang tersedia lalu upload file, atau gunakan direct URL dari penyimpanan Anda sendiri.</div>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <div><label class="muted text-[10px] uppercase font-bold block mb-2">Kecepatan <span id="audioSpeedLabel">1.00x · Normal</span></label><input id="audioSpeed" type="range" min="0.5" max="3" step="0.05" value="1" class="w-full" oninput="updateAudioSpeedLabel()"><button type="button" onclick="setAudioSpeedNormal()" class="mt-2 btn border border-white/15 rounded-lg px-3 py-1.5 text-[10px]">NORMAL 1.0x</button></div>
-            <div><label class="muted text-[10px] uppercase font-bold block mb-2">Amplifier <span id="audioGainLabel">0 dB</span></label><input id="audioGain" type="range" min="-24" max="12" step="1" value="0" class="w-full" oninput="$('audioGainLabel').textContent=this.value+' dB'"></div>
+          <div class="grid lg:grid-cols-2 gap-4">
+            <div class="audio-source-card space-y-2">
+              <label class="audio-label" for="audioFile">01 · Upload dari perangkat</label>
+              <input id="audioFile" type="file" accept=".mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.opus,.mp4,.webm,.mov,.mkv,audio/*,video/*" class="field w-full rounded-xl p-3 text-xs">
+              <p class="muted text-[10px]">MP3, WAV, M4A, AAC, FLAC, OPUS, OGG, MP4, WEBM, MOV, MKV.</p>
+            </div>
+            <div class="audio-source-card space-y-2">
+              <label class="audio-label" for="audioSourceUrl">02 · Link media / YouTube / TikTok</label>
+              <input id="audioSourceUrl" type="text" inputmode="url" autocomplete="url" placeholder="https://youtu.be/... atau https://www.tiktok.com/@.../video/... atau link file media" class="field w-full rounded-xl p-3 text-xs">
+              <p class="muted text-[10px]">Link Share YouTube/TikTok dikenali otomatis. Jika tombol Download resmi tersedia, unduh videonya lalu upload file ke kolom kiri untuk dikonversi. Link file langsung tetap mengikuti allowlist server.</p>
+            </div>
           </div>
-          <p class="muted text-[10px]">Speed 0.5x–3.0x · Normal 1.0x · Amplifier -24 dB sampai +12 dB. Gunakan hanya konten yang Anda miliki atau berhak konversi.</p>
-          <button id="audioConvertBtn" type="button" onclick="convertAudio()" class="btn gold rounded-xl px-6 py-3.5 w-full text-xs font-extrabold">CONVERT & DOWNLOAD OGG</button>
+          <div class="audio-notice">
+            <span class="audio-notice-icon">i</span>
+            <p><b>YouTube / TikTok:</b> tempel link Share lalu tekan Convert. DSS akan membuka halaman video resmi. Jika kreator mengaktifkan Download dan tombol unduh tersedia untuk akun/wilayah Anda, unduh melalui aplikasi atau situs resmi, kemudian upload file hasil unduhan ke DSS untuk konversi OGG. DSS tidak mengambil stream tersembunyi, tidak melewati DRM, login, atau pembatasan unduhan. Link file media langsung hanya diterima dari domain yang diizinkan admin.</p>
+          </div>
+          <div class="audio-settings-panel space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div><p class="audio-eyebrow">SOUND CONTROL</p><h4 class="font-bold text-sm mt-1">Preset & Penyesuaian Manual</h4></div>
+              <span class="muted text-[10px]">Preset akan mengatur Speed + Amplifier sekaligus</span>
+            </div>
+            <div class="space-y-2.5">
+              <label class="audio-label">Preset kombinasi</label>
+              <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <button type="button" class="audio-preset" data-audio-preset="2.1,-8" onclick="setAudioPreset(2.1,-8)"><b>2.1x</b><span>-8 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.3,-10" onclick="setAudioPreset(2.3,-10)"><b>2.3x</b><span>-10 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.5,-12" onclick="setAudioPreset(2.5,-12)"><b>2.5x</b><span>-12 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.7,-14" onclick="setAudioPreset(2.7,-14)"><b>2.7x</b><span>-14 dB</span></button>
+                <button type="button" class="audio-preset" data-audio-preset="2.9,-14" onclick="setAudioPreset(2.9,-14)"><b>2.9x</b><span>-14 dB</span></button>
+              </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="audio-slider-block">
+                <div class="flex items-center justify-between gap-3 mb-3"><label class="audio-label" for="audioSpeed">Kecepatan</label><output id="audioSpeedLabel" class="audio-value">1.00x · Normal</output></div>
+                <input id="audioSpeed" type="range" min="0.5" max="3" step="0.05" value="1" class="w-full" oninput="updateAudioSpeedLabel()">
+                <div class="flex justify-between muted text-[10px] mt-1"><span>0.5x</span><span>3.0x</span></div>
+              </div>
+              <div class="audio-slider-block">
+                <div class="flex items-center justify-between gap-3 mb-3"><label class="audio-label" for="audioGain">Amplifier</label><output id="audioGainLabel" class="audio-value">0 dB</output></div>
+                <input id="audioGain" type="range" min="-24" max="12" step="1" value="0" class="w-full" oninput="updateAudioGainLabel()">
+                <div class="flex justify-between muted text-[10px] mt-1"><span>-24 dB</span><span>+12 dB</span></div>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="muted text-[10px]">Slider tetap bisa diubah manual setelah memilih preset.</p>
+              <button type="button" onclick="resetAudioControls()" class="btn border border-white/15 rounded-lg px-3 py-2 text-[10px] font-bold">RESET PENGATURAN</button>
+            </div>
+          </div>
+          <button id="audioConvertBtn" type="button" onclick="convertAudio()" class="btn gold rounded-xl px-6 py-4 w-full text-xs font-extrabold tracking-wider">CONVERT & DOWNLOAD OGG</button>
           <p id="audioConvertStatus" class="muted text-xs text-center" aria-live="polite"></p>
         </section>
         <section class="glass-card rounded-3xl p-6 space-y-4"><h3 class="font-bold">Riwayat Konversi</h3><div id="audioHistory" class="space-y-2"><p class="muted text-xs">Belum ada riwayat.</p></div></section>
@@ -1360,18 +1497,78 @@ async function loadAudioStatus() {
 function updateAudioSpeedLabel() {
   const value = Number($('audioSpeed')?.value || 1);
   $('audioSpeedLabel').textContent = value.toFixed(2) + 'x' + (Math.abs(value - 1) < 0.001 ? ' · Normal' : '');
+  syncAudioPresetState();
+}
+function updateAudioGainLabel() {
+  $('audioGainLabel').textContent = Number($('audioGain')?.value || 0) + ' dB';
+  syncAudioPresetState();
+}
+function syncAudioPresetState() {
+  const speed = Number($('audioSpeed')?.value || 1);
+  const gain = Number($('audioGain')?.value || 0);
+  document.querySelectorAll('[data-audio-preset]').forEach(button => {
+    const [presetSpeed, presetGain] = button.dataset.audioPreset.split(',').map(Number);
+    button.classList.toggle('is-active', Math.abs(speed - presetSpeed) < 0.001 && gain === presetGain);
+  });
+}
+function setAudioPreset(speed, gainDb) {
+  $('audioSpeed').value = String(speed);
+  $('audioGain').value = String(gainDb);
+  updateAudioSpeedLabel();
+  updateAudioGainLabel();
+}
+function resetAudioControls() {
+  $('audioSpeed').value = '1';
+  $('audioGain').value = '0';
+  updateAudioSpeedLabel();
+  updateAudioGainLabel();
 }
 function setAudioSpeedNormal() {
-  $('audioSpeed').value = '1';
-  updateAudioSpeedLabel();
+  resetAudioControls();
+}
+
+function getSupportedPlatformPage(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== 'https:') return null;
+    const host = url.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+    const isYouTube = host === 'youtu.be' || host === 'youtube.com' ||
+      host.endsWith('.youtube.com') || host === 'youtube-nocookie.com' ||
+      host.endsWith('.youtube-nocookie.com');
+    const isTikTok = host === 'tiktok.com' || host.endsWith('.tiktok.com');
+    return isYouTube || isTikTok ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 async function convertAudio() {
   const file = $('audioFile').files[0];
-  const sourceUrl = ($('audioSourceUrl')?.value || '').trim();
-  if (file && sourceUrl) return toast('Pilih upload file atau URL saja, jangan keduanya.');
-  if (!file && !sourceUrl) return toast('Pilih file atau masukkan direct media URL.');
+  let sourceUrl = ($('audioSourceUrl')?.value || '').trim();
+  const markdownLink = sourceUrl.match(/^\[([^\]]+)\]\((https:\/\/[^)\s]+)\)$/i);
+  if (markdownLink) sourceUrl = markdownLink[2];
+
+  if (sourceUrl && !sourceUrl.toLowerCase().startsWith('https://')) {
+    return toast('Tautan sumber harus diawali https://.');
+  }
+  if (file && sourceUrl) return toast('Pilih upload file atau tautan saja, jangan keduanya.');
+  if (!file && !sourceUrl) return toast('Pilih file, link Share YouTube/TikTok, atau tautan file media.');
   if (file && file.size > 50 * 1024 * 1024) return toast('Ukuran file maksimal 50 MB.');
+
+  // Share URL platform adalah halaman video, bukan URL file media.
+  // Buka halaman resmi agar pengguna dapat memakai tombol Download
+  // yang memang disediakan oleh kreator/platform, lalu upload hasilnya.
+  if (!file && sourceUrl) {
+    const platformUrl = getSupportedPlatformPage(sourceUrl);
+    if (platformUrl) {
+      const opened = window.open(platformUrl, '_blank', 'noopener,noreferrer');
+      const message = 'Link video dikenali. Jika tombol Download resmi tersedia, unduh videonya dari YouTube/TikTok, lalu upload file tersebut ke DSS untuk konversi OGG. DSS tidak melewati pembatasan unduhan platform.';
+      $('audioConvertStatus').textContent = message;
+      if (!opened) toast('Browser memblokir tab baru. Izinkan pop-up atau buka link video secara manual.');
+      else toast('Halaman video resmi dibuka. Unduh hanya jika opsi Download tersedia.');
+      return;
+    }
+  }
 
   const btn = $('audioConvertBtn'), status = $('audioConvertStatus');
   const form = new FormData();
