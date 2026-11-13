@@ -823,8 +823,11 @@ async function listOwnedPortalLicenses(user) {
                 continue;
             }
         } else if (
-            String(license.owner_user_id) !== String(user.userId)
+            String(license.owner_user_id || '') !== String(user.userId) &&
+            String(license.creator_user_id || '') !== String(user.userId)
         ) {
+            // Lisensi User boleh ditampilkan jika akun login adalah
+            // owner_user_id ATAU creator_user_id yang terverifikasi.
             continue;
         }
 
@@ -1019,38 +1022,27 @@ async function clientLoginHandler(req, res) {
             verification.user.displayName ||
             verification.user.exactUsername;
 
-        const ownedLicenseIds = ownedLicenses.map(
-            item => String(item.id)
-        );
+        // PROJECT EXPERIENCE PUBLIC CATALOG
+        // Semua pengguna Portal Client dapat melihat semua Experience
+        // yang pernah terdaftar, dari seluruh pemilik lisensi.
+        // Hanya metadata Experience yang dipublikasikan; informasi
+        // privat seperti license_key dan detail lisensi tidak dikirim.
+        const projectResult = await pool.query(`
+            SELECT DISTINCT
+                pe.place_id,
+                pe.product_name,
+                pe.owner_id,
+                pe.creator_type,
+                pe.universe_id,
+                pe.experience_name,
+                pe.icon_url,
+                pe.visits,
+                pe.last_ping
+            FROM project_experiences pe
+            ORDER BY pe.last_ping DESC
+        `);
 
-        let licensedProjects = [];
-
-        if (ownedLicenseIds.length) {
-            const projectResult = await pool.query(`
-                SELECT DISTINCT
-                    pe.place_id,
-                    pe.product_name,
-                    pe.owner_id,
-                    pe.creator_type,
-                    pe.universe_id,
-                    pe.experience_name,
-                    pe.icon_url,
-                    pe.visits,
-                    pe.last_ping
-                FROM project_experiences pe
-                INNER JOIN licenses active_license
-                    ON active_license.id = pe.license_id
-                WHERE pe.license_id = ANY($1::bigint[])
-                    AND active_license.is_active = TRUE
-                    AND (
-                        active_license.expires_at IS NULL
-                        OR active_license.expires_at > NOW()
-                    )
-                ORDER BY pe.last_ping DESC
-            `, [ownedLicenseIds]);
-
-            licensedProjects = projectResult.rows;
-        }
+        const licensedProjects = projectResult.rows;
 
         return res.json({
             success: true,
