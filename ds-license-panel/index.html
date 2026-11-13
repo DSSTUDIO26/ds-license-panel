@@ -1,1863 +1,371 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DRAGON STELL STUDIO — Management Console</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root{color-scheme:dark}
-* { box-sizing: border-box; }
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: #040507;
-  color: #f4f4f5;
-  background-image: 
-    radial-gradient(circle at 15% 10%, rgba(185, 155, 81, 0.08) 0, transparent 40%),
-    radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.06) 0, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(185, 155, 81, 0.04) 0, transparent 50%);
-  background-attachment: fixed;
-}
-.glass {
-  background: rgba(12, 13, 18, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-}
-.glass-card {
-  background: linear-gradient(145deg, rgba(18, 20, 28, 0.9), rgba(10, 11, 15, 0.95));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-}
-.field {
-  background: #08090d;
-  border: 1px solid #22232b;
-  outline: none;
-  transition: all 0.2s ease;
-}
-.field:focus { border-color: #b99b51; box-shadow: 0 0 15px rgba(185, 155, 81, 0.15); }
-.gold {
-  background: linear-gradient(135deg, #b99b51 0%, #e8d59a 50%, #9a7b32 100%);
-  color: #121008;
-  font-weight: 700;
-}
-.muted { color: #9898a0; }
-.btn { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-.btn:hover { filter: brightness(1.12); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(185, 155, 81, 0.2); }
-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-#toast { transition: opacity 0.3s ease, transform 0.3s ease; }
-
-@keyframes shimmerGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-.animated-title {
-  background: linear-gradient(270deg, #ffffff, #b99b51, #a1a1aa, #ffffff);
-  background-size: 300% 300%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmerGradient 8s ease infinite;
-}
-
-@keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.98) translateY(8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-.animate-fade { animation: fadeInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
-.product-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-  overflow: hidden;
-  border-radius: 24px;
-  background: linear-gradient(160deg, rgba(16, 18, 26, 0.9), rgba(8, 9, 13, 0.95));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.product-card:hover {
-  border-color: rgba(185, 155, 81, 0.45);
-  transform: translateY(-6px);
-  box-shadow: 0 20px 45px -12px rgba(185, 155, 81, 0.2);
-}
-.product-cover {
-  width: 100%;
-  height: 200px;
-  background: #06070a;
-  overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  position: relative;
-}
-.product-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.product-card:hover .product-cover img { transform: scale(1.07); }
-.product-cover .fallback-text {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  color: #71717a;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-}
-.product-card h3, .product-card p { overflow-wrap: anywhere; }
-.checkrow {
-  background: #08090d;
-  border: 1px solid #22232b;
-  transition: all 0.2s ease;
-}
-.checkrow:has(input:checked) {
-  border-color: #b99b51;
-  background: rgba(185, 155, 81, 0.08);
-}
-</style>
-
-<style id="dss-premium-monochrome">
-/* DRAGON STELL STUDIO — Silver Glass refinement */
-:root{
-  color-scheme:dark;
-  --silver-0:#ffffff;
-  --silver-1:#f1f4f8;
-  --silver-2:#cbd2dc;
-  --silver-3:#9ba5b3;
-  --silver-line:rgba(226,232,240,.16);
-  --silver-glass:rgba(18,21,27,.76);
-  --silver-glass-strong:rgba(11,13,18,.92);
-}
-html{scroll-behavior:smooth}
-body{
-  background-color:#050608!important;
-  background-image:
-    radial-gradient(ellipse at 12% 8%,rgba(210,220,232,.105),transparent 32%),
-    radial-gradient(ellipse at 88% 18%,rgba(120,132,150,.095),transparent 34%),
-    radial-gradient(ellipse at 52% 100%,rgba(190,200,214,.055),transparent 42%),
-    linear-gradient(145deg,#050608 0%,#0b0e13 48%,#050608 100%)!important;
-  background-attachment:fixed;
-  letter-spacing:.005em;
-}
-::selection{background:rgba(220,228,238,.25)!important;color:#fff!important}
-.glass{
-  background:rgba(12,15,21,.78)!important;
-  border-color:rgba(225,232,242,.14)!important;
-  box-shadow:0 16px 50px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035);
-  backdrop-filter:blur(24px) saturate(135%);
-}
-.glass-card,.product-card{
-  background:linear-gradient(145deg,rgba(27,31,39,.88),rgba(10,12,17,.94))!important;
-  border:1px solid rgba(220,228,238,.13)!important;
-  box-shadow:0 18px 48px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.045);
-  backdrop-filter:blur(18px) saturate(130%);
-}
-.product-card{border-radius:22px}
-.product-card:hover{
-  border-color:rgba(220,230,242,.34)!important;
-  box-shadow:0 24px 60px rgba(0,0,0,.42),0 0 28px rgba(210,220,232,.055);
-  transform:translateY(-4px);
-}
-.field{
-  color:#f4f6f9!important;
-  background:linear-gradient(145deg,rgba(5,7,10,.92),rgba(17,20,26,.9))!important;
-  border:1px solid rgba(210,220,232,.17)!important;
-  border-radius:13px!important;
-  box-shadow:inset 0 1px 5px rgba(0,0,0,.28);
-}
-.field::placeholder{color:#707987!important}
-.field:focus{
-  border-color:rgba(224,232,242,.58)!important;
-  box-shadow:0 0 0 3px rgba(210,220,232,.09),0 8px 24px rgba(0,0,0,.2)!important;
-}
-.gold{
-  color:#080a0e!important;
-  background:linear-gradient(135deg,#f5f7fa 0%,#c9d0da 42%,#929daa 100%)!important;
-  border:1px solid rgba(255,255,255,.65)!important;
-  box-shadow:0 9px 26px rgba(190,202,218,.13),inset 0 1px 0 rgba(255,255,255,.8)!important;
-}
-.btn{transition:transform .22s ease,filter .22s ease,box-shadow .22s ease,border-color .22s ease}
-.btn:hover{
-  filter:brightness(1.12);
-  transform:translateY(-2px);
-  box-shadow:0 12px 28px rgba(0,0,0,.35),0 0 18px rgba(215,225,238,.08);
-}
-.muted{color:#9ba5b3!important}
-.animated-title{
-  background:linear-gradient(110deg,#fff 5%,#aeb8c6 32%,#f8fafc 52%,#8994a3 76%,#fff 100%)!important;
-  background-size:260% 260%!important;
-  -webkit-background-clip:text!important;
-  background-clip:text!important;
-  animation:shimmerGradient 9s ease infinite;
-}
-header.glass{
-  background:rgba(7,9,13,.82)!important;
-  border-bottom:1px solid rgba(225,232,242,.16)!important;
-  box-shadow:0 12px 38px rgba(0,0,0,.42)!important;
-}
-header img{border-color:rgba(235,240,248,.3)!important}
-#clientTab{max-width:1120px!important}
-#welcome{padding-top:54px!important;padding-bottom:42px!important}
-#welcome:before{
-  content:"";position:absolute;inset:8% 12% 0;pointer-events:none;
-  border:1px solid rgba(220,230,242,.055);border-radius:48%;
-  transform:scaleX(1.12);filter:blur(.2px)
-}
-#welcome:after{
-  content:"";position:absolute;left:50%;bottom:5px;transform:translateX(-50%);
-  width:min(420px,70%);height:1px;
-  background:linear-gradient(90deg,transparent,rgba(230,237,246,.38),transparent)
-}
-#welcome h1{line-height:1.12;text-wrap:balance;text-shadow:0 8px 36px rgba(220,230,242,.10)}
-#welcome p{color:#aab3c0!important}
-#clientLoginBox{box-shadow:0 28px 90px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.06)!important}
-#clientLoginBox:before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 100% 0,rgba(220,230,242,.09),transparent 42%)
-}
-#clientLoginBox>div:first-child{height:2px!important;background:linear-gradient(90deg,#697482,#f4f6fa,#8994a2)!important}
-#clientDashboard .glass-card{position:relative}
-#clientDashboard .grid>div,#adminTab .glass-card{transition:border-color .22s ease,transform .22s ease}
-#clientDashboard .grid>div:hover,#adminTab .glass-card:hover{border-color:rgba(220,230,242,.22)!important}
-.client-nav{border:1px solid transparent}
-.client-nav:not(.gold):hover{background:rgba(255,255,255,.055)}
-.product-cover{height:210px;background:linear-gradient(145deg,#171c24,#080a0e)!important;border-bottom-color:rgba(220,230,242,.12)!important}
-.product-cover:after{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.28))
-}
-.product-cover img{filter:saturate(.82) contrast(1.04)}
-.checkrow{background:rgba(7,9,13,.72)!important;border-color:rgba(220,230,242,.14)!important}
-.checkrow:has(input:checked){border-color:rgba(230,237,246,.58)!important;background:rgba(210,220,232,.09)!important}
-table thead{background:rgba(255,255,255,.025)}
-table tbody tr{border-color:rgba(220,230,242,.08)!important}
-#adminLogsContainer{background:rgba(3,5,8,.82)!important;border-color:rgba(220,230,242,.12)!important}
-#toast{background:rgba(17,20,26,.94)!important;border-color:rgba(220,230,242,.28)!important}
-footer{background:rgba(4,6,9,.48)!important;border-color:rgba(220,230,242,.12)!important}
-button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{
-  outline:2px solid rgba(230,237,246,.72);outline-offset:3px
-}
-/* Replace the old amber/indigo accent system with a consistent silver palette. */
-[class*="text-amber-"],[class*="text-indigo-"]{color:#d6dde7!important}
-[class*="border-amber-"],[class*="border-indigo-"]{border-color:rgba(220,230,242,.25)!important}
-[class*="bg-amber-"],[class*="bg-indigo-"]{background-color:rgba(210,220,232,.085)!important}
-[class*="from-amber-"],[class*="from-indigo-"]{--tw-gradient-from:#7f8b9b var(--tw-gradient-from-position)!important;--tw-gradient-to:rgb(127 139 155 / 0) var(--tw-gradient-to-position)!important}
-[class*="via-amber-"],[class*="via-indigo-"]{--tw-gradient-to:rgb(220 228 238 / 0) var(--tw-gradient-to-position)!important;--tw-gradient-stops:var(--tw-gradient-from),#e7ebf1 var(--tw-gradient-via-position),var(--tw-gradient-to)!important}
-[class*="to-amber-"],[class*="to-indigo-"]{--tw-gradient-to:#7e8998 var(--tw-gradient-to-position)!important}
-[class*="shadow-amber-"],[class*="shadow-indigo-"]{--tw-shadow-color:rgba(180,192,208,.16)!important}
-input[type="radio"],input[type="checkbox"]{accent-color:#d5dce6}
-@media(max-width:640px){
-  #welcome{padding-top:34px!important;padding-bottom:28px!important}
-  #welcome h1{font-size:clamp(1.8rem,8vw,2.7rem)!important}
-  .product-cover{height:185px}
-  #clientLoginBox{padding:24px!important}
-  nav.client-nav{scrollbar-width:thin}
-}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-}
-</style>
-
-
-<style id="dss-executive-refinement">
-/* Executive Silver Glass — refined hierarchy, clarity and premium interaction */
-:root{
-  --dss-bg:#07090d;
-  --dss-panel:rgba(17,21,28,.82);
-  --dss-panel-hi:rgba(25,30,39,.88);
-  --dss-line:rgba(215,224,236,.16);
-  --dss-line-hi:rgba(232,239,248,.30);
-  --dss-white:#f7f9fc;
-  --dss-silver:#d5dce6;
-  --dss-muted:#929dac;
-  --dss-shadow:0 22px 64px rgba(0,0,0,.42);
-}
-body{
-  color:var(--dss-white)!important;
-  background-image:
-    radial-gradient(ellipse at 50% -15%,rgba(210,220,234,.13),transparent 42%),
-    radial-gradient(ellipse at 0% 48%,rgba(120,135,155,.075),transparent 34%),
-    radial-gradient(ellipse at 100% 72%,rgba(145,158,178,.065),transparent 36%),
-    linear-gradient(145deg,#050608 0%,#0b0f15 48%,#06080c 100%)!important;
-}
-.dss-icon{
-  display:inline-block;width:17px;height:17px;flex:0 0 17px;
-  fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
-  vertical-align:-3px;opacity:.94
-}
-.dss-icon-sm{width:14px;height:14px;flex-basis:14px;vertical-align:-2px}
-button .dss-icon, a .dss-icon{transition:transform .22s ease,opacity .22s ease}
-button:hover .dss-icon, a:hover .dss-icon{transform:translateY(-1px);opacity:1}
-.glass,.glass-card,.product-card,#clientLoginBox{
-  border-color:var(--dss-line)!important;
-  box-shadow:var(--dss-shadow),inset 0 1px 0 rgba(255,255,255,.055)!important;
-}
-.glass-card{
-  background:linear-gradient(145deg,rgba(27,32,41,.88),rgba(11,14,20,.94))!important;
-}
-.glass-card:hover{
-  border-color:var(--dss-line-hi)!important;
-  box-shadow:0 26px 70px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.07)!important;
-}
-h1,h2,h3,h4{letter-spacing:-.025em}
-h2{font-weight:750!important}
-p{line-height:1.65}
-.text-gray-400,.text-gray-500,.muted{color:#9ba6b5!important}
-.text-white{color:#f7f9fc!important}
-header.glass{
-  background:rgba(6,8,12,.88)!important;
-  border-bottom:1px solid rgba(222,231,243,.17)!important;
-  backdrop-filter:blur(28px) saturate(150%)!important;
-}
-header .btn,header button{min-height:40px}
-.client-nav{
-  position:relative;isolation:isolate;
-  border:1px solid rgba(220,229,241,.10)!important;
-  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.012))!important;
-  color:#b7c0cd!important;
-  border-radius:13px!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
-}
-.client-nav:after{
-  content:"";position:absolute;left:18%;right:18%;bottom:-1px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(235,241,249,.7),transparent);
-  opacity:0;transition:opacity .2s ease
-}
-.client-nav:hover:after,.client-nav.gold:after{opacity:1}
-.client-nav:hover{
-  color:#fff!important;border-color:rgba(226,234,245,.25)!important;
-  background:rgba(225,233,244,.075)!important;transform:translateY(-1px)
-}
-.client-nav.gold{
-  color:#090c11!important;
-  background:linear-gradient(135deg,#fff 0%,#d8dee7 48%,#9ca8b8 100%)!important;
-  border-color:rgba(255,255,255,.68)!important;
-  box-shadow:0 8px 26px rgba(196,208,225,.17),inset 0 1px 0 #fff!important
-}
-.btn,button,a[class*="rounded"]{
-  transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .22s ease,color .22s ease
-}
-.btn:hover,button:hover:not(:disabled){
-  box-shadow:0 12px 28px rgba(0,0,0,.34),0 0 20px rgba(215,225,238,.075)
-}
-button:active,.btn:active{transform:translateY(0) scale(.985)!important}
-button:disabled{filter:grayscale(.35)}
-input,textarea,select,.field{
-  min-height:42px;
-  color:#f4f6fa!important;
-  background:rgba(5,8,12,.78)!important;
-  border-color:rgba(205,216,231,.19)!important;
-}
-input::placeholder,textarea::placeholder{color:#758091!important}
-input:focus,textarea:focus,select:focus{
-  border-color:rgba(226,234,245,.56)!important;
-  box-shadow:0 0 0 3px rgba(210,222,238,.085)!important
-}
-.product-card{
-  position:relative;
-  border-radius:20px!important;
-  background:linear-gradient(150deg,rgba(27,32,41,.96),rgba(9,12,17,.98))!important
-}
-.product-card:before,.glass-card:before{
-  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
-  background:linear-gradient(135deg,rgba(255,255,255,.045),transparent 38%);
-  opacity:.8
-}
-.product-card>*{position:relative}
-.product-card:hover{transform:translateY(-5px)!important}
-.product-cover{height:220px!important}
-.product-cover img{filter:saturate(.72) contrast(1.08)!important}
-.product-cover:after{
-  background:linear-gradient(180deg,transparent 45%,rgba(3,5,8,.58))!important
-}
-#clientTab{max-width:1180px!important}
-#clientDashboard .grid>div{
-  border-radius:18px;
-}
-#clientDashboard .grid>div:hover{transform:translateY(-2px)}
-table{border-collapse:separate;border-spacing:0}
-table thead th{
-  color:#dce3ed!important;font-size:10px!important;
-  text-transform:uppercase;letter-spacing:.11em;
-  border-bottom:1px solid rgba(220,230,242,.16)!important
-}
-table tbody td{color:#c2cad5}
-table tbody tr:hover{background:rgba(220,230,242,.035)!important}
-#toast{
-  border:1px solid rgba(225,234,246,.24)!important;
-  box-shadow:0 18px 54px rgba(0,0,0,.5)!important;
-  backdrop-filter:blur(22px)
-}
-hr{border-color:rgba(220,230,242,.12)!important}
-.badge,.status-badge{letter-spacing:.035em}
-a{transition:color .2s ease}
-a:hover{color:#fff}
-#adminLogsContainer{font-variant-numeric:tabular-nums}
-@media(min-width:1024px){
-  #clientTab{padding-left:30px!important;padding-right:30px!important}
-  .client-nav{padding-left:20px!important;padding-right:20px!important}
-}
-@media(max-width:640px){
-  .dss-icon{width:16px;height:16px;flex-basis:16px}
-  .client-nav{padding:11px 14px!important;font-size:11px!important}
-  .product-cover{height:180px!important}
-}
-@media(prefers-reduced-motion:reduce){
-  .dss-icon,button,.btn,.product-card,.client-nav{transition:none!important}
-}
-</style>
-
-
-<style id="dss-executive-finish">
-/* Executive finish: layered ambient lighting, refined borders and responsive polish */
-body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.20;background-image:linear-gradient(rgba(220,230,242,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(220,230,242,.025) 1px,transparent 1px);background-size:54px 54px;mask-image:linear-gradient(to bottom,black,transparent 78%)}
-body:after{content:"";position:fixed;inset:auto -15vw -45vh auto;width:58vw;height:58vw;max-width:760px;max-height:760px;border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,rgba(190,204,222,.075),transparent 68%);filter:blur(12px)}
-.contact-me-btn{display:inline-flex!important;visibility:visible!important;opacity:1!important;white-space:nowrap;position:relative;z-index:60;overflow:hidden;flex:0 0 auto;min-height:42px}
-.contact-me-btn:before{content:"";position:absolute;inset:0;transform:translateX(-130%);background:linear-gradient(105deg,transparent,rgba(255,255,255,.13),transparent);transition:transform .65s ease}
-.contact-me-btn:hover:before{transform:translateX(130%)}
-#clientAvatar{box-shadow:0 0 0 5px rgba(215,225,238,.045),0 12px 34px rgba(0,0,0,.5);background:linear-gradient(135deg,#222a35,#090b10)}
-#clientName{letter-spacing:-.035em;text-shadow:0 4px 24px rgba(220,230,242,.12)}
-.client-nav{border:1px solid transparent}
-.client-nav:not(.gold):hover{border-color:rgba(220,230,242,.13);background:rgba(255,255,255,.035)}
-.glass-card{position:relative;isolation:isolate}
-.glass-card:focus-within{border-color:rgba(220,230,242,.28)!important}
-button,a,input{ -webkit-tap-highlight-color:transparent }
-:focus-visible{outline:2px solid rgba(225,233,244,.72)!important;outline-offset:3px}
-::-webkit-scrollbar{width:9px;height:9px}
-::-webkit-scrollbar-track{background:rgba(5,7,10,.65)}
-::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#596575,#303946);border:2px solid #080a0e;border-radius:20px}
-::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#8491a2,#4b5665)}
-@media(max-width:640px){header .contact-me-btn{padding:.65rem .75rem}header .contact-me-btn span{display:inline!important;font-size:9px}#clientAvatar{width:68px;height:68px;border-radius:18px}#clientDashboard .glass-card{border-radius:20px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-</style>
-
-
-<style id="dss-audio-professional">
-.audio-workspace{border-color:rgba(220,230,242,.19)!important;background:linear-gradient(145deg,rgba(25,30,39,.96),rgba(8,11,16,.98))!important;box-shadow:0 24px 70px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.06)!important}
-.audio-eyebrow{font-size:9px;font-weight:800;letter-spacing:.19em;color:#aeb9c8;text-transform:uppercase}
-.audio-format-chip{display:inline-flex;align-items:center;padding:8px 11px;border-radius:10px;border:1px solid rgba(220,230,242,.19);background:rgba(255,255,255,.045);font-size:9px;font-weight:800;letter-spacing:.12em;color:#e3e9f1}
-.audio-source-card{min-width:0;padding:16px;border-radius:17px;border:1px solid rgba(220,230,242,.13);background:rgba(3,6,10,.42)}
-.audio-label{display:block;color:#dce3ed;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
-.audio-notice{display:flex;align-items:flex-start;gap:11px;padding:13px 15px;border-radius:14px;border:1px solid rgba(220,230,242,.13);background:rgba(255,255,255,.035);color:#aeb8c6;font-size:11px;line-height:1.65}
-.audio-notice p{margin:0;min-width:0}
-.audio-notice b{color:#e8edf4;font-weight:700}
-.audio-notice-icon{display:grid;place-items:center;flex:0 0 19px;width:19px;height:19px;border-radius:50%;border:1px solid rgba(220,230,242,.32);color:#e8edf4;font-size:11px;font-weight:800}
-.audio-settings-panel{padding:17px;border-radius:18px;border:1px solid rgba(220,230,242,.13);background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(0,0,0,.17))}
-.audio-preset{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:66px;padding:10px 8px;border-radius:13px;border:1px solid rgba(220,230,242,.16);background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));color:#e8edf4;transition:all .2s ease}
-.audio-preset b{font-size:14px;font-weight:800;letter-spacing:-.02em}
-.audio-preset span{font-size:10px;color:#9ba7b7;font-weight:700}
-.audio-preset:hover{border-color:rgba(235,242,250,.42);background:rgba(220,230,242,.09);transform:translateY(-2px)}
-.audio-preset.is-active{border-color:rgba(245,248,252,.72);background:linear-gradient(145deg,rgba(225,233,243,.19),rgba(225,233,243,.07));box-shadow:0 0 0 2px rgba(220,230,242,.07),0 10px 24px rgba(0,0,0,.22)}
-.audio-preset.is-active span{color:#e8edf4}
-.audio-slider-block{padding:15px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid rgba(220,230,242,.10)}
-.audio-value{font-size:11px;font-weight:800;color:#f2f5f9;font-variant-numeric:tabular-nums}
-#audioSpeed,#audioGain{accent-color:#e1e7ef;min-height:22px;cursor:pointer}
-#audioConvertBtn{min-height:52px}
-.audio-progress-shell{display:none;padding:15px;border-radius:14px;border:1px solid rgba(220,230,242,.15);background:rgba(0,0,0,.28)}
-.audio-progress-track{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
-.audio-progress-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#9aa7b6,#f0f3f6);transition:width .25s ease}
-.audio-progress-fill.is-indeterminate{width:45%!important;animation:indeterminateBar 1.4s infinite ease-in-out}
-@keyframes indeterminateBar{0%{transform:translateX(-110%)}100%{transform:translateX(240%)}}
-.audio-download-ready{display:none;padding:15px;border-radius:14px;border:1px solid rgba(52,211,153,.35);background:rgba(16,185,129,.08)}
-@media(max-width:640px){
- .audio-workspace{padding:17px!important;border-radius:22px!important}
- .audio-settings-panel{padding:13px}
- .audio-preset{min-height:60px}
- .audio-source-card{padding:13px}
-}
-</style>
-
-
-
-<style id="dss-executive-platinum-v2">
-/* DSS AUDIO PRO — Executive Platinum UI refinement. Layout, IDs and application logic are preserved. */
-:root{color-scheme:dark;--dss-white:#f4f6f8;--dss-silver:#c5ced8;--dss-muted:#8f9baa;--dss-line:rgba(211,222,235,.13);--dss-panel:rgba(13,17,23,.88);--dss-accent:#d7e0e9}
-html{scroll-behavior:smooth;scroll-padding-top:92px}
-body{background-color:#05070a!important;color:var(--dss-white)!important;background-image:radial-gradient(ellipse at 12% 0%,rgba(166,183,204,.105),transparent 34%),radial-gradient(ellipse at 90% 24%,rgba(105,122,144,.075),transparent 34%),linear-gradient(180deg,#070a0e 0%,#05070a 55%,#080b10 100%)!important;background-attachment:fixed}
-body:before{opacity:.13!important;background-size:64px 64px!important}
-body:after{background:radial-gradient(circle,rgba(195,208,224,.07),transparent 68%)!important}
-.glass{background:rgba(8,11,16,.84)!important;border-color:var(--dss-line)!important;backdrop-filter:blur(24px) saturate(125%)!important}
-.glass-card,.product-card{background:linear-gradient(150deg,rgba(20,25,33,.94),rgba(9,12,17,.97))!important;border:1px solid var(--dss-line)!important;box-shadow:0 18px 55px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.035)!important}
-.glass-card{border-radius:25px!important}
-.product-card{border-radius:21px!important}
-.product-card:hover{border-color:rgba(211,224,239,.34)!important;transform:translateY(-4px)!important;box-shadow:0 22px 48px rgba(0,0,0,.36)!important}
-.gold{background:linear-gradient(135deg,#f0f3f6 0%,#cbd4de 48%,#9aa7b6 100%)!important;color:#10151c!important;box-shadow:0 9px 24px rgba(190,204,220,.12)!important}
-.animated-title{background:linear-gradient(270deg,#fff,#c6d0dc,#8e9baa,#fff)!important;background-size:300% 300%!important;-webkit-background-clip:text!important;background-clip:text!important}
-.muted{color:var(--dss-muted)!important}
-header.glass{background:rgba(5,8,12,.88)!important;border-bottom:1px solid rgba(210,222,237,.15)!important;box-shadow:0 12px 40px rgba(0,0,0,.28)!important}
-header .text-amber-400,header .text-amber-300{color:#d4dde7!important}
-header .bg-amber-500\/15,header .bg-amber-500\/10{background:rgba(211,223,237,.08)!important}
-header .border-amber-500\/30,header .border-amber-500\/25{border-color:rgba(211,223,237,.22)!important}
-.field{background:rgba(4,7,11,.78)!important;border:1px solid rgba(207,220,235,.17)!important;border-radius:14px!important;color:#f5f7fa!important;min-height:47px}
-.field:focus{border-color:rgba(220,231,243,.62)!important;box-shadow:0 0 0 3px rgba(207,220,235,.09)!important}
-button,.btn,a{transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease}
-.btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 25px rgba(0,0,0,.28)!important}
-.client-nav{border:1px solid transparent!important;border-radius:13px!important}
-.client-nav:not(.gold){color:#9ca8b6!important}
-.client-nav:not(.gold):hover{background:rgba(215,226,239,.065)!important;border-color:rgba(215,226,239,.14)!important;color:#fff!important}
-.client-nav.gold{color:#10151c!important}
-#clientTab{max-width:1240px!important}
-#clientDashboard{gap:22px}
-#clientDashboard nav{background:rgba(8,11,16,.82)!important;border-color:var(--dss-line)!important;box-shadow:0 12px 35px rgba(0,0,0,.2)!important}
-#clientAvatar{border-color:rgba(220,230,242,.55)!important}
-#clientName{color:#f6f8fb!important}
-#toast{background:rgba(10,14,19,.96)!important;border-color:rgba(211,223,237,.22)!important;box-shadow:0 18px 50px rgba(0,0,0,.5)!important}
-.audio-workspace{background:linear-gradient(145deg,rgba(19,25,33,.98),rgba(7,10,15,.99))!important;border:1px solid rgba(214,226,240,.22)!important;border-radius:26px!important;box-shadow:0 28px 80px rgba(0,0,0,.43),inset 0 1px 0 rgba(255,255,255,.06)!important}
-.audio-eyebrow{color:#c4ceda!important;letter-spacing:.22em!important}
-.audio-format-chip{background:rgba(220,230,242,.075)!important;border-color:rgba(220,230,242,.23)!important;color:#f0f4f8!important}
-.audio-source-card{background:linear-gradient(145deg,rgba(5,9,14,.72),rgba(12,17,24,.66))!important;border-color:rgba(211,223,237,.17)!important;border-radius:18px!important}
-.audio-label{color:#e2e8ef!important;letter-spacing:.11em!important}
-.audio-notice{background:rgba(211,223,237,.045)!important;border-color:rgba(211,223,237,.16)!important;color:#aeb9c7!important}
-.audio-notice-icon{border-color:rgba(220,230,242,.4)!important;color:#e9eef4!important}
-.audio-settings-panel{background:linear-gradient(145deg,rgba(220,230,242,.045),rgba(0,0,0,.2))!important;border-color:rgba(211,223,237,.16)!important}
-.audio-preset{background:linear-gradient(145deg,rgba(220,230,242,.075),rgba(255,255,255,.018))!important;border-color:rgba(211,223,237,.17)!important}
-.audio-preset:hover{border-color:rgba(230,238,247,.5)!important;background:rgba(220,230,242,.11)!important}
-.audio-preset.is-active{background:linear-gradient(145deg,rgba(222,232,243,.2),rgba(222,232,243,.075))!important;border-color:rgba(232,240,248,.72)!important}
-.audio-slider-block{background:rgba(0,0,0,.27)!important;border-color:rgba(211,223,237,.13)!important}
-#audioSpeed,#audioGain{accent-color:#dbe4ed!important}
-#audioConvertBtn{background:linear-gradient(135deg,#f0f3f6,#bfcbd8)!important;color:#10151c!important;letter-spacing:.1em!important;box-shadow:0 12px 30px rgba(190,205,222,.12)!important}
-#audioConvertBtn:hover{filter:brightness(1.07)!important;transform:translateY(-2px)!important}
-:focus-visible{outline:2px solid rgba(224,234,245,.8)!important;outline-offset:3px!important}
-::selection{background:rgba(200,214,230,.25);color:#fff}
-::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#788696,#394553)!important}
-@media(max-width:640px){
- body{background-attachment:scroll!important}
- header .contact-me-btn{min-height:39px!important}
- #clientDashboard .glass-card{border-radius:19px!important}
- #clientDashboard nav{padding:8px!important}
- .audio-workspace{padding:17px!important;border-radius:21px!important}
- .audio-source-card{padding:13px!important}
- .audio-settings-panel{padding:13px!important}
- .client-nav{padding:10px 12px!important}
-}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-</style>
-
-</head>
-<body class="min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
-
-<!-- Toast Notification -->
-<div id="toast" class="fixed z-50 bottom-6 right-6 opacity-0 translate-y-2 pointer-events-none glass rounded-2xl px-5 py-3.5 text-xs shadow-2xl max-w-[90vw] border border-amber-500/30 font-medium flex items-center gap-3">
-  <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-  <span id="toastText">Notifikasi</span>
-</div>
-
-<!-- Header -->
-<header class="glass sticky top-0 z-40 border-x-0 border-t-0 shadow-xl">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-3.5 min-w-0">
-      <div class="relative">
-        <div class="absolute -inset-1 bg-gradient-to-r from-amber-500 to-indigo-500 rounded-2xl blur opacity-30"></div>
-        <img class="relative w-11 h-11 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" alt="DSS" src="https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true">
-      </div>
-      <div class="min-w-0">
-        <div class="font-extrabold tracking-wide text-sm sm:text-base truncate text-white flex items-center gap-2">
-          DRAGON STELL STUDIO
-          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="System Online"></span>
+<!-- Navbar -->
+<header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-lg">
+                DSS
+            </div>
+            <div>
+                <span class="font-bold text-lg tracking-wide text-white">DRAGON STELL STUDIO</span>
+                <span class="block text-xs text-indigo-400 font-medium">License Pro V5 Creator Root</span>
+            </div>
         </div>
-        <div class="text-[9px] tracking-[0.3em] text-amber-400/90 font-bold uppercase">Secure License & Management Console</div>
-      </div>
+        <div id="navUserArea" class="hidden flex items-center space-x-4">
+            <div class="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/60 px-3 py-1.5 rounded-full">
+                <img id="navAvatar" src="" alt="Avatar" class="w-6 h-6 rounded-full object-cover">
+                <span id="navUsername" class="text-sm font-medium text-slate-200"></span>
+            </div>
+            <button onclick="logout()" class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg transition">Keluar</button>
+        </div>
     </div>
-    
-    <div class="shrink-0 flex items-center gap-2 sm:gap-3">
-      <a id="contactMeButton" href="https://discord.gg/XkuKuv23bH" target="_blank" rel="noopener noreferrer" style="display:inline-flex;visibility:visible;opacity:1;align-items:center;justify-content:center;gap:8px;flex-shrink:0;position:relative;z-index:60" class="contact-me-btn btn inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-[10px] sm:text-xs font-extrabold tracking-wider uppercase text-slate-100 border border-white/15 bg-white/[0.045] hover:bg-white/[0.09] shadow-lg" aria-label="Contact Me melalui Discord">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5h7M8.5 14h4"/></svg>
-        <span>Contact Me</span>
-        <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7M8 7h9v9"/></svg>
-      </a>
-      <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-inner">
-        <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-        CREATOR STELL
-      </span>
-    </div>
-  </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+<!-- Main Container -->
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col">
 
-  <section id="clientTab" class="max-w-5xl mx-auto space-y-8 animate-fade">
-    <div id="welcome" class="text-center py-6 sm:py-10 space-y-4 relative">
-      <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"><div class="w-[500px] h-[300px] bg-gradient-to-r from-amber-500 to-indigo-600 rounded-full blur-[120px]"></div></div>
-      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-extrabold tracking-[0.25em] uppercase bg-amber-500/10 text-amber-400 border border-amber-500/25 mb-1 shadow-sm">Secure Authentication Portal</span>
-      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight animated-title">WELCOME TO DRAGON STELL STUDIO</h1>
-      <p class="muted text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">Sistem manajemen lisensi terenkripsi profesional untuk autentikasi produk dan unduhan resmi ekosistem Dragon Stell.</p>
-    </div>
-
-    <!-- Kotak Login Klien -->
-    <div id="clientLoginBox" class="glass-card rounded-3xl p-7 sm:p-10 max-w-lg mx-auto space-y-6 shadow-2xl border border-white/10 relative overflow-hidden">
-      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-600 via-amber-400 to-indigo-500"></div>
-      <div class="space-y-1.5">
-        <h2 class="text-xl font-extrabold text-white">Masuk ke Portal Klien</h2>
-        <p class="muted text-xs">Verifikasi kepemilikan produk menggunakan kredensial Roblox Anda.</p>
-      </div>
-      <div class="space-y-4 pt-1">
-        <div>
-          <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Username Roblox</label>
-          <div class="relative"><span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500 font-semibold">@</span><input id="loginUsername" class="field w-full rounded-2xl pl-9 pr-4 py-3.5 text-sm font-medium text-white" placeholder="UsernameRoblox" autocomplete="username"></div>
-        </div>
-        <div>
-          <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">License Key</label>
-          <div class="relative">
-            <input id="loginKey" type="password" class="field w-full rounded-2xl pl-4 pr-11 py-3.5 text-sm font-medium text-white" placeholder="DSS-XXXX-XXXX-XXXX" autocomplete="current-password">
-            <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-white transition-colors cursor-pointer" title="Tampilkan/Sembunyikan Key"><svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
-          </div>
-        </div>
-      </div>
-      <button type="button" id="portalLoginBtn" onclick="portalLogin()" class="btn gold rounded-2xl w-full py-4 font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-amber-900/30 cursor-pointer">Login Securely</button>
-      <p id="clientError" class="hidden text-xs text-red-400 text-center font-medium bg-red-500/10 py-3 rounded-2xl border border-red-500/20"></p>
-    </div>
-
-    <!-- Dashboard Klien -->
-    <div id="clientDashboard" class="hidden space-y-6 animate-fade">
-      <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center justify-between shadow-2xl relative overflow-hidden border border-amber-500/25">
-        <div class="flex items-center gap-5 min-w-0 relative z-10">
-          <div class="relative">
-            <img id="clientAvatar" class="w-20 h-20 rounded-2xl bg-black border-2 border-amber-400/50 object-cover shadow-2xl" alt="Avatar">
-          </div>
-          <div class="min-w-0 space-y-1.5">
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-widest uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30">ROBLOX ACCOUNT VERIFIED</div>
-            <b id="clientName" class="text-xl sm:text-2xl font-extrabold block truncate text-white tracking-tight"></b>
-            <p id="clientUsername" class="text-xs text-slate-300 font-semibold"></p>
-            <p id="clientRobloxId" class="muted text-[11px] font-mono"></p>
-            <p id="clientExpiry" class="muted text-xs font-medium"></p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 relative z-10 flex-wrap">
-          <button type="button" onclick="refreshClient()" class="btn border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white/5 hover:bg-white/10 flex items-center gap-2 cursor-pointer shadow-sm"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg> Refresh Data</button>
-          <button type="button" onclick="logoutClient()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 flex items-center gap-1.5 cursor-pointer">Keluar</button>
-        </div>
-      </div>
-
-      <!-- Navigasi Tab Klien -->
-      <nav class="glass rounded-2xl p-2.5 flex gap-2 overflow-x-auto shadow-xl border border-white/10">
-        <button type="button" id="nav-home" onclick="showClientTab('home')" class="client-nav gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg> Beranda Utama</button>
-        <button type="button" id="nav-showcase" onclick="showClientTab('showcase')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9"/></svg> Showcase Produk</button>
-        <button type="button" id="nav-licenses" onclick="showClientTab('licenses')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="5"/><path d="m11.5 11.5 8-8 2 2-2 2 2 2-3 3-2-2-3.5 3.5"/></svg> Lisensi & Unduhan</button>
-        <button type="button" id="nav-projects" onclick="showClientTab('projects')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h4m-2-2v4m7-1h.01M18 10h.01"/><path d="M7 6h10a4 4 0 0 1 3.8 2.8l1.1 4a3 3 0 0 1-4.8 3.1L15 14H9l-2.1 1.9a3 3 0 0 1-4.8-3.1l1.1-4A4 4 0 0 1 7 6Z"/></svg> Project Experience</button>
-        <button type="button" id="nav-audio" onclick="showClientTab('audio')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Audio Convert</button>
-        <button type="button" id="nav-subscription" onclick="showClientTab('subscription')" class="client-nav text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer"><svg class="dss-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg> Langganan</button>
-      </nav>
-
-      <!-- Sub-Tab Beranda -->
-      <div id="client-home" class="client-page space-y-6 animate-fade">
-        <section class="glass-card rounded-3xl p-6 sm:p-7 border border-white/10 shadow-xl">
-          <div class="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 class="text-sm sm:text-base font-extrabold text-white">Komunitas Roblox Milik Anda</h2>
-              <p class="muted text-[11px] mt-1">Nama komunitas yang terdeteksi sebagai pemilik (Owner).</p>
-            </div>
-            <span id="communityCount" class="text-[10px] font-bold text-slate-200 bg-white/5 border border-white/10 rounded-lg px-3 py-2">0 Komunitas</span>
-          </div>
-          <div id="clientCommunities" class="flex flex-wrap gap-2">
-            <span class="muted text-xs">Belum ada komunitas yang terdeteksi.</span>
-          </div>
-        </section>
-        <div class="grid sm:grid-cols-3 gap-5">
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
-            <p class="muted text-xs font-bold uppercase tracking-wider">Produk Dimiliki</p>
-            <p id="statProducts" class="text-4xl font-extrabold text-amber-300 mt-3">0</p>
-          </div>
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
-            <p class="muted text-xs font-bold uppercase tracking-wider">Status Akun</p>
-            <p class="text-xl font-extrabold text-emerald-400 mt-3 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>Terverifikasi Aman</p>
-          </div>
-          <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/5">
-            <p class="muted text-xs font-bold uppercase tracking-wider">Tipe Akses</p>
-            <p id="statAccessType" class="text-lg font-extrabold text-white mt-3">Lisensi Resmi</p>
-          </div>
-        </div>
-
-        <div class="glass-card rounded-3xl p-8 shadow-2xl space-y-5 border border-white/10 relative overflow-hidden">
-          <div class="space-y-1.5 relative z-10">
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Selamat Datang di Portal Eksklusif Dragon Stell Studio</h2>
-          </div>
-          <p class="muted text-sm leading-relaxed relative z-10 max-w-3xl">
-            Akun Anda telah terautentikasi dengan aman melalui sistem verifikasi Roblox. Anda dapat langsung melihat seluruh katalog produk berkualitas tinggi di menu <b>Showcase Produk</b> atau mengeksplorasi Project Experience resmi Anda.
-          </p>
-          <div class="pt-3 flex flex-wrap gap-3.5 relative z-10">
-            <button type="button" onclick="showClientTab('showcase')" class="btn gold rounded-2xl px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg">Jelajahi Showcase Produk</button>
-            <button type="button" onclick="showClientTab('projects')" class="btn border border-white/10 rounded-2xl px-6 py-3.5 text-xs font-bold text-white bg-white/5 hover:bg-white/10">Buka Project Experience</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sub-Tab Showcase -->
-      <div id="client-showcase" class="client-page hidden space-y-6 animate-fade">
-        <div class="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Showcase Produk</h2>
-            <p class="muted text-xs sm:text-sm mt-1">Katalog produk profesional berkualitas tinggi dari Dragon Stell Studio.</p>
-          </div>
-          <span id="productCount" class="text-xs font-bold text-amber-400 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/25 shrink-0"></span>
-        </div>
-        <div id="clientProducts" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-      </div>
-
-      <!-- Sub-Tab Lisensi & Unduhan -->
-      <div id="client-licenses" class="client-page hidden space-y-6 animate-fade">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Lisensi & Unduhan Saya</h2>
-          <p class="muted text-xs sm:text-sm mt-1">Daftar hak akses dan file unduhan resmi yang terikat pada akun atau grup Anda.</p>
-        </div>
-        <div id="clientLicenseDetails" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-      </div>
-
-      <!-- Sub-Tab Project Experience -->
-      <div id="client-projects" class="client-page hidden space-y-6 animate-fade">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Project Experience Terdaftar</h2>
-          <p class="muted text-xs sm:text-sm mt-1">Daftar experience Roblox terverifikasi lengkap dengan statistik pengunjung, produk terdeteksi, dan tautan langsung.</p>
-        </div>
-        <div id="clientDynamicProjects" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-      </div>
-
-      <div id="client-audio" class="client-page hidden space-y-6 animate-fade">
-        <div class="flex flex-wrap justify-between gap-3 items-end">
-          <div><h2 class="text-xl sm:text-2xl font-extrabold">DSS Audio Convert</h2><p class="muted text-xs mt-1">Konversi cepat ke OGG dengan kontrol audio profesional (Maksimal durasi 7 menit).</p></div>
-          <button class="btn border border-white/15 rounded-xl px-4 py-2 text-xs" onclick="loadAudioStatus()">Refresh Statistik</button>
-        </div>
-        <div class="grid sm:grid-cols-3 gap-4">
-          <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Kredit Tersedia</p><b id="audioCredits" class="text-3xl block mt-2">—</b></div>
-          <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Gratis Hari Ini</p><b id="audioDaily" class="text-3xl block mt-2">—</b></div>
-          <div class="glass-card rounded-2xl p-5"><p class="muted text-[10px] uppercase font-bold">Total Berhasil Convert</p><b id="audioTotal" class="text-3xl block mt-2">0</b></div>
-        </div>
-        <section class="glass-card audio-workspace rounded-3xl p-5 sm:p-8 space-y-6">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div><p class="audio-eyebrow">DSS AUDIO ENGINE</p><h3 class="font-extrabold text-lg sm:text-xl mt-1">Sumber & Pengaturan Audio</h3><p class="muted text-xs mt-1">Upload file dari perangkat atau masukkan link halaman YouTube / TikTok / direct media HTTPS. Maksimal durasi 7 menit & ukuran 50 MB.</p></div>
-            <span class="audio-format-chip">OUTPUT · OGG (MAX 7 MIN)</span>
-          </div>
-          <div class="grid lg:grid-cols-2 gap-4">
-            <div class="audio-source-card space-y-2">
-              <label class="audio-label" for="audioFile">01 · Upload dari perangkat</label>
-              <input id="audioFile" type="file" accept=".mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.opus,.mp4,.webm,.mov,.mkv,audio/*,video/*" class="field w-full rounded-xl p-3 text-xs">
-              <p class="muted text-[10px]">MP3, WAV, M4A, AAC, FLAC, OPUS, OGG, MP4, WEBM, MOV, MKV (Maks. 7 menit).</p>
-            </div>
-            <div class="audio-source-card space-y-2">
-              <label class="audio-label" for="audioSourceUrl">02 · Link Halaman YouTube / TikTok atau Media URL</label>
-              <input id="audioSourceUrl" type="text" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/watch?v=... atau https://www.tiktok.com/..." class="field w-full rounded-xl p-3 text-xs" oninput="onAudioUrlInput()">
-              <div id="audioUrlMetaPreview" class="hidden mt-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/15 flex items-center gap-2.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
-                <div class="min-w-0 flex-1">
-                  <p id="audioUrlPlatformLabel" class="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">MENDETEKSI JUDUL...</p>
-                  <p id="audioUrlTitleText" class="text-xs font-bold text-white truncate">Memuat judul media...</p>
+    <!-- LOGIN VIEW -->
+    <div id="viewLogin" class="flex-1 flex items-center justify-center py-12">
+        <div class="max-w-md w-full bg-slate-900/80 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl mx-auto flex items-center justify-center text-indigo-400 text-2xl mb-4">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
-              </div>
-              <p class="muted text-[10px]">Masukkan link halaman YouTube/TikTok untuk menampilkan judul & mengonversinya langsung menjadi file musik <b>.ogg</b> (maksimal 7 menit).</p>
+                <h1 class="text-xl font-bold text-white">Portal Masuk DSS Studio</h1>
+                <p class="text-sm text-slate-400 mt-1">Masukkan Username Roblox dan License Key atau Password Admin.</p>
             </div>
-          </div>
-          <div class="audio-notice">
-            <span class="audio-notice-icon">i</span>
-            <p><b>Info Konversi:</b> Sistem mendukung upload file langsung maupun ekstraksi audio dari link halaman <b>YouTube</b> & <b>TikTok</b> menjadi format musik <b>OGG</b> dengan batas maksimal durasi <b>7 menit (420 detik)</b> per konversi.</p>
-          </div>
-          <div class="audio-settings-panel space-y-5">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div><p class="audio-eyebrow">SOUND CONTROL</p><h4 class="font-bold text-sm mt-1">Preset & Penyesuaian Manual</h4></div>
-              <span class="muted text-[10px]">Preset akan mengatur Speed + Amplifier sekaligus</span>
-            </div>
-            <div class="space-y-2.5">
-              <label class="audio-label">Preset kombinasi</label>
-              <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                <button type="button" class="audio-preset" data-audio-preset="2.1,-6" onclick="setAudioPreset(2.1,-6)"><b>2.1x</b><span>-6 dB</span></button>
-                <button type="button" class="audio-preset" data-audio-preset="2.3,-8" onclick="setAudioPreset(2.3,-8)"><b>2.3x</b><span>-8 dB</span></button>
-                <button type="button" class="audio-preset" data-audio-preset="2.5,-10" onclick="setAudioPreset(2.5,-10)"><b>2.5x</b><span>-10 dB</span></button>
-                <button type="button" class="audio-preset" data-audio-preset="2.7,-12" onclick="setAudioPreset(2.7,-12)"><b>2.7x</b><span>-12 dB</span></button>
-                <button type="button" class="audio-preset" data-audio-preset="2.9,-14" onclick="setAudioPreset(2.9,-14)"><b>2.9x</b><span>-14 dB</span></button>
-              </div>
-            </div>
-            <div class="grid md:grid-cols-2 gap-6">
-              <div class="audio-slider-block">
-                <div class="flex items-center justify-between gap-3 mb-3"><label class="audio-label" for="audioSpeed">Kecepatan</label><output id="audioSpeedLabel" class="audio-value">1.00x · Normal</output></div>
-                <input id="audioSpeed" type="range" min="0.5" max="3" step="0.05" value="1" class="w-full" oninput="updateAudioSpeedLabel()">
-                <div class="flex justify-between muted text-[10px] mt-1"><span>0.5x</span><span>3.0x</span></div>
-              </div>
-              <div class="audio-slider-block">
-                <div class="flex items-center justify-between gap-3 mb-3"><label class="audio-label" for="audioGain">Amplifier</label><output id="audioGainLabel" class="audio-value">0 dB</output></div>
-                <input id="audioGain" type="range" min="-24" max="12" step="1" value="0" class="w-full" oninput="updateAudioGainLabel()">
-                <div class="flex justify-between muted text-[10px] mt-1"><span>-24 dB</span><span>+12 dB</span></div>
-              </div>
-            </div>
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="muted text-[10px]">Slider tetap bisa diubah manual setelah memilih preset.</p>
-              <button type="button" onclick="resetAudioControls()" class="btn border border-white/15 rounded-lg px-3 py-2 text-[10px] font-bold">RESET PENGATURAN</button>
-            </div>
-          </div>
-          <button id="audioConvertBtn" type="button" onclick="convertAudio()" class="btn gold rounded-xl px-6 py-4 w-full text-xs font-extrabold tracking-wider">MULAI KONVERSI KE OGG</button>
-          <div id="audioProgressPanel" class="audio-progress-shell space-y-3" aria-live="polite">
-            <div class="flex items-center justify-between gap-3">
-              <div><p class="audio-eyebrow">DSS AUDIO ENGINE</p><p id="audioProgressLabel" class="text-xs font-bold text-white mt-1">Menyiapkan proses...</p></div>
-              <strong id="audioProgressPercent" class="text-sm font-extrabold tabular-nums">0%</strong>
-            </div>
-            <div class="audio-progress-track"><div id="audioProgressFill" class="audio-progress-fill"></div></div>
-            <p id="audioConvertStatus" class="muted text-[10px]">Jangan tutup halaman sampai proses selesai.</p>
-          </div>
-          <div id="audioDownloadReady" class="audio-download-ready items-center justify-between gap-3 flex-wrap">
-            <div><p class="text-xs font-extrabold text-white">Konversi berhasil</p><p id="audioDownloadName" class="muted text-[10px] mt-1 break-all">File musik OGG siap diunduh.</p></div>
-            <button id="audioDownloadBtn" type="button" onclick="downloadConvertedAudio()" class="btn gold rounded-xl px-5 py-3 text-[10px] font-extrabold tracking-wider">DOWNLOAD MUSIK OGG</button>
-          </div>
-          <p id="audioConvertStatusFallback" class="sr-only" aria-live="polite"></p>
-        </section>
-        <section class="glass-card rounded-3xl p-6 space-y-4"><h3 class="font-bold">Riwayat Konversi</h3><div id="audioHistory" class="space-y-2"><p class="muted text-xs">Belum ada riwayat.</p></div></section>
-      </div>
-
-      <div id="client-subscription" class="client-page hidden space-y-6 animate-fade">
-        <div><h2 class="text-xl sm:text-2xl font-extrabold">Langganan & Kredit Audio</h2><p class="muted text-xs mt-1">Pemilik lisensi aktif mendapat hingga 2 konversi gratis per hari. Kredit tambahan diaktifkan setelah konfirmasi pembayaran melalui Discord.</p></div>
-        <div class="grid md:grid-cols-2 gap-5">
-          <div class="glass-card rounded-3xl p-6 space-y-3"><p class="muted text-[10px] uppercase font-bold">Paket 7 Hari</p><h3 id="audioPrice7" class="text-2xl font-extrabold">—</h3><p id="audioCredit7" class="muted text-xs">— kredit</p><button onclick="requestAudioPackage('7d')" class="btn gold rounded-xl w-full py-3 text-xs font-bold">Hubungi Discord</button></div>
-          <div class="glass-card rounded-3xl p-6 space-y-3"><p class="muted text-[10px] uppercase font-bold">Paket 1 Bulan</p><h3 id="audioPrice30" class="text-2xl font-extrabold">—</h3><p id="audioCredit30" class="muted text-xs">— kredit</p><button onclick="requestAudioPackage('30d')" class="btn gold rounded-xl w-full py-3 text-xs font-bold">Hubungi Discord</button></div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Username Roblox</label>
+                    <input type="text" id="loginUsername" required placeholder="Contoh: MyRobloxName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">License Key / Password Admin</label>
+                    <input type="password" id="loginCredential" required placeholder="DSS-XXXX-XXXX atau Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                </div>
+                <button type="submit" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/25 flex items-center justify-center space-x-2">
+                    <span>Verifikasi & Masuk</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+            <div id="loginError" class="mt-4 hidden p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs text-center"></div>
         </div>
-        <p class="muted text-xs">Akun tanpa lisensi aktif tidak dapat menggunakan layanan Audio Convert. Owner website mendapatkan akses tanpa batas.</p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Bagian Admin Management Console -->
-  <section id="adminTab" class="hidden space-y-8 animate-fade">
-    <div class="text-center py-3">
-      <p class="text-amber-400 text-xs uppercase tracking-[0.3em] font-bold mb-2">Management Console</p>
-      <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">Admin Dashboard</h1>
-      <p class="muted text-xs sm:text-sm mt-2 max-w-lg mx-auto">Kelola katalog produk, harga, URL Vercel Blob, Project Experience ID, dan Logs sistem dengan aman.</p>
     </div>
 
-    <div id="adminPanel" class="space-y-8">
-      <div class="glass-card rounded-2xl p-6 flex items-center justify-between gap-4 shadow-xl border border-amber-500/25">
-        <div>
-          <p class="text-xs uppercase tracking-wider text-amber-400 font-extrabold">Owner Session Active</p>
-          <p class="muted text-xs mt-0.5">Hak akses penuh terverifikasi melalui Roblox Administrator ID</p>
-        </div>
-        <button type="button" onclick="logoutAdmin()" class="btn border border-red-500/30 text-red-300 rounded-xl px-4 py-2.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 cursor-pointer">Keluar Admin</button>
-      </div>
-
-      <div class="grid lg:grid-cols-2 gap-8">
-        <!-- Form Produk -->
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
-          <div>
-            <h2 id="formTitle" class="font-bold text-lg text-white">Tambah Produk Baru</h2>
-            <p class="muted text-xs mt-1">Masukkan detail produk, harga, dan URL file Vercel Blob.</p>
-          </div>
-          <input type="hidden" id="editProductId">
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Nama Produk</label><input id="productName" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Contoh: Roleplay System"></div>
-          <div class="grid sm:grid-cols-2 gap-3.5">
-            <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Kode Produk</label><input id="productCode" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ROLE_SYSTEM"></div>
-            <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Harga Produk</label><input id="productPrice" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Rp 150.000"></div>
-          </div>
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Deskripsi Singkat</label><textarea id="productDescription" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white resize-none" rows="2" placeholder="Fitur produk..."></textarea></div>
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Image URL (Vercel Blob Public)</label><input id="productImageUrl" class="field rounded-2xl px-3.5 py-3.5 w-full text-xs font-mono text-white" placeholder="https://..."></div>
-          <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Download URL (File .rbxm)</label><input id="productDownloadUrl" class="field rounded-2xl px-3.5 py-3.5 w-full text-xs font-mono text-white" placeholder="https://..."></div>
-          <div class="pt-2 flex gap-3">
-            <button type="button" id="saveProductBtn" onclick="saveProduct()" class="btn rounded-2xl border border-amber-500/30 text-amber-200 py-4 w-full text-xs font-bold uppercase tracking-wider bg-amber-500/15 hover:bg-amber-500/25 shadow-md cursor-pointer">+ Tambah Produk</button>
-            <button type="button" id="cancelEditBtn" onclick="resetProductForm()" class="hidden btn rounded-2xl border border-white/10 muted py-4 px-6 text-xs font-bold hover:bg-white/5 cursor-pointer">Batal</button>
-          </div>
-          <div class="pt-4 border-t border-white/5"><p class="text-xs font-bold text-white mb-3">Daftar Katalog Produk</p><div id="productCatalog" class="space-y-2.5 max-h-60 overflow-y-auto pr-1"></div></div>
+    <!-- DASHBOARD VIEW -->
+    <div id="viewDashboard" class="hidden flex-1 flex flex-col space-y-6">
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-800 space-x-6">
+            <button onclick="switchTab('catalog')" id="tabBtnCatalog" class="pb-3 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 transition flex items-center space-x-2">
+                <i class="fa-solid fa-box-archive"></i>
+                <span>Katalog & Lisensi</span>
+            </button>
+            <button onclick="switchTab('audio')" id="tabBtnAudio" class="pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center space-x-2">
+                <i class="fa-solid fa-music"></i>
+                <span>DSS Audio Convert (.OGG)</span>
+            </button>
+            <button onclick="switchTab('admin')" id="tabBtnAdmin" class="hidden pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center space-x-2">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Panel Admin</span>
+            </button>
         </div>
 
-        <!-- Buat Lisensi & Project Experience ID -->
-        <div class="space-y-8">
-          <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
-            <div>
-              <h2 class="font-bold text-lg text-white">Buat Lisensi Baru</h2>
-              <p class="muted text-xs mt-1">Hubungkan tepat satu produk untuk akun pribadi atau grup.</p>
+        <!-- Tab 1: Catalog & Licenses -->
+        <div id="tabContentCatalog" class="space-y-6">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-key text-indigo-400"></i>
+                    <span>Lisensi Aktif Anda</span>
+                </h2>
+                <div id="userLicensesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Rendered dynamically -->
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-2 p-1 bg-black/40 rounded-2xl border border-white/5">
-              <button type="button" id="personalMode" onclick="setMode('personal')" class="gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer">Akun Pribadi</button>
-              <button type="button" id="groupMode" onclick="setMode('group')" class="text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer">Group Experience</button>
-            </div>
-            <div>
-              <label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">License Key</label>
-              <div class="flex gap-2.5">
-                <input id="newKey" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-mono font-medium text-white" placeholder="DSS-XXXX">
-                <button type="button" onclick="generateKey()" class="btn border border-white/10 rounded-2xl px-5 py-3.5 text-xs font-semibold bg-white/5 hover:bg-white/10 shrink-0 cursor-pointer">Generate</button>
-              </div>
-            </div>
-            <div id="ownerFields"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Username Pemilik Roblox</label><input id="newOwner" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="Username"></div>
-            <div id="groupFields" class="hidden"><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Group ID Roblox</label><input id="newGroup" inputmode="numeric" class="field rounded-2xl px-4 py-3.5 w-full text-sm font-medium text-white" placeholder="ID Grup"></div>
-            <div><label class="text-[11px] uppercase tracking-wider muted font-semibold block mb-2.5">Pilih Satu Produk</label><div id="licenseProductChoices" class="space-y-2.5 max-h-40 overflow-y-auto pr-1"></div></div>
-            <div><label class="block text-[11px] uppercase tracking-wider muted font-semibold mb-2">Masa Kedaluwarsa (Opsional)</label><input id="newExpires" type="date" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-medium text-white"></div>
-            <button type="button" onclick="createLicense()" class="btn gold rounded-2xl w-full py-4 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-amber-900/30 cursor-pointer">Simpan Lisensi Baru</button>
-          </div>
 
-          <!-- Tambah Project Experience ID -->
-          <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
-            <div>
-              <h2 class="font-bold text-lg text-white">Tambah Project Experience ID</h2>
-              <p class="muted text-xs mt-1">Masukkan Place ID Roblox agar otomatis tertata rapi di dashboard klien.</p>
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-store text-indigo-400"></i>
+                    <span>Katalog Produk Tersedia</span>
+                </h2>
+                <div id="catalogList" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Rendered dynamically -->
+                </div>
             </div>
-            <div class="flex gap-2.5">
-              <input id="newPlaceId" class="field rounded-2xl px-4 py-3.5 w-full text-xs font-mono font-medium text-white" placeholder="Contoh: 114330086695098">
-              <button type="button" onclick="saveProjectExperience()" class="btn border border-amber-500/30 text-amber-200 rounded-2xl px-6 py-3.5 text-xs font-bold uppercase tracking-wider bg-amber-500/15 hover:bg-amber-500/25 shrink-0 cursor-pointer">+ Tambah</button>
-            </div>
-            <div id="adminProjectList" class="space-y-2.5 max-h-40 overflow-y-auto pr-1"></div>
-          </div>
-        </div>
-      </div>
-
-
-      <section class="audio-admin-section rounded-3xl p-5 sm:p-8 space-y-6">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p class="audio-admin-kicker">DSS AUDIO MANAGEMENT</p>
-            <h2 class="font-extrabold text-xl sm:text-2xl mt-2">Audio Convert Control Center</h2>
-            <p class="muted text-xs mt-2 max-w-2xl">Kelola paket, kredit, akses pengguna, dan permintaan langganan dalam satu panel administrasi.</p>
-          </div>
-          <span class="audio-format-chip">ADMIN · AUDIO</span>
         </div>
 
-        <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          <div class="audio-admin-subpanel"><p class="audio-admin-kicker">Paket Mingguan</p><p class="text-sm font-bold mt-2">7 Hari</p><p class="muted text-[10px] mt-1">Harga dan kuota kredit</p></div>
-          <div class="audio-admin-subpanel"><p class="audio-admin-kicker">Paket Bulanan</p><p class="text-sm font-bold mt-2">30 Hari</p><p class="muted text-[10px] mt-1">Harga dan kuota kredit</p></div>
-          <div class="audio-admin-subpanel"><p class="audio-admin-kicker">Manajemen Akun</p><p class="text-sm font-bold mt-2">User Credits</p><p class="muted text-[10px] mt-1">Grant akses manual</p></div>
-          <div class="audio-admin-subpanel"><p class="audio-admin-kicker">Permintaan</p><p class="text-sm font-bold mt-2">Subscription Queue</p><p class="muted text-[10px] mt-1">Pantau permintaan paket</p></div>
+        <!-- Tab 2: Audio Convert (Client-Side FFmpeg.wasm) -->
+        <div id="tabContentAudio" class="hidden space-y-6">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8">
+                <div class="max-w-2xl mx-auto space-y-6">
+                    <div class="text-center space-y-2">
+                        <h2 class="text-2xl font-bold text-white">DSS Audio Convert Pro</h2>
+                        <p class="text-sm text-slate-400">Ubah file MP3, WAV, atau Video menjadi format OGG berkualitas tinggi khusus Roblox (Maks. 7 Menit).</p>
+                    </div>
+
+                    <div class="space-y-4 bg-slate-950 border border-slate-800/80 p-6 rounded-2xl">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Pilih File Audio / Video</label>
+                            <input type="file" id="audioFileInput" accept="audio/*,video/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/20 file:text-indigo-400 hover:file:bg-indigo-600/30 cursor-pointer">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Kecepatan (Speed): <span id="speedVal" class="text-indigo-400 font-bold">1.0x</span></label>
+                                <input type="range" id="audioSpeed" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('speedVal').innerText = this.value + 'x'" class="w-full accent-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Volume Gain (dB): <span id="gainVal" class="text-indigo-400 font-bold">0 dB</span></label>
+                                <input type="range" id="audioGain" min="-12" max="12" step="1" value="0" oninput="document.getElementById('gainVal').innerText = this.value + ' dB'" class="w-full accent-indigo-500">
+                            </div>
+                        </div>
+
+                        <button onclick="convertAudioFile()" id="convertBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/25 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Konversi ke .OGG Sekarang</span>
+                        </button>
+                    </div>
+
+                    <div id="audioProgressArea" class="hidden space-y-2">
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span id="audioProgressText">Memproses konversi...</span>
+                            <span id="audioProgressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div id="audioProgressBar" class="bg-indigo-500 h-2 w-0 transition-all duration-150"></div>
+                        </div>
+                    </div>
+
+                    <div id="audioResultArea" class="hidden p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-circle-check text-emerald-400 text-xl"></i>
+                            <div>
+                                <p class="text-sm font-semibold text-white">Konversi Berhasil!</p>
+                                <p class="text-xs text-slate-400" id="audioResultName">output.ogg</p>
+                            </div>
+                        </div>
+                        <a id="audioDownloadLink" download="audio.ogg" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">Unduh OGG</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="grid xl:grid-cols-2 gap-4">
-          <div class="audio-admin-subpanel space-y-4">
-            <div><p class="audio-admin-kicker">01 · PACKAGE CONFIGURATION</p><h3 class="font-bold text-sm mt-1">Harga & Kuota Paket</h3></div>
-            <div class="grid sm:grid-cols-2 gap-3">
-              <label class="space-y-1.5"><span class="audio-label">Harga 7 Hari</span><input id="audioAdminPrice7" class="field audio-admin-field" placeholder="Contoh: Rp 15.000"></label>
-              <label class="space-y-1.5"><span class="audio-label">Harga 30 Hari</span><input id="audioAdminPrice30" class="field audio-admin-field" placeholder="Contoh: Rp 45.000"></label>
-              <label class="space-y-1.5"><span class="audio-label">Kredit 7 Hari</span><input id="audioAdminCredits7" type="number" min="1" class="field audio-admin-field" placeholder="30"></label>
-              <label class="space-y-1.5"><span class="audio-label">Kredit 30 Hari</span><input id="audioAdminCredits30" type="number" min="1" class="field audio-admin-field" placeholder="150"></label>
-              <label class="space-y-1.5 sm:col-span-2"><span class="audio-label">Discord Support URL</span><input id="audioAdminDiscord" class="field audio-admin-field" placeholder="https://discord.gg/..."></label>
+        <!-- Tab 3: Admin Panel -->
+        <div id="tabContentAdmin" class="hidden space-y-6">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-gauge-high text-indigo-400"></i>
+                    <span>Panel Kontrol Admin DSS Studio</span>
+                </h2>
+                <p class="text-sm text-slate-400">Anda masuk sebagai Administrator Utama. Kelola produk, lisensi, dan database sistem dari sini.</p>
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Status Sistem</p>
+                        <p class="text-lg font-bold text-emerald-400 mt-1">ONLINE (Creator Root V5)</p>
+                    </div>
+                </div>
             </div>
-            <button onclick="saveAudioAdminSettings()" class="btn gold rounded-xl px-5 py-3.5 w-full text-[10px] font-extrabold tracking-wider">SIMPAN PENGATURAN PAKET</button>
-          </div>
-
-          <div class="audio-admin-subpanel space-y-4">
-            <div><p class="audio-admin-kicker">02 · MANUAL ACCESS</p><h3 class="font-bold text-sm mt-1">Berikan Kredit / Akses</h3><p class="muted text-[10px] mt-1">Masukkan username Roblox yang akan menerima kredit.</p></div>
-            <div class="space-y-3">
-              <label class="space-y-1.5 block"><span class="audio-label">Username Roblox</span><input id="audioGrantUsername" class="field audio-admin-field" placeholder="Username tujuan"></label>
-              <div class="grid sm:grid-cols-2 gap-3">
-                <label class="space-y-1.5"><span class="audio-label">Jumlah Kredit</span><input id="audioGrantCredits" type="number" min="0" class="field audio-admin-field" placeholder="Contoh: 50"></label>
-                <label class="space-y-1.5"><span class="audio-label">Masa Aktif (Hari)</span><input id="audioGrantDays" type="number" min="0" class="field audio-admin-field" placeholder="Contoh: 30"></label>
-              </div>
-            </div>
-            <button onclick="grantAudioCredits()" class="btn border border-white/20 rounded-xl px-5 py-3.5 w-full text-[10px] font-extrabold tracking-wider bg-white/5 hover:bg-white/10">BERIKAN KREDIT / AKSES</button>
-          </div>
         </div>
-
-        <div class="grid xl:grid-cols-2 gap-4">
-          <div class="audio-admin-subpanel min-w-0 space-y-3">
-            <div class="flex items-center justify-between gap-3"><div><p class="audio-admin-kicker">03 · USER DIRECTORY</p><h3 class="font-bold text-sm mt-1">Akun Audio Terbaru</h3></div><span class="audio-format-chip">ACCOUNTS</span></div>
-            <div id="audioAdminUsers" class="overflow-x-auto text-xs muted rounded-xl">Belum dimuat.</div>
-          </div>
-          <div class="audio-admin-subpanel min-w-0 space-y-3">
-            <div class="flex items-center justify-between gap-3"><div><p class="audio-admin-kicker">04 · REQUEST QUEUE</p><h3 class="font-bold text-sm mt-1">Permintaan Paket</h3></div><span class="audio-format-chip">REQUESTS</span></div>
-            <div id="audioAdminRequests" class="overflow-x-auto text-xs muted rounded-xl">Belum dimuat.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Database Lisensi & Logs Sistem -->
-      <div class="space-y-8">
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-white/10">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 class="font-bold text-lg text-white">Database Lisensi Berdasarkan Produk</h2>
-              <p class="muted text-xs mt-0.5">Filter dan kelola lisensi terkelompok per produk secara rapi.</p>
-            </div>
-            <div class="flex flex-wrap gap-3 w-full sm:w-auto">
-              <select id="productFilterSelect" onchange="renderLicenses()" class="field rounded-2xl px-4 py-2.5 text-xs font-medium text-amber-300 bg-black/70 border-amber-500/30 min-w-[200px]"><option value="all">Semua Produk (All)</option></select>
-              <input id="licenseSearch" oninput="renderLicenses()" class="field rounded-2xl px-4 py-2.5 text-xs w-full sm:w-64 font-medium text-white" placeholder="Cari key atau owner...">
-            </div>
-          </div>
-          <div class="overflow-x-auto"><table class="w-full text-left text-xs min-w-[850px]"><thead class="text-gray-400 border-b border-white/10 text-[11px] uppercase tracking-wider"><tr><th class="py-4 pr-4 font-semibold">Produk</th><th class="py-4 pr-4 font-semibold">Pemilik</th><th class="py-4 pr-4 font-semibold">License Key</th><th class="py-4 pr-4 font-semibold">Status</th><th class="py-4 pr-4 font-semibold">Expiry</th><th class="py-4 font-semibold">Aksi</th></tr></thead><tbody id="licenseRows" class="divide-y divide-white/5"></tbody></table></div>
-        </div>
-
-        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl border border-white/10">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="font-bold text-lg text-white">System Logs & Audit Trail</h2>
-              <p class="muted text-xs mt-0.5">Catatan aktivitas login klien, verifikasi, dan pembaruan admin secara real-time.</p>
-            </div>
-            <button type="button" onclick="clearLogs()" class="btn text-red-300 border border-red-500/20 rounded-xl px-3.5 py-2 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 cursor-pointer">Bersihkan Logs</button>
-          </div>
-          <div id="adminLogsContainer" class="bg-black/70 border border-white/5 rounded-2xl p-4 font-mono text-[11px] text-gray-300 h-48 overflow-y-auto space-y-1.5 shadow-inner">
-            <div class="text-amber-400">[SYSTEM] Console management siap dan berjalan normal.</div>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </section>
 
 </main>
 
-<footer class="text-center muted text-xs border-t border-white/5 py-9 mt-16 bg-black/30 tracking-[0.08em]">
-  <p>© 2026 DRAGON STELL STUDIO · CREATOR STELL MANAGEMENT CONSOLE</p>
-</footer>
-
+<!-- Script Utama -->
 <script>
-const API = '';
-let mode = 'personal', products = [], licenses = [], clientUser = '', clientKey = '', clientData = null;
-let customProjects = ['114330086695098'];
-let autoProjects = [];
-let clientProjects = [];
-const expCache = new Map();
-const $ = id => document.getElementById(id);
-
-function addLog(msg) {
-  const container = $('adminLogsContainer');
-  if(!container) return;
-  const time = new Date().toLocaleTimeString('id-ID');
-  container.innerHTML += `<div><span class="text-gray-500">[${time}]</span> ${safe(msg)}</div>`;
-  container.scrollTop = container.scrollHeight;
-}
-function clearLogs() {
-  const container = $('adminLogsContainer');
-  if(container) container.innerHTML = `<div class="text-amber-400">[SYSTEM] Logs dibersihkan.</div>`;
-  toast('Logs dibersihkan.');
-}
-
-function toast(s) {
-  const t = $('toast'), txt = $('toastText');
-  if(!t || !txt) return;
-  txt.textContent = s;
-  t.classList.remove('opacity-0', 'translate-y-2');
-  setTimeout(() => t.classList.add('opacity-0', 'translate-y-2'), 3200);
-}
-
-function showMainTab(tabName) {
-  const clientTab = $('clientTab'), adminTab = $('adminTab');
-  if (tabName === 'admin') {
-    if(clientTab) clientTab.classList.add('hidden');
-    if(adminTab) adminTab.classList.remove('hidden');
-  } else {
-    if(clientTab) clientTab.classList.remove('hidden');
-    if(adminTab) adminTab.classList.add('hidden');
-  }
-}
-
-function showClientTab(tab) {
-  showMainTab('client');
-  for(const t of ['home', 'showcase', 'licenses', 'projects', 'audio', 'subscription']) {
-    const page = $('client-' + t), btn = $('nav-' + t);
-    if(page) page.classList.toggle('hidden', t !== tab);
-    if(btn) {
-      btn.className = 'client-nav ' + (t === tab ? 'gold rounded-xl px-6 py-3 text-xs font-bold whitespace-nowrap shadow-sm transition-all flex items-center gap-2.5 cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl px-6 py-3 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2.5 cursor-pointer');
-    }
-  }
-}
-
-async function api(url, options = {}) {
-  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-  delete headers['x-api-secret'];
-  const r = await fetch(API + url, { credentials: 'same-origin', ...options, headers });
-  let d;
-  try { d = await r.json(); } catch { d = { success: false, message: 'Respons server tidak valid.' }; }
-  if(!r.ok || d.success === false) throw new Error(d.message || `HTTP ${r.status}`);
-  return d;
-}
-
-function safe(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function fmtDate(s) { if(!s) return 'Selamanya'; const d = new Date(s); return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}); }
-
-function setMode(m) {
-  mode = m;
-  const ownerFields = $('ownerFields'), groupFields = $('groupFields'), personalMode = $('personalMode'), groupMode = $('groupMode');
-  if(ownerFields) ownerFields.classList.toggle('hidden', m !== 'personal');
-  if(groupFields) groupFields.classList.toggle('hidden', m !== 'group');
-  if(personalMode) personalMode.className = m === 'personal' ? 'gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
-  if(groupMode) groupMode.className = m === 'group' ? 'gold rounded-xl py-2.5 text-xs font-bold shadow-sm transition-all cursor-pointer' : 'text-gray-400 hover:text-white rounded-xl py-2.5 text-xs font-semibold transition-all cursor-pointer';
-}
-
-function generateKey() {
-  const b = new Uint8Array(16);
-  crypto.getRandomValues(b);
-  const newKeyInput = $('newKey');
-  if(newKeyInput) newKeyInput.value = 'DSS-' + [...b].map(x => x.toString(16).padStart(2, '0').toUpperCase()).join('').match(/.{1,4}/g).join('-');
-}
-
-function togglePasswordVisibility() {
-  const keyInput = $('loginKey'), icon = $('eyeIcon');
-  if(!keyInput || !icon) return;
-  if(keyInput.type === 'password') {
-    keyInput.type = 'text';
-    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>`;
-  } else {
-    keyInput.type = 'password';
-    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>`;
-  }
-}
-
-async function portalLogin() {
-  const usernameInput = $('loginUsername'), credentialInput = $('loginKey'), clientErr = $('clientError'), btn = $('portalLoginBtn');
-  if(!usernameInput || !credentialInput) return;
-  const username = usernameInput.value.trim(), credential = credentialInput.value.trim();
-  if(clientErr) clientErr.classList.add('hidden');
-  if(!username || !credential) return toast('Username dan License Key wajib diisi.');
-  if(btn) { btn.disabled = true; btn.textContent = 'MEMVERIFIKASI...'; }
-  try {
-    const d = await api('/api/portal-login', { method: 'POST', body: JSON.stringify({ owner_name: username, credential }) });
-    addLog(`Login berhasil oleh @${username}`);
-    if(d.access === 'admin') {
-      sessionStorage.removeItem('dss_user'); sessionStorage.removeItem('dss_key');
-      clientUser = ''; clientKey = '';
-      const loginBox = $('clientLoginBox'), dash = $('clientDashboard');
-      if(loginBox) loginBox.classList.remove('hidden');
-      if(dash) dash.classList.add('hidden');
-      credentialInput.value = '';
-      addLog(`Admin login berhasil.`);
-      await openAdmin();
-      toast('Akses Owner berhasil diverifikasi.');
-      return;
-    }
-    clientUser = d.owner_name; clientKey = credential;
-    sessionStorage.setItem('dss_user', clientUser); sessionStorage.setItem('dss_key', clientKey);
-    credentialInput.value = '';
-    await showClient(d);
-  } catch(e) {
-    if(clientErr) { clientErr.textContent = e.message; clientErr.classList.remove('hidden'); }
-    addLog(`Gagal login oleh @${username}: ${e.message}`);
-  } finally {
-    if(btn) { btn.disabled = false; btn.textContent = 'Login Securely'; }
-  }
-}
-
-async function showClient(d) {
-  clientData = d;
-  clientProjects = Array.isArray(d.projects) ? d.projects : [];
-  expCache.clear();
-  const loginBox = $('clientLoginBox'), dash = $('clientDashboard'), cName = $('clientName'), cAvatar = $('clientAvatar'), cExpiry = $('clientExpiry'), pCount = $('productCount'), statProd = $('statProducts'), statAccess = $('statAccessType'), cLicenses = $('clientLicenseDetails'), cProducts = $('clientProducts');
-
-  if(loginBox) loginBox.classList.add('hidden');
-  if(dash) dash.classList.remove('hidden');
-  if(cName) cName.textContent = d.owner_display_name || d.display_name || d.owner_name || clientUser;
-  if(cAvatar) {
-    cAvatar.src = d.avatar_url || '';
-    cAvatar.alt = 'Avatar Roblox ' + (d.owner_username || d.owner_name || clientUser);
-    cAvatar.onerror = () => { cAvatar.onerror = null; cAvatar.src = 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-0-Png/150/150/AvatarHeadshot/Png/noFilter'; };
-  }
-  const usernameEl = $('clientUsername'), userIdEl = $('clientRobloxId');
-  if(usernameEl) usernameEl.textContent = '@' + (d.owner_username || d.owner_name || clientUser) + ' · Roblox';
-  if(userIdEl) userIdEl.textContent = 'ROBLOX USER ID · ' + String(d.owner_user_id || '-');
-  if(cExpiry) cExpiry.textContent = 'Roblox account verified · ' + (d.license_owner_type === 'group' ? 'Lisensi Experience Grup' : 'Akun Pribadi');
-
-  const communities = Array.isArray(d.owned_communities) ? d.owned_communities : [];
-  const communityBox = $('clientCommunities'), communityCount = $('communityCount');
-  if(communityCount) communityCount.textContent = communities.length + ' Komunitas';
-  if(communityBox) communityBox.innerHTML = communities.length
-    ? communities.map(group => `<span class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-2.5 text-xs font-semibold text-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>${safe(group.name)}<span class="text-[10px] text-slate-500">#${safe(group.group_id)}</span></span>`).join('')
-    : '<span class="muted text-xs">Tidak ada komunitas dengan role Owner yang terdeteksi pada akun ini.</span>';
-  
-  const catalog = d.data || [], owned = d.owned_licenses || [];
-  if(pCount) pCount.textContent = catalog.length + ' produk tersedia';
-  if(statProd) statProd.textContent = String(owned.filter(l => l.is_active && l.product).length);
-  if(statAccess) statAccess.textContent = owned.some(l => l.owner_type === 'group') ? 'Pribadi + Grup' : 'Akun Pribadi';
-
-  await renderClientProjects();
-
-  if(cLicenses) {
-    cLicenses.innerHTML = owned.map(l => {
-      const active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date()), p = l.product;
-      return `<article class="product-card p-6 shadow-xl"><div class="flex items-start justify-between gap-2"><div><span class="text-[9px] uppercase tracking-widest text-amber-400 font-extrabold px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">${l.owner_type==='group'?'LISENSI KOMUNITAS':'LISENSI PRIBADI'}</span><h3 class="font-bold text-base mt-2.5 text-white">${safe(p?.product_name||'Produk tidak terhubung')}</h3><p class="muted text-xs mt-0.5">${safe(p?.product_code||'-')}</p></div><span class="text-[9px] font-extrabold rounded-full px-3 py-1 uppercase tracking-wider ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'AKTIF':'EXPIRED'}</span></div><div class="mt-5 space-y-2 text-xs"><div class="flex justify-between"><span class="muted">Pemilik:</span> <span class="font-medium text-white">${safe(l.owner_display_name||d.owner_name)}</span></div>${l.group_id?`<div class="flex justify-between"><span class="muted">Group ID:</span> <span class="font-mono text-white">${safe(l.group_id)}</span></div>`:''}<div class="flex flex-col gap-1.5 pt-1"><span class="muted">Key:</span><code class="break-all text-[11px] bg-black/50 p-2.5 rounded-xl border border-white/5 font-mono text-amber-200/90">${safe(l.license_key)}</code></div><div class="flex justify-between pt-1"><span class="muted">Kedaluwarsa:</span> <span class="font-medium text-white">${safe(fmtDate(l.expires_at))}</span></div></div><div class="mt-6">${active&&p?.download_url&&p?.product_active?`<button type="button" class="btn gold rounded-xl w-full py-3.5 text-xs font-bold tracking-wide uppercase shadow-md cursor-pointer flex items-center justify-center gap-2" onclick="downloadOwnedProduct(${p.id},decodeURIComponent('${encodeURIComponent(String(l.license_key)).replace(/'/g,'%27')}'))">Download Produk (.rbxm)</button>`:'<div class="text-center py-2.5 text-xs muted bg-white/5 rounded-xl border border-white/5 font-medium">Download tidak tersedia</div>'}</div></article>`
-    }).join('') || '<div class="glass-card rounded-2xl p-8 muted text-xs sm:col-span-2 lg:col-span-3 text-center">Belum ada lisensi terdaftar untuk akun atau grup ini.</div>';
-  }
-
-  if(cProducts) {
-    cProducts.innerHTML = catalog.map(p => {
-      const license = owned.find(l => l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date()) && l.product && String(l.product.id) === String(p.id));
-      return `<article class="product-card shadow-xl">
-        <div>
-          <div class="product-cover">
-            ${p.image_url ? `<img src="${safe(p.image_url)}" alt="${safe(p.product)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\'fallback-text\'>DRAGON STELL STUDIO</div>'">` : `<div class="fallback-text">DRAGON STELL STUDIO</div>`}
-          </div>
-          <div class="p-6 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">${safe(p.product_code || 'DSS PRODUCT')}</span>
-              ${p.price ? `<span class="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">${safe(p.price)}</span>` : ''}
-            </div>
-            <h3 class="font-bold text-base sm:text-lg leading-snug text-white">${safe(p.product)}</h3>
-            ${p.description ? `<p class="muted text-xs sm:text-sm leading-relaxed line-clamp-3">${safe(p.description)}</p>` : ''}
-          </div>
-        </div>
-        <div class="p-6 pt-0">
-          <div class="pt-4 border-t border-white/5">
-            ${license ? '<div class="text-emerald-400 text-xs font-bold flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> LISENSI DIMILIKI</div>' : `<button type="button" onclick="toast('Silakan hubungi administrator DSS untuk pembelian produk.')" class="btn gold rounded-xl w-full py-3 text-xs font-bold uppercase tracking-wider text-center block cursor-pointer">Hubungi Administrator</button>`}
-          </div>
-        </div>
-      </article>`;
-    }).join('') || '<div class="glass-card rounded-2xl p-8 muted text-xs text-center">Belum ada produk di katalog.</div>';
-  }
-  showClientTab('home');
-  loadAudioStatus().catch(()=>{});
-}
-
-async function fetchExperienceDetails(placeId, projectMeta = null) {
-  const cacheKey = String(placeId);
-  if(expCache.has(cacheKey)) return expCache.get(cacheKey);
-  const data = {
-    name: projectMeta?.experience_name || `Experience #${placeId}`,
-    icon: projectMeta?.icon_url || 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true',
-    creator: projectMeta?.owner_name || 'Roblox Creator',
-    visits: Number(projectMeta?.visits || 0).toLocaleString('id-ID'),
-    rawVisits: Number(projectMeta?.visits || 0),
-    verifiedProduct: projectMeta?.product_name || null
-  };
-  try {
-    const res = await api('/api/game-details', { method: 'POST', body: JSON.stringify({ place_id: placeId }) });
-    if (res.success) {
-      data.name = res.name || data.name;
-      data.icon = res.icon || data.icon;
-      data.creator = res.creatorName || data.creator;
-      data.rawVisits = Number(res.visits || data.rawVisits || 0);
-      data.visits = data.rawVisits.toLocaleString('id-ID');
-    }
-  } catch {}
-  expCache.set(cacheKey, data);
-  return data;
-}
-
-async function renderClientProjects() {
-  const container = $('clientDynamicProjects');
-  if(!container) return;
-  container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-amber-300 animate-pulse">Memuat dan mengurutkan data experience dari Roblox API...</div>`;
-
-  const entries = [
-    ...clientProjects.map(project => ({ pid: String(project.place_id), meta: project })),
-    ...customProjects
-      .filter(pid => !clientProjects.some(project => String(project.place_id) === String(pid)))
-      .map(pid => ({ pid: String(pid), meta: null }))
-  ];
-  let projectInfos = [];
-  for(const entry of entries) {
-    const info = await fetchExperienceDetails(entry.pid, entry.meta);
-    projectInfos.push({ pid: entry.pid, ...info });
-  }
-
-  // Urutkan berdasarkan kunjungan terbanyak ke tersedikit
-  projectInfos.sort((a, b) => b.rawVisits - a.rawVisits);
-
-  let html = '';
-  for(const info of projectInfos) {
-    const robloxGameUrl = `https://www.roblox.com/games/${info.pid}`;
-    html += `
-      <article class="product-card shadow-xl">
-        <div>
-          <div class="product-cover">
-            <img src="${safe(info.icon)}" alt="${safe(info.name)}" loading="lazy" onerror="this.src='https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true'">
-            <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-bold text-amber-300 flex items-center gap-1.5 shadow-md">
-              <svg class="dss-icon dss-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> ${safe(info.visits)} Kunjungan
-            </div>
-          </div>
-          <div class="p-6 space-y-3">
-            <h3 class="font-bold text-base sm:text-lg leading-snug text-white">${safe(info.name)}</h3>
-            <div class="text-xs muted space-y-1.5 pt-1.5 border-t border-white/5">
-              <div class="flex justify-between items-center"><span>Kreator:</span> <span class="font-semibold text-white">${safe(info.creator)}</span></div>
-              <div class="flex justify-between items-center"><span>Produk Terdeteksi:</span> <span class="font-semibold text-amber-400">${safe(info.verifiedProduct || 'Belum Terikat Lisensi')}</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="p-6 pt-0">
-          <a href="${robloxGameUrl}" target="_blank" class="btn gold rounded-xl w-full py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-md text-center block cursor-pointer">Lihat Game</a>
-        </div>
-      </article>
-    `;
-  }
-  container.innerHTML = html || '<div class="glass-card rounded-2xl p-8 muted text-xs text-center col-span-full">Belum ada Project Experience terdaftar.</div>';
-}
-
-function saveProjectExperience() {
-  const input = $('newPlaceId');
-  if(!input) return;
-  const pid = input.value.trim();
-  if(!pid || !/^\d+$/.test(pid)) return toast('Masukkan Place ID angka yang valid.');
-  if(customProjects.includes(pid) || autoProjects.some(project => String(project.place_id) === pid)) return toast('Project ID sudah terdaftar.');
-  customProjects.push(pid);
-  input.value = '';
-  renderAdminProjects();
-  renderClientProjects();
-  addLog(`Project Experience ID ${pid} ditambahkan.`);
-  toast('Project Experience berhasil ditambahkan.');
-}
-
-async function removeProjectExperience(pid, isAuto = false) {
-  try {
-    if(isAuto) {
-      await api('/api/auto-projects/' + encodeURIComponent(pid), { method: 'DELETE', body: '{}' });
-      autoProjects = autoProjects.filter(project => String(project.place_id) !== String(pid));
-      clientProjects = clientProjects.filter(project => String(project.place_id) !== String(pid));
-    } else {
-      customProjects = customProjects.filter(id => String(id) !== String(pid));
-    }
-    expCache.delete(String(pid));
-    renderAdminProjects();
-    renderClientProjects();
-    addLog(`Project Experience ID ${pid} dihapus.`);
-    toast('Project dihapus.');
-  } catch(e) {
-    toast('Gagal menghapus project: ' + e.message);
-  }
-}
-
-function renderAdminProjects() {
-  const list = $('adminProjectList');
-  if(!list) return;
-  const autoHtml = autoProjects.map(project => `
-    <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-black/50 border border-white/10">
-      <div class="min-w-0">
-        <div class="font-mono text-xs text-white">Place ID: ${safe(project.place_id)}</div>
-        <div class="text-[10px] muted mt-1">${safe(project.experience_name || 'Verified Experience')} · ${safe(project.product_name || 'Licensed Product')}</div>
-        <div class="text-[9px] text-emerald-300 mt-1">AUTO-SYNC · ${safe(project.license_active ? 'LICENSE ACTIVE' : 'LICENSE STATUS CHECK')}</div>
-      </div>
-      <button type="button" onclick="removeProjectExperience('${safe(project.place_id)}', true)" class="btn text-red-300 hover:text-red-200 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
-    </div>
-  `).join('');
-  const manualHtml = customProjects.map(pid => `
-    <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-black/40 border border-white/5">
-      <span class="font-mono text-xs text-gray-200">Manual Place ID: ${safe(pid)}</span>
-      <button type="button" onclick="removeProjectExperience('${safe(pid)}', false)" class="btn text-red-300 hover:text-red-200 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-500/10 cursor-pointer">Delete</button>
-    </div>
-  `).join('');
-  list.innerHTML = autoHtml + manualHtml || '<p class="muted text-xs">Belum ada project terverifikasi. Project akan muncul setelah Roblox Loader berhasil memverifikasi lisensi.</p>';
-}
-
-async function downloadOwnedProduct(id, key) {
-  try {
-    const d = await api('/api/file-ticket', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: key, product_id: id, kind: 'download' }) });
-    addLog(`Klien mengunduh produk ID ${id}`);
-    window.location.href = d.url;
-  } catch(e) { toast(e.message); }
-}
-
-async function refreshClient() {
-  try {
-    const d = await api('/api/client-refresh', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: clientKey }) });
-    await showClient(d);
-    toast('Data lisensi diperbarui.');
-  } catch(e) { toast(e.message); logoutClient(); }
-}
-
-function logoutClient() {
-  clientUser = ''; clientKey = ''; clientData = null;
-  sessionStorage.removeItem('dss_user'); sessionStorage.removeItem('dss_key');
-  const loginBox = $('clientLoginBox'), dash = $('clientDashboard');
-  if(loginBox) loginBox.classList.remove('hidden');
-  if(dash) dash.classList.add('hidden');
-  showClientTab('home');
-}
-
-async function openAdmin() {
-  showMainTab('admin');
-  try { await loadAdmin(); }
-  catch(e) {
-    await api('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => {});
-    showClientTab('home');
-    throw e;
-  }
-}
-
-async function logoutAdmin() {
-  await api('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => {});
-  const loginKey = $('loginKey');
-  if(loginKey) loginKey.value = '';
-  addLog('Admin logout.');
-  toast('Sesi Admin ditutup.');
-  showClientTab('home');
-}
-
-async function loadAdmin() {
-  const [p, l, projects] = await Promise.all([
-    api('/api/products'),
-    api('/api/licenses'),
-    api('/api/auto-projects')
-  ]);
-  products = p.products || [];
-  licenses = l.licenses || [];
-  autoProjects = projects.data || [];
-  renderProducts();
-  renderLicenseChoices();
-  renderProductFilterDropdown();
-  renderLicenses();
-  renderAdminProjects();
-  loadAudioAdmin().catch(()=>{});
-}
-
-async function saveProduct() {
-  const editId = $('editProductId').value, name = $('productName').value.trim(), code = $('productCode').value.trim(), price = $('productPrice').value.trim(), description = $('productDescription').value.trim(), image_url = $('productImageUrl').value.trim(), download_url = $('productDownloadUrl').value.trim();
-  if(!name) return toast('Nama produk wajib diisi.');
-  
-  const btn = $('saveProductBtn');
-  if(btn) { btn.disabled = true; btn.textContent = 'MENYIMPAN...'; }
-
-  try {
-    const payload = { product_name: name, product_code: code, price: price, description: description, image_url: image_url, download_url: download_url };
-    if(editId) {
-      await api('/api/products/' + editId, { method: 'PUT', body: JSON.stringify(payload) });
-      addLog(`Produk ${name} diperbarui.`);
-      toast('Produk berhasil diperbarui.');
-    } else {
-      await api('/api/products', { method: 'POST', body: JSON.stringify(payload) });
-      addLog(`Produk baru ${name} ditambahkan.`);
-      toast('Produk berhasil ditambahkan.');
-    }
-    resetProductForm();
-    await loadAdmin();
-  } catch(e) {
-    toast('Gagal: ' + e.message);
-  } finally {
-    if(btn) { btn.disabled = false; btn.textContent = editId ? 'Simpan Perubahan' : '+ Tambah Produk'; }
-  }
-}
-
-function editProduct(id) {
-  const p = products.find(x => String(x.id) === String(id));
-  if(!p) return;
-  $('editProductId').value = p.id;
-  $('productName').value = p.product_name || '';
-  $('productCode').value = p.product_code || '';
-  $('productPrice').value = p.price || '';
-  $('productDescription').value = p.description || '';
-  $('productImageUrl').value = p.image_url || '';
-  $('productDownloadUrl').value = p.download_url || '';
-  $('formTitle').textContent = 'Edit Produk: ' + p.product_name;
-  $('saveProductBtn').textContent = 'Simpan Perubahan';
-  $('cancelEditBtn').classList.remove('hidden');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function resetProductForm() {
-  $('editProductId').value = '';
-  $('productName').value = '';
-  $('productCode').value = '';
-  $('productPrice').value = '';
-  $('productDescription').value = '';
-  $('productImageUrl').value = '';
-  $('productDownloadUrl').value = '';
-  $('formTitle').textContent = 'Tambah Produk Baru';
-  $('saveProductBtn').textContent = '+ Tambah Produk';
-  $('cancelEditBtn').classList.add('hidden');
-}
-
-function renderProducts() {
-  const catalog = $('productCatalog');
-  if(!catalog) return;
-  catalog.innerHTML = products.map(p => `
-    <div class="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2 hover:border-white/15 transition-colors">
-      <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <b class="text-xs font-bold text-white block truncate">${safe(p.product_name)}</b>
-            ${p.price ? `<span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">${safe(p.price)}</span>` : ''}
-          </div>
-          <p class="muted text-[10px] mt-1">${safe(p.product_code)} · ${p.image_url ? '<span class="text-emerald-400 font-semibold">Gambar OK</span>' : '<span class="text-amber-400">Tanpa Gambar</span>'} · ${p.download_url ? '<span class="text-emerald-400 font-semibold">File OK</span>' : '<span class="text-amber-400">Tanpa File</span>'}</p>
-        </div>
-        <div class="flex gap-2 shrink-0">
-          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border border-amber-500/30 text-amber-200 bg-amber-500/10 hover:bg-amber-500/25 cursor-pointer" onclick="editProduct(${p.id})">Edit</button>
-          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border ${p.is_active ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-white/10 muted'} cursor-pointer" onclick="toggleProduct(${p.id},${!p.is_active})">${p.is_active ? 'Aktif' : 'Nonaktif'}</button>
-          <button type="button" class="btn text-[10px] font-semibold rounded-xl px-3 py-1.5 border border-red-500/30 text-red-300 bg-red-500/10 hover:bg-red-500/20 cursor-pointer" onclick="deleteProduct(${p.id})">Delete</button>
-        </div>
-      </div>
-    </div>`).join('') || '<p class="muted text-xs text-center py-2">Katalog produk masih kosong.</p>';
-}
-
-function renderLicenseChoices() {
-  const choices = $('licenseProductChoices');
-  if(!choices) return;
-  choices.innerHTML = products.filter(p => p.is_active).map(p => `<label class="checkrow flex items-center gap-3 rounded-2xl p-3.5 cursor-pointer"><input type="radio" name="licenseProduct" value="${p.id}" class="accent-amber-400"><span><b class="block text-xs font-bold text-white">${safe(p.product_name)}</b><span class="muted text-[10px]">${safe(p.product_code)}</span></span></label>`).join('') || '<p class="muted text-xs">Tambahkan dan aktifkan produk terlebih dahulu.</p>';
-}
-
-function renderProductFilterDropdown() {
-  const select = $('productFilterSelect');
-  if(!select) return;
-  const currentVal = select.value;
-  select.innerHTML = `<option value="all">Semua Produk (All)</option>` + products.map(p => `<option value="${p.id}">${safe(p.product_name)} (${safe(p.product_code)})</option>`).join('');
-  select.value = currentVal;
-}
-
-async function toggleProduct(id, active) {
-  try { await api('/api/products/' + id, { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); await loadAdmin(); toast('Status produk diperbarui.'); }
-  catch(e) { toast(e.message); }
-}
-
-async function deleteProduct(id) {
-  const p = products.find(x => String(x.id) === String(id));
-  if(!confirm(`Hapus produk “${p?.product_name || id}”?`)) return;
-  try { await api('/api/products/' + id, { method: 'DELETE' }); addLog(`Produk ID ${id} dihapus.`); await loadAdmin(); toast('Produk dihapus.'); }
-  catch(e) { toast(e.message); }
-}
-
-async function createLicense() {
-  const selected = document.querySelector('input[name="licenseProduct"]:checked');
-  if(!selected) return toast('Pilih tepat satu produk.');
-  const keyInput = $('newKey'), expInput = $('newExpires'), ownerInput = $('newOwner'), groupInput = $('newGroup');
-  const body = { license_key: keyInput ? keyInput.value.trim() : '', product_ids: [Number(selected.value)], expires_at: expInput ? expInput.value || null : null };
-  if(mode === 'personal') body.owner_name = ownerInput ? ownerInput.value.trim() : '';
-  else body.group_id = groupInput ? groupInput.value.trim() : '';
-  try {
-    const d = await api('/api/licenses/create', { method: 'POST', body: JSON.stringify(body) });
-    addLog(`Lisensi baru dibuat untuk produk ID ${selected.value}`);
-    toast(d.message || 'Lisensi dibuat.');
-    if(keyInput) keyInput.value = '';
-    if(expInput) expInput.value = '';
-    if(ownerInput) ownerInput.value = '';
-    if(groupInput) groupInput.value = '';
-    document.querySelectorAll('input[name="licenseProduct"]').forEach(x => x.checked = false);
-    await loadAdmin();
-  } catch(e) { toast(e.message); }
-}
-
-function renderLicenses() {
-  const searchInput = $('licenseSearch'), select = $('productFilterSelect'), rowsContainer = $('licenseRows');
-  if(!rowsContainer) return;
-  const q = (searchInput ? searchInput.value : '').toLowerCase();
-  const selectedProdId = select ? select.value : 'all';
-
-  const filtered = licenses.filter(l => {
-    const pList = l.products || [];
-    const matchProd = selectedProdId === 'all' || pList.some(p => String(p.id) === String(selectedProdId));
-    if(!matchProd) return false;
-    const searchString = JSON.stringify([l.license_key, l.owner_name, l.owner_display_name, l.group_id, l.owner_user_id, ...pList.map(p => p.product_name)]).toLowerCase();
-    return searchString.includes(q);
-  });
-
-  rowsContainer.innerHTML = filtered.map(l => {
-    const p = (l.products || [])[0], active = l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date());
-    const owner = l.owner_display_name || l.owner_name || 'Pemilik tidak terdeteksi', avatar = l.owner_avatar_url || '';
-    return `<tr class="hover:bg-white/[0.03] transition-colors"><td class="py-4 pr-4"><div class="font-bold text-white">${safe(p?.product_name||l.product_name||'-')}</div><div class="muted mt-0.5 text-[11px]">${safe(p?.product_code||'-')}</div></td><td class="py-4 pr-4"><div class="flex items-center gap-3 min-w-0"><img src="${safe(avatar)}" alt="" class="w-10 h-10 rounded-xl object-cover bg-black border border-white/10 shrink-0 shadow-md" onerror="this.style.display='none'"><div class="min-w-0"><div class="font-semibold text-white break-words">${safe(owner)}</div><div class="muted mt-0.5 text-[10px] font-mono break-all">${l.group_id?'Grup ID: '+safe(l.group_id):'User ID: '+safe(l.owner_user_id||'-')}</div></div></div></td><td class="py-4 pr-4 font-mono text-[11px] text-amber-200/90 break-all">${safe(l.license_key)}</td><td class="py-4 pr-4"><span class="font-semibold text-[11px] px-3 py-1 rounded-full ${active?'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20':'text-red-400 bg-red-400/10 border border-red-400/20'}">${active?'Aktif':'Expired'}</span></td><td class="py-4 pr-4 text-gray-300 font-medium">${fmtDate(l.expires_at)}</td><td class="py-4"><div class="flex gap-2"><button type="button" onclick="toggleLicense(${l.id},${!l.is_active})" class="btn border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-white/5 cursor-pointer">${l.is_active?'Nonaktifkan':'Aktifkan'}</button><button type="button" onclick="deleteLicense(${l.id})" class="btn text-red-300 border border-red-500/20 rounded-xl px-3 py-1.5 text-[11px] font-semibold bg-red-500/5 cursor-pointer">Delete</button></div></td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="py-8 muted text-center font-medium">Tidak ada data lisensi ditemukan untuk produk ini.</td></tr>';
-}
-
-async function toggleLicense(id, active) {
-  try { await api('/api/licenses/' + id + '/status', { method: 'PATCH', body: JSON.stringify({ is_active: active }) }); addLog(`Status lisensi ID ${id} diubah ke ${active}`); await loadAdmin(); toast('Status lisensi diperbarui.'); }
-  catch(e) { toast(e.message); }
-}
-
-async function deleteLicense(id) {
-  if(!confirm('Hapus lisensi ini secara permanen?')) return;
-  try { await api('/api/licenses/' + id, { method: 'DELETE' }); addLog(`Lisensi ID ${id} dihapus.`); await loadAdmin(); toast('Lisensi dihapus.'); }
-  catch(e) { toast(e.message); }
-}
-
-
-async function loadAudioStatus() {
-  if(!clientUser || !clientKey) return;
-  try {
-    const q=new URLSearchParams({username:clientUser,key:clientKey});
-    const d=await api('/api/audio/status?'+q.toString());
-    $('audioCredits').textContent=d.account.owner?'UNLIMITED':d.account.balance;
-    $('audioDaily').textContent=d.account.owner?'Unlimited':`${Math.max(0,d.account.dailyRemaining)} / 2`;
-    $('audioTotal').textContent=Number(d.account.totalConverted||0).toLocaleString('id-ID');
-    $('audioPrice7').textContent=d.packages.days7.price;
-    $('audioPrice30').textContent=d.packages.days30.price;
-    $('audioCredit7').textContent=d.packages.days7.credits+' kredit · aktif 7 hari';
-    $('audioCredit30').textContent=d.packages.days30.credits+' kredit · aktif 30 hari';
-    $('audioHistory').innerHTML=d.history.map(x=>`<div class="flex flex-wrap justify-between gap-2 p-3 rounded-xl bg-black/30 border border-white/5"><span>${safe(x.source_name)} → <b>${safe(x.output_name)}</b></span><span class="muted">${safe(x.speed)}x · ${safe(x.gain_db)} dB · ${new Date(x.created_at).toLocaleString('id-ID')}</span></div>`).join('')||'<p class="muted text-xs">Belum ada riwayat konversi.</p>';
-  } catch(e) { toast(e.message); }
-}
-
-function updateAudioSpeedLabel() {
-  const value = Number($('audioSpeed')?.value || 1);
-  $('audioSpeedLabel').textContent = value.toFixed(2) + 'x' + (Math.abs(value - 1) < 0.001 ? ' · Normal' : '');
-  syncAudioPresetState();
-}
-function updateAudioGainLabel() {
-  $('audioGainLabel').textContent = Number($('audioGain')?.value || 0) + ' dB';
-  syncAudioPresetState();
-}
-function syncAudioPresetState() {
-  const speed = Number($('audioSpeed')?.value || 1);
-  const gain = Number($('audioGain')?.value || 0);
-  document.querySelectorAll('[data-audio-preset]').forEach(button => {
-    const [presetSpeed, presetGain] = button.dataset.audioPreset.split(',').map(Number);
-    button.classList.toggle('is-active', Math.abs(speed - presetSpeed) < 0.001 && gain === presetGain);
-  });
-}
-function setAudioPreset(speed, gainDb) {
-  $('audioSpeed').value = String(speed);
-  $('audioGain').value = String(gainDb);
-  updateAudioSpeedLabel();
-  updateAudioGainLabel();
-}
-function resetAudioControls() {
-  $('audioSpeed').value = '1';
-  $('audioGain').value = '0';
-  updateAudioSpeedLabel();
-  updateAudioGainLabel();
-}
-function setAudioSpeedNormal() {
-  resetAudioControls();
-}
-
-function getSupportedPlatformPage(rawUrl) {
-  try {
-    const url = new URL(rawUrl);
-    if (url.protocol !== 'https:') return null;
-    const host = url.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
-    const isYouTube = host === 'youtu.be' || host === 'youtube.com' ||
-      host.endsWith('.youtube.com') || host === 'youtube-nocookie.com' ||
-      host.endsWith('.youtube-nocookie.com');
-    const isTikTok = host === 'tiktok.com' || host.endsWith('.tiktok.com');
-    if (isYouTube) return { platform: 'YouTube', url: url.toString() };
-    if (isTikTok) return { platform: 'TikTok', url: url.toString() };
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-let audioMetaTimer = null;
-let dssDetectedTitle = '';
-
-function onAudioUrlInput() {
-  clearTimeout(audioMetaTimer);
-  const raw = ($('audioSourceUrl')?.value || '').trim();
-  const preview = $('audioUrlMetaPreview');
-  const titleEl = $('audioUrlTitleText');
-  const platEl = $('audioUrlPlatformLabel');
-  dssDetectedTitle = '';
-
-  const platformInfo = getSupportedPlatformPage(raw);
-  if (!platformInfo) {
-    if (preview) preview.classList.add('hidden');
-    return;
-  }
-
-  if (preview) preview.classList.remove('hidden');
-  if (platEl) platEl.textContent = `${platformInfo.platform.toUpperCase()} · MENDETEKSI JUDUL...`;
-  if (titleEl) titleEl.textContent = 'Mengambil informasi judul halaman...';
-
-  audioMetaTimer = setTimeout(async () => {
-    try {
-      const res = await api('/api/audio/url-info', {
-        method: 'POST',
-        body: JSON.stringify({ username: clientUser, key: clientKey, sourceUrl: platformInfo.url })
-      });
-      if (res.success && res.title) {
-        dssDetectedTitle = res.title;
-        if (platEl) platEl.textContent = `${(res.platform || platformInfo.platform).toUpperCase()} · SIAP CONVERT KE OGG`;
-        if (titleEl) titleEl.textContent = res.title;
-      }
-    } catch (err) {
-      if (platEl) platEl.textContent = `${platformInfo.platform.toUpperCase()} · LINK TERDETEKSI`;
-      if (titleEl) titleEl.textContent = err.message || 'Judul akan diambil otomatis saat konversi.';
-    }
-  }, 450);
-}
-
-let dssConvertedBlob = null;
-let dssConvertedFilename = 'DSS_Audio_Converted.ogg';
-let dssConvertedObjectUrl = null;
-
-function setAudioProgress(percent, label, detail, indeterminate=false) {
-  const panel = $('audioProgressPanel');
-  const fill = $('audioProgressFill');
-  const pct = $('audioProgressPercent');
-  const title = $('audioProgressLabel');
-  const status = $('audioConvertStatus');
-  if (panel) panel.style.display = 'block';
-  if (title) title.textContent = label || 'Memproses...';
-  if (status) status.textContent = detail || '';
-  if (pct) pct.textContent = indeterminate ? '...' : `${Math.max(0,Math.min(100,Math.round(percent)))}%`;
-  if (fill) {
-    fill.classList.toggle('is-indeterminate', !!indeterminate);
-    if (!indeterminate) fill.style.width = `${Math.max(0,Math.min(100,percent))}%`;
-  }
-}
-
-function resetAudioDownloadState() {
-  dssConvertedBlob = null;
-  if (dssConvertedObjectUrl) URL.revokeObjectURL(dssConvertedObjectUrl);
-  dssConvertedObjectUrl = null;
-  const ready = $('audioDownloadReady');
-  if (ready) { ready.style.display = 'none'; ready.classList.remove('flex'); }
-}
-
-function downloadConvertedAudio() {
-  if (!dssConvertedBlob) return toast('File hasil konversi belum tersedia.');
-  if (!dssConvertedObjectUrl) dssConvertedObjectUrl = URL.createObjectURL(dssConvertedBlob);
-  const a = document.createElement('a');
-  a.href = dssConvertedObjectUrl;
-  a.download = dssConvertedFilename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  $('audioConvertStatus').textContent = 'Download dimulai. File musik OGG tersimpan melalui browser.';
-}
-
-async function convertAudio() {
-  const file = $('audioFile').files[0];
-  let sourceUrl = ($('audioSourceUrl')?.value || '').trim();
-  const markdownLink = sourceUrl.match(/^\[([^\]]+)\]\((https:\/\/[^)\s]+)\)$/i);
-  if (markdownLink) sourceUrl = markdownLink[2];
-
-  if (sourceUrl && !sourceUrl.toLowerCase().startsWith('https://')) return toast('Tautan sumber harus diawali https://.');
-  if (file && sourceUrl) return toast('Pilih upload file atau tautan saja, jangan keduanya.');
-  if (!file && !sourceUrl) return toast('Pilih file atau masukkan link halaman YouTube / TikTok / media URL.');
-  if (file && file.size > 50 * 1024 * 1024) return toast('Ukuran file maksimal 50 MB.');
-
-  const platformPage = sourceUrl ? getSupportedPlatformPage(sourceUrl) : null;
-
-  resetAudioDownloadState();
-  const btn = $('audioConvertBtn');
-  const ready = $('audioDownloadReady');
-  if (ready) { ready.style.display = 'none'; ready.classList.remove('flex'); }
-  const form = new FormData();
-  form.append('username', clientUser);
-  form.append('key', clientKey);
-  form.append('speed', $('audioSpeed').value);
-  form.append('gainDb', $('audioGain').value);
-
-  let endpoint = API + '/api/audio/convert';
-  if (file) form.append('audio', file);
-  else {
-    endpoint = API + '/api/audio/convert-url';
-    form.append('sourceUrl', sourceUrl);
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'SEDANG MEMPROSES...';
-  setAudioProgress(
-    8,
-    platformPage ? `Mengambil audio dari ${platformPage.platform}` : 'Menyiapkan sumber media',
-    platformPage
-      ? `Mengunduh audio${dssDetectedTitle ? ` "${dssDetectedTitle}"` : ''} (maksimal 7 menit) & mengonversi ke OGG...`
-      : 'Memvalidasi akun, durasi maksimal 7 menit, dan format media...',
-    !!platformPage
-  );
-
-  try {
-    const result = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', endpoint, true);
-      xhr.withCredentials = true;
-      xhr.responseType = 'blob';
-      xhr.upload.onprogress = event => {
-        if (file && event.lengthComputable && event.total > 0) {
-          const p = Math.min(42, 8 + (event.loaded / event.total) * 34);
-          setAudioProgress(p, 'Mengirim media ke server', `Upload ${Math.round(event.loaded/1024/1024*10)/10} MB dari ${Math.round(event.total/1024/1024*10)/10} MB`, false);
+    let currentUserData = null;
+    let ffmpegInstance = null;
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginUsername').value.trim();
+        const credential = document.getElementById('loginCredential').value.trim();
+        const errorBox = document.getElementById('loginError');
+        errorBox.classList.add('hidden');
+
+        try {
+            const res = await fetch('/api/portal-login', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ owner_name: username, credential })
+            });
+            const json = await res.json();
+
+            if (!json.success) {
+                errorBox.innerText = json.message || 'Login gagal.';
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            if (json.access === 'admin') {
+                // Berhasil login admin
+                document.getElementById('viewLogin').classList.add('hidden');
+                document.getElementById('viewDashboard').classList.remove('hidden');
+                document.getElementById('navUserArea').classList.remove('hidden');
+                document.getElementById('navUsername').innerText = json.owner_name;
+                document.getElementById('tabBtnAdmin').classList.remove('hidden');
+                switchTab('admin');
+                return;
+            }
+
+            currentUserData = json;
+            document.getElementById('viewLogin').classList.add('hidden');
+            document.getElementById('viewDashboard').classList.remove('hidden');
+            document.getElementById('navUserArea').classList.remove('hidden');
+            document.getElementById('navAvatar').src = json.avatar_url || 'https://github.com/DSSTUDIO26/ds-license-panel/blob/main/ds-license-panel/Image/dragonstellstudio.jpeg?raw=true';
+            document.getElementById('navUsername').innerText = json.owner_display_name;
+
+            renderDashboard();
+            switchTab('catalog');
+        } catch (err) {
+            errorBox.innerText = 'Terjadi kesalahan jaringan.';
+            errorBox.classList.remove('hidden');
         }
-      };
-      xhr.upload.onload = () => {
-        setAudioProgress(
-          58,
-          platformPage ? `Memproses link ${platformPage.platform}` : 'Media diterima server',
-          'Server sedang mengekstrak & mengonversi audio menjadi format OGG (maks. 7 menit)...',
-          true
-        );
-      };
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
-          setAudioProgress(82, 'Menyelesaikan file OGG', 'FFmpeg selesai memproses audio. Menyiapkan unduhan...', true);
-        }
-      };
-      xhr.onload = () => {
-        const type = xhr.getResponseHeader('content-type') || '';
-        if (xhr.status >= 200 && xhr.status < 300 && (type.includes('audio/') || xhr.getResponseHeader('X-DSS-Converted') === '1')) {
-          const headerTitle = xhr.getResponseHeader('X-DSS-Media-Title');
-          if (headerTitle) {
-            try { dssDetectedTitle = decodeURIComponent(headerTitle); } catch {}
-          }
-          resolve({blob:xhr.response, disposition:xhr.getResponseHeader('content-disposition') || ''});
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => {
-          try { const data = JSON.parse(String(reader.result || '{}')); reject(new Error(data.message || 'Konversi gagal.')); }
-          catch { reject(new Error('Konversi gagal. Pastikan link valid dan durasi maksimal 7 menit.')); }
-        };
-        reader.onerror = () => reject(new Error('Server mengembalikan respons yang tidak dapat dibaca.'));
-        reader.readAsText(xhr.response);
-      };
-      xhr.onerror = () => reject(new Error('Koneksi ke server terputus.'));
-      xhr.onabort = () => reject(new Error('Proses dibatalkan.'));
-      xhr.send(form);
-    });
-
-    dssConvertedBlob = result.blob;
-    const match = result.disposition.match(/filename="?([^";]+)"?/i);
-    dssConvertedFilename = match ? match[1].trim() : 'DSS_Audio_Converted.ogg';
-    setAudioProgress(100, 'Konversi selesai', 'File musik OGG sudah siap. Klik tombol Download Musik OGG untuk menyimpan.', false);
-    if (ready) {
-      $('audioDownloadName').textContent = dssDetectedTitle
-        ? `${dssDetectedTitle} (${dssConvertedFilename})`
-        : dssConvertedFilename;
-      ready.style.display = 'flex';
     }
-    btn.textContent = 'KONVERSI SELESAI';
-    $('audioFile').value = '';
-    $('audioSourceUrl').value = '';
-    if ($('audioUrlMetaPreview')) $('audioUrlMetaPreview').classList.add('hidden');
-    await loadAudioStatus();
-  } catch (e) {
-    setAudioProgress(0, 'Konversi gagal', e.message, false);
-    toast(e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = dssConvertedBlob ? 'KONVERSI SELESAI' : 'COBA KONVERSI LAGI';
-  }
-}
 
-async function requestAudioPackage(code) {
-  try {
-    const d = await api('/api/audio/request-package', {
-      method: 'POST',
-      body: JSON.stringify({ username: clientUser, key: clientKey, package_code: code })
-    });
-    toast(d.message);
-    if (d.discordUrl) window.open(d.discordUrl, '_blank', 'noopener,noreferrer');
-  } catch (e) {
-    toast(e.message);
-  }
-}
+    function switchTab(tab) {
+        document.getElementById('tabContentCatalog').classList.add('hidden');
+        document.getElementById('tabContentAudio').classList.add('hidden');
+        document.getElementById('tabContentAdmin').classList.add('hidden');
+        document.getElementById('tabBtnCatalog').className = 'pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center space-x-2';
+        document.getElementById('tabBtnAudio').className = 'pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center space-x-2';
+        document.getElementById('tabBtnAdmin').className = 'hidden pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center space-x-2';
 
-async function loadAudioAdmin() {
-  const d=await api('/api/admin/audio');
-  const s=d.settings||{};
-  $('audioAdminPrice7').value=s.price_7d||'';
-  $('audioAdminPrice30').value=s.price_30d||'';
-  $('audioAdminCredits7').value=s.credits_7d||30;
-  $('audioAdminCredits30').value=s.credits_30d||150;
-  $('audioAdminDiscord').value=s.discord_url||'';
-  $('audioAdminUsers').innerHTML=`<table class="audio-admin-table w-full text-left"><thead><tr><th>Username</th><th>Kredit</th><th>Expiry</th><th>Total Convert</th></tr></thead><tbody>${d.users.map(u=>`<tr><td class="font-bold text-white py-2">@${safe(u.username)}</td><td>${Number(u.credit_balance||0).toLocaleString('id-ID')}</td><td>${u.credit_expires_at?fmtDate(u.credit_expires_at):'—'}</td><td>${Number(u.total_converted||0).toLocaleString('id-ID')}</td></tr>`).join('')||'<tr><td colspan="4" class="text-center muted py-2">Belum ada akun audio.</td></tr>'}</tbody></table>`;
-  $('audioAdminRequests').innerHTML=d.requests.map(x=>`<div class="flex flex-wrap items-center justify-between gap-3 p-3 border-b border-white/5"><div><b class="text-white">@${safe(x.username)}</b><p class="muted text-[10px] mt-1">${safe(x.package_code)} · ${fmtDate(x.created_at)}</p></div><span class="audio-format-chip">${safe(x.status)}</span></div>`).join('')||'<p class="muted p-3">Belum ada permintaan paket.</p>';
-}
-async function saveAudioAdminSettings() {
-  try {
-    await api('/api/admin/audio/settings',{method:'PUT',body:JSON.stringify({
-      price_7d:$('audioAdminPrice7').value,price_30d:$('audioAdminPrice30').value,
-      credits_7d:$('audioAdminCredits7').value,credits_30d:$('audioAdminCredits30').value,
-      discord_url:$('audioAdminDiscord').value
-    })});
-    toast('Pengaturan Audio Convert disimpan.'); await loadAudioAdmin();
-  } catch(e){toast(e.message);}
-}
-async function grantAudioCredits() {
-  try {
-    const d=await api('/api/admin/audio/grant',{method:'POST',body:JSON.stringify({
-      username:$('audioGrantUsername').value,credits:$('audioGrantCredits').value,days:$('audioGrantDays').value
-    })});
-    toast(d.message); addLog(d.message); $('audioGrantUsername').value=''; $('audioGrantCredits').value=''; $('audioGrantDays').value='';
-    await loadAudioAdmin();
-  } catch(e){toast(e.message);}
-}
+        if (currentUserData && document.getElementById('tabBtnAdmin').classList.contains('hidden') === false) {
+            document.getElementById('tabBtnAdmin').classList.remove('hidden');
+        }
 
+        if (tab === 'catalog') {
+            document.getElementById('tabContentCatalog').classList.remove('hidden');
+            document.getElementById('tabBtnCatalog').className = 'pb-3 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 transition flex items-center space-x-2';
+        } else if (tab === 'audio') {
+            document.getElementById('tabContentAudio').classList.remove('hidden');
+            document.getElementById('tabBtnAudio').className = 'pb-3 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 transition flex items-center space-x-2';
+        } else if (tab === 'admin') {
+            document.getElementById('tabContentAdmin').classList.remove('hidden');
+            document.getElementById('tabBtnAdmin').className = 'pb-3 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 transition flex items-center space-x-2';
+        }
+    }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  // Default sound controls: normal speed and neutral amplifier.
-  if ($('audioSpeed')) $('audioSpeed').value = '1';
-  if ($('audioGain')) $('audioGain').value = '0';
-  updateAudioSpeedLabel();
-  updateAudioGainLabel();
-  renderAdminProjects();
-  try {
-    const s = await api('/api/admin-session');
-    if(s.authenticated) { await openAdmin(); return; }
-  } catch {}
-  clientUser = sessionStorage.getItem('dss_user') || '';
-  clientKey = sessionStorage.getItem('dss_key') || '';
-  if(clientUser && clientKey) {
-    try {
-      const d = await api('/api/client-login', { method: 'POST', body: JSON.stringify({ owner_name: clientUser, license_key: clientKey }) });
-      await showClient(d);
-    } catch { logoutClient(); }
-  }
-});
+    function renderDashboard() {
+        if (!currentUserData) return;
+        const licensesDiv = document.getElementById('userLicensesList');
+        licensesDiv.innerHTML = (currentUserData.owned_licenses || []).map(l => `
+            <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-semibold">${l.product?.product_name || 'General License'}</span>
+                    <p class="text-sm font-mono text-white mt-1">${l.license_key}</p>
+                </div>
+                <span class="text-xs px-2.5 py-1 rounded-full ${l.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
+                    ${l.is_active ? 'Aktif' : 'Nonaktif'}
+                </span>
+            </div>
+        `).join('') || '<p class="text-sm text-slate-500">Tidak ada lisensi aktif ditemukan.</p>';
+
+        const catalogDiv = document.getElementById('catalogList');
+        catalogDiv.innerHTML = (currentUserData.data || []).map(p => `
+            <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+                <img src="${p.image_url || ''}" alt="${p.product}" class="w-full h-40 object-cover bg-slate-900">
+                <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                        <h3 class="font-bold text-white text-base">${p.product}</h3>
+                        <p class="text-xs text-slate-400 mt-1 line-clamp-2">${p.description || 'Tidak ada deskripsi.'}</p>
+                    </div>
+                    <a href="${p.download_url || '#'}" target="_blank" class="w-full bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold py-2.5 rounded-lg text-center transition block">Unduh Asset</a>
+                </div>
+            </div>
+        `).join('') || '<p class="text-sm text-slate-500">Katalog kosong.</p>';
+    }
+
+    // FFmpeg.wasm Audio Conversion Implementation
+    async function convertAudioFile() {
+        const fileInput = document.getElementById('audioFileInput');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Pilih file audio atau video terlebih dahulu.');
+            return;
+        }
+        const file = fileInput.files[0];
+        const speed = document.getElementById('audioSpeed').value;
+        const gain = document.getElementById('audioGain').value;
+
+        const progressArea = document.getElementById('audioProgressArea');
+        const progressBar = document.getElementById('audioProgressBar');
+        const progressText = document.getElementById('audioProgressText');
+        const progressPercent = document.getElementById('audioProgressPercent');
+        const resultArea = document.getElementById('audioResultArea');
+        const convertBtn = document.getElementById('convertBtn');
+
+        progressArea.classList.remove('hidden');
+        resultArea.classList.add('hidden');
+        convertBtn.disabled = true;
+
+        try {
+            if (!ffmpegInstance) {
+                progressText.innerText = 'Memuat Engine FFmpeg...';
+                const { FFmpeg } = FFmpegWASM;
+                ffmpegInstance = new FFmpeg();
+                ffmpegInstance.on('progress', ({ progress }) => {
+                    const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+                    progressBar.style.width = pct + '%';
+                    progressPercent.innerText = pct + '%';
+                });
+                const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+                await ffmpegInstance.load({
+                    coreURL: `${baseURL}/ffmpeg-core.js`,
+                    wasmURL: `${baseURL}/ffmpeg-core.wasm`
+                });
+            }
+
+            progressText.innerText = 'Membaca file...';
+            const { fetchFile } = FFmpegWASM;
+            const inputName = 'input_media' + (file.name.substring(file.name.lastIndexOf('.')) || '.mp4');
+            const outputName = 'output_audio.ogg';
+
+            await ffmpegInstance.writeFile(inputName, await fetchFile(file));
+
+            progressText.innerText = 'Mengonversi ke OGG...';
+            
+            let atempoCmd = [];
+            let rem = parseFloat(speed);
+            while (rem > 2.0) { atempoCmd.push('atempo=2.0'); rem /= 2.0; }
+            while (rem < 0.5) { atempoCmd.push('atempo=0.5'); rem /= 0.5; }
+            atempoCmd.push(`atempo=${rem.toFixed(3)}`);
+            const filterStr = `${atempoCmd.join(',')},volume=${gain}dB`;
+
+            await ffmpegInstance.exec([
+                '-i', inputName,
+                '-vn',
+                '-af', filterStr,
+                '-c:a', 'libvorbis',
+                '-q:a', '5',
+                outputName
+            ]);
+
+            const data = await ffmpegInstance.readFile(outputName);
+            const blob = new Blob([data.buffer], { type: 'audio/ogg' });
+            const url = URL.createObjectURL(blob);
+
+            const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || 'audio';
+            const finalFilename = `${baseName}_converted.ogg`;
+
+            document.getElementById('audioResultName').innerText = finalFilename;
+            const dlLink = document.getElementById('audioDownloadLink');
+            dlLink.href = url;
+            dlLink.download = finalFilename;
+
+            progressArea.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengonversi file: ' + err.message);
+            progressArea.classList.add('hidden');
+        } finally {
+            convertBtn.disabled = false;
+        }
+    }
+
+    function logout() {
+        currentUserData = null;
+        document.getElementById('viewDashboard').classList.add('hidden');
+        document.getElementById('viewLogin').classList.remove('hidden');
+        document.getElementById('navUserArea').classList.add('hidden');
+        document.getElementById('loginCredential').value = '';
+    }
 </script>
-</body>
-</html>
