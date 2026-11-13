@@ -2633,10 +2633,11 @@ app.post(
 
 
 // ============================================================
-// DSS AUDIO CONVERT — AUTHORIZED LOCAL FILE CONVERSION
-// YouTube/TikTok DRM or download restrictions are intentionally
-// not bypassed. Accept only user-uploaded files.
-// Requires system ffmpeg + npm package multer.
+// DSS AUDIO CONVERT — AUTHORIZED FILE + DIRECT MEDIA URL CONVERSION
+// YouTube/TikTok share URLs are recognized by the frontend for official
+// manual download guidance. Backend never extracts platform streams or
+// bypasses creator/platform restrictions. Accept uploads and allowlisted
+// direct media URLs only. Requires FFmpeg + multer.
 // ============================================================
 
 const audioUpload = multer({
@@ -2959,7 +2960,24 @@ app.post('/api/audio/convert-url',
     async (req, res) => {
         try {
             const sourceUrl = String(req.body?.sourceUrl || '').trim();
-            if (!sourceUrl || sourceUrl.length > 2048) return sendError(res, 400, 'Direct media URL wajib diisi dan maksimal 2048 karakter.');
+            if (!sourceUrl || sourceUrl.length > 2048) return sendError(res, 400, 'Tautan HTTPS wajib diisi dan maksimal 2048 karakter.');
+            let submittedUrl;
+            try { submittedUrl = new URL(sourceUrl); }
+            catch { return sendError(res, 400, 'Format tautan tidak valid. Masukkan URL HTTPS yang benar.'); }
+            const submittedHost = submittedUrl.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+            const isPlatformPage = submittedUrl.protocol === 'https:' && (
+                submittedHost === 'youtube.com' || submittedHost === 'youtu.be' ||
+                submittedHost.endsWith('.youtube.com') || submittedHost === 'youtube-nocookie.com' ||
+                submittedHost.endsWith('.youtube-nocookie.com') || submittedHost === 'tiktok.com' ||
+                submittedHost.endsWith('.tiktok.com')
+            );
+            if (isPlatformPage) {
+                return res.status(409).json({
+                    success: false,
+                    code: 'PLATFORM_DOWNLOAD_REQUIRED',
+                    message: 'Ini adalah link halaman video, bukan file media langsung. Buka video di aplikasi/situs resmi YouTube atau TikTok. Jika tombol Download resmi tersedia untuk video tersebut, unduh melalui platform lalu upload file ke DSS untuk konversi. Jika Download tidak tersedia, DSS tidak dapat melewati pembatasan kreator/platform.'
+                });
+            }
             const downloaded = await requestAllowedMedia(sourceUrl);
             const parsed = new URL(downloaded.finalUrl);
             let ext = path.extname(parsed.pathname).toLowerCase();
